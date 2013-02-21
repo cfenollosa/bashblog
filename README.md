@@ -3,7 +3,7 @@ bashblog
 
 A Bash script that handles blog posting
 
-You can read [the initial blog post](http://mmb.pcb.ub.es/~carlesfe/blog/creating-a-simple-blog-system-with-a-500-line-bash-script.html) for more information.
+You can read [the initial blog post](http://mmb.pcb.ub.es/~carlesfe/blog/creating-a-simple-blog-system-with-a-500-line-bash-script.html) for more information and as a demo, as my site has been 100% generated using bashblog.
 
 Usage
 -----
