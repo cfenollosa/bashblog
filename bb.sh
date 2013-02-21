@@ -91,33 +91,33 @@ global_variables() {
     global_software_version="1.5"
 
     # Blog title
-    global_title="Waiting for the jobs to finish"
+    global_title="My fancy blog"
     # The typical subtitle for each blog
-    global_description="Thoughts on science and tips for researchers who use computers"
+    global_description="A blog about turtles and carrots"
     # The public base URL for this blog
-    global_url="http://mmb.pcb.ub.es/~carlesfe/blog"
+    global_url="http://example.com/blog"
 
     # Your name
-    global_author="Carles Fenollosa"
+    global_author="John Smith"
     # You can use twitter or facebook or anything for global_author_url
-    global_author_url="http://mmb.pcb.ub.es/~carlesfe" 
+    global_author_url="http://twitter.com/example" 
     # Your email
-    global_email="carles.fenollosa@bsc.es"
+    global_email="john@smith.com"
 
     # CC by-nc-nd is a good starting point, you can change this to "&copy;" for Copyright
     global_license="CC by-nc-nd"
 
-    # If you have a Google Analytics ID, put it here.
+    # If you have a Google Analytics ID (UA-XXXXX), put it here.
     # If left empty (i.e. "") Analytics will be disabled
-    global_analytics="UA-752819-13"
+    global_analytics=""
 
     # Leave this empty (i.e. "") if you don't want to use feedburner, 
     # or change it to your own URL
-    global_feedburner="http://feeds.feedburner.com/WaitingForTheJobsToFinish"
+    global_feedburner=""
 
     # Leave these empty if you don't want to use twitter for comments
     global_twitter="true"
-    global_twitter_username="cfenollosa"
+    global_twitter_username="example"
 
 
     # Blog generated files
