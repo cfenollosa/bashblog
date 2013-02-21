@@ -380,7 +380,7 @@ all_posts() {
     rm "$contentfile"
 }
 
-# Generate the index.html with the content of the latest 10 posts
+# Generate the index.html with the content of the latest posts
 rebuild_index() {
     echo -n "Rebuilding the index "
     newindexfile="$index_file.$RANDOM"
@@ -390,7 +390,7 @@ rebuild_index() {
         contentfile="$newindexfile.content"
     done
 
-    # Create the content file, maximum 10 entries
+    # Create the content file
     n=0
     for i in $(ls -t *.html); do # sort by date, newest first
         if [ "$i" == "$index_file" ] || [ "$i" == "$archive_index" ]; then continue; fi
