@@ -14,7 +14,7 @@ Download bb.sh into a public folder of yours and run it:
 
 This will show the available commands
 
-Before creating a blog post, edit bb.sh and modify the variables in the global_variables() function
+**Before creating a blog post, edit `bb.sh` and modify the variables in the `global_variables()` function**
 
 To create your first post, just do:
 
