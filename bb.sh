@@ -91,11 +91,11 @@ global_variables() {
     global_software_version="1.5"
 
     # Blog title
-    global_title="My blog"
+    global_title="Waiting for the jobs to finish"
     # The typical subtitle for each blog
-    global_description="A blog where I talk about stuff"
+    global_description="Thoughts on science and tips for researchers who use computers"
     # The public base URL for this blog
-    global_url="http://example.com/blog"
+    global_url="http://mmb.pcb.ub.es/~carlesfe/blog"
 
     # blog generated files
     # index page of blog (it is usually good to use "index.html" here)
@@ -122,26 +122,26 @@ global_variables() {
     template_twitter_button="Tweet"
 
     # Your name
-    global_author="John Smith"
+    global_author="Carles Fenollosa"
     # You can use twitter or facebook or anything for global_author_url
-    global_author_url="http://johnsmith.com/about-me" 
+    global_author_url="http://mmb.pcb.ub.es/~carlesfe" 
     # Your email
-    global_email="johnsmith@example.com"
+    global_email="carles.fenollosa@bsc.es"
 
     # CC by-nc-nd is a good starting point, you can change this to "&copy;" for Copyright
     global_license="CC by-nc-nd"
 
     # If you have a Google Analytics ID, put it here.
     # If left empty (i.e. "") Analytics will be disabled
-    global_analytics=""
+    global_analytics="UA-752819-13"
 
     # Leave this empty (i.e. "") if you don't want to use feedburner, 
     # or change it to your own URL
-    global_feedburner="http://feeds.feedburner.example.com/MyBlog"
+    global_feedburner="http://feeds.feedburner.com/WaitingForTheJobsToFinish"
 
     # Leave these empty if you don't want to use twitter for comments
     global_twitter="true"
-    global_twitter_username="examplecom"
+    global_twitter_username="cfenollosa"
 }
 
 
