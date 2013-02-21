@@ -5,6 +5,13 @@ A Bash script that handles blog posting
 
 You can read [the initial blog post](http://mmb.pcb.ub.es/~carlesfe/blog/creating-a-simple-blog-system-with-a-500-line-bash-script.html) for more information.
 
+Usage
+-----
+
+Download bb.sh into a public folder of yours and run it:
+> ./bb.sh
+
+
 BashBlog supports:
 
 - Simple creation and edition of the posts with your favorite text editor
