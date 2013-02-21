@@ -127,7 +127,7 @@ global_variables() {
     # global archive
     archive_index="all_posts.html"
     # feed file (rss in this case)
-    blog_feed="test.rss"
+    blog_feed="feed.rss"
     number_of_feed_articles="10"
 
     # Localization and i18n
