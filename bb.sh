@@ -60,7 +60,7 @@
 #
 #########################################################################################
 #
-# 1.5      Durad Radojicic refactored some code and added flexibility
+# 1.5      Durad Radojicic refactored some code and added flexibility and i18n
 # 1.4.2    Now issues are handled at Github
 # 1.4.1    Some code refactoring
 # 1.4      Using twitter for comments, improved 'rebuild' command
@@ -97,30 +97,6 @@ global_variables() {
     # The public base URL for this blog
     global_url="http://mmb.pcb.ub.es/~carlesfe/blog"
 
-    # blog generated files
-    # index page of blog (it is usually good to use "index.html" here)
-    index_file="index.html"
-    number_of_index_articles="8"
-    # global archive
-    archive_index="all_posts.html"
-    # feed file (rss in this case)
-    blog_feed="test.rss"
-    number_of_feed_articles="10"
-
-    # template elements that can be translated
-    # "Comments?" (used in twitter link after every post)
-    template_comments="Comments?"
-    # "View more posts" (used on bottom of index page as link to archive)
-    template_archive="View more posts"
-    # "Back to the index page" (used on archive page, it is link to blog index)
-    template_archive_index_page="Back to the index page"
-    # "Subscribe" (used on bottom of index page, it is link to RSS feed)
-    template_subscribe="Subscribe"
-    # "Subscribe to this page..." (used as text for browser feed button that is embedded to html)
-    template_subscribe_browser_button="Subscribe to this page..."
-    # "Tweet" (used as twitter text button for posting to twitter)
-    template_twitter_button="Tweet"
-
     # Your name
     global_author="Carles Fenollosa"
     # You can use twitter or facebook or anything for global_author_url
@@ -142,8 +118,35 @@ global_variables() {
     # Leave these empty if you don't want to use twitter for comments
     global_twitter="true"
     global_twitter_username="cfenollosa"
-}
 
+
+    # Blog generated files
+    # index page of blog (it is usually good to use "index.html" here)
+    index_file="index.html"
+    number_of_index_articles="8"
+    # global archive
+    archive_index="all_posts.html"
+    # feed file (rss in this case)
+    blog_feed="test.rss"
+    number_of_feed_articles="10"
+
+    # Localization and i18n
+    # "Comments?" (used in twitter link after every post)
+    template_comments="Comments?"
+    # "View more posts" (used on bottom of index page as link to archive)
+    template_archive="View more posts"
+    # "Back to the index page" (used on archive page, it is link to blog index)
+    template_archive_index_page="Back to the index page"
+    # "Subscribe" (used on bottom of index page, it is link to RSS feed)
+    template_subscribe="Subscribe"
+    # "Subscribe to this page..." (used as text for browser feed button that is embedded to html)
+    template_subscribe_browser_button="Subscribe to this page..."
+    # "Tweet" (used as twitter text button for posting to twitter)
+    template_twitter_button="Tweet"
+    # The locale to use for the dates displayed on screen (not for the timestamps)
+    date_format="%B %d, %Y"
+    date_locale="C"
+}
 
 # Prints the required google analytics code
 google_analytics() {
@@ -234,9 +237,9 @@ create_html_page() {
         echo "$title" >> "$filename"
         echo '</a></h3>' >> "$filename"
         if [ "$timestamp" == "" ]; then
-            echo '<div class="subtitle">'$(date +"%B %d, %Y")' &mdash; ' >> "$filename"
+            echo '<div class="subtitle">'$(LC_ALL=date_locale date +"$date_format")' &mdash; ' >> "$filename"
         else
-            echo '<div class="subtitle">'$(date +"%B %d, %Y" --date="$timestamp") ' &mdash; ' >> "$filename"
+            echo '<div class="subtitle">'$(LC_ALL=date_locale date +"$date_format" --date="$timestamp") ' &mdash; ' >> "$filename"
         fi
         echo "$global_author</div>" >> "$filename"
         echo '<!-- text begin -->' >> "$filename" # This marks the text body, after the title, date...
@@ -367,7 +370,7 @@ all_posts() {
         title="$(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i)"
         echo -n '<li><a href="'$global_url/$i'">'$title'</a> &mdash;' >> "$contentfile"
         # Date
-        date="$(date -r "$i" +%B\ %d\,\ %Y)"
+        date="$(LC_ALL=date_locale date -r "$i" "$date_format")"
         echo " $date</li>" >> "$contentfile"
     done
     echo ""
@@ -420,7 +423,7 @@ list_posts() {
     n=1
     for i in $(ls -t *.html); do
         if [ "$i" == "$index_file" ] || [ "$i" == "$archive_index" ]; then continue; fi
-        line="$n # $(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i) # $(date -r $i +%B\ %d\,\ %Y)"
+        line="$n # $(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i) # $(LC_ALL=date_locale date -r $i "date_format")"
         lines="${lines}""$line""\n" # Weird stuff needed for the newlines
         n=$(( $n + 1 ))
     done 
