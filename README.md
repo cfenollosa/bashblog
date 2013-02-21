@@ -1,7 +1,11 @@
 bashblog
 ========
 
-A Bash script that handles blog posting
+A Bash script that handles blog posting.
+
+Some would say it's a CMS, but I don't like that word. It's just a script that lets you write a blog post with your favorite editor, puts all the posts together into an index, and creates an RSS file and a list of posts.
+
+I created it because I wanted a very, very simple way to post entries to a blog by using a public folder on my server, without any special requirements and dependencies.
 
 You can read [the initial blog post](http://mmb.pcb.ub.es/~carlesfe/blog/creating-a-simple-blog-system-with-a-500-line-bash-script.html) for more information and as a demo, as my site has been 100% generated using bashblog.
 
