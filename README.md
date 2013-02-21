@@ -9,7 +9,7 @@ Usage
 -----
 
 Download bb.sh into a public folder of yours and run it:
-> ./bb.sh
+    ./bb.sh
 
 
 BashBlog supports:
