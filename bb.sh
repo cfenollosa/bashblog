@@ -370,7 +370,7 @@ all_posts() {
         title="$(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i)"
         echo -n '<li><a href="'$global_url/$i'">'$title'</a> &mdash;' >> "$contentfile"
         # Date
-        date="$(LC_ALL=date_locale date -r "$i" "$date_format")"
+        date="$(LC_ALL=date_locale date -r "$i" +"$date_format")"
         echo " $date</li>" >> "$contentfile"
     done
     echo ""
@@ -423,7 +423,7 @@ list_posts() {
     n=1
     for i in $(ls -t *.html); do
         if [ "$i" == "$index_file" ] || [ "$i" == "$archive_index" ]; then continue; fi
-        line="$n # $(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i) # $(LC_ALL=date_locale date -r $i "date_format")"
+        line="$n # $(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i) # $(LC_ALL=date_locale date -r $i +"date_format")"
         lines="${lines}""$line""\n" # Weird stuff needed for the newlines
         n=$(( $n + 1 ))
     done 
