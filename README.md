@@ -37,6 +37,7 @@ Features
 - Auto-generated CSS support
 - Headers, footers, and in general everything that a well-structured html file has
 - xhtml validation, CSS validation, RSS validation by the w3c
+- Backup of the site every time you post
 - Everything contained in a single 700-line bash script!
 - A simple but nice and readable design, with nothing but the blog posts
 
