@@ -86,8 +86,6 @@
 # Global variables
 # It is recommended to perform a 'rebuild' after changing any of this in the code
 global_variables() {
-    # If you want to fork the project please contact me first, I wouldn't mind opening a git
-    # or some shared code base and collaborate with other people.
     global_software_name="BashBlog"
     global_software_version="1.5.1"
 
