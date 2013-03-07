@@ -616,6 +616,13 @@ do_main() {
         exit
     fi
 
+    if [[ "$1" == "edit" ]]; then
+        if [[ $# -lt 2 ]] || [[ ! -f "$2" ]]; then
+            echo "Please enter a valid html file to edit"
+            exit
+        fi
+    fi
+
     # Test for existing html files
     ls *.html &> /dev/null
     if [ $? -ne 0 ] && [ "$1" == "rebuild" ]; then
