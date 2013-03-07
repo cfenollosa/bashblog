@@ -147,6 +147,8 @@ global_variables() {
     # The locale to use for the dates displayed on screen (not for the timestamps)
     date_format="%B %d, %Y"
     date_locale="C"
+    # Date options which work on both BSD and GNU date variants
+    date_R='+%a, %d %h %Y %H:%M:%S %z'
 }
 
 # Prints the required google analytics code
@@ -177,7 +179,8 @@ google_analytics() {
 #
 # $1 	the file to edit
 edit() {
-    timestamp="$(date -r $1 +'%Y%m%d%k%M')"
+    # timestamp="$(date -r $1 +'%Y%m%d%k%M')"
+    timestamp="$(stat -f "%Sm" -t  '%Y%m%d%k%M' $1)"
     $EDITOR "$1"
     touch -t $timestamp "$1"
 }
@@ -238,9 +241,11 @@ create_html_page() {
         echo "$title" >> "$filename"
         echo '</a></h3>' >> "$filename"
         if [ "$timestamp" == "" ]; then
-            echo '<div class="subtitle">'$(LC_ALL=date_locale date +"$date_format")' &mdash; ' >> "$filename"
+            # echo '<div class="subtitle">'$(LC_ALL=date_locale date +"$date_format")' &mdash; ' >> "$filename"
+            echo '<div class="subtitle">'$(date "$date_R")' &mdash; ' >> "$filename"
         else
-            echo '<div class="subtitle">'$(LC_ALL=date_locale date +"$date_format" --date="$timestamp") ' &mdash; ' >> "$filename"
+            # echo '<div class="subtitle">'$(LC_ALL=date_locale date +"$date_format" --date="$timestamp") ' &mdash; ' >> "$filename"
+            echo '<div class="subtitle">'"$timestamp"' &mdash; ' >> "$filename"
         fi
         echo "$global_author</div>" >> "$filename"
         echo '<!-- text begin -->' >> "$filename" # This marks the text body, after the title, date...
@@ -371,7 +376,8 @@ all_posts() {
         title="$(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i)"
         echo -n '<li><a href="'$global_url/$i'">'$title'</a> &mdash;' >> "$contentfile"
         # Date
-        date="$(LC_ALL=date_locale date -r "$i" +"$date_format")"
+        #date="$(LC_ALL=date_locale date -r "$i" +"$date_format")"
+        date="$(stat -f "%Sm" -t "%a, %d %h %Y %H:%M:%S %z")"
         echo " $date</li>" >> "$contentfile"
     done
     echo ""
@@ -424,7 +430,7 @@ list_posts() {
     n=1
     for i in $(ls -t *.html); do
         if [ "$i" == "$index_file" ] || [ "$i" == "$archive_index" ]; then continue; fi
-        line="$n # $(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i) # $(LC_ALL=date_locale date -r $i +"date_format")"
+        line="$n # $(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i) # $(stat -f "%Sm" -t "%a, %d %h %Y %H:%M:%S %z"   $i)"
         lines="${lines}""$line""\n" # Weird stuff needed for the newlines
         n=$(( $n + 1 ))
     done 
@@ -443,8 +449,8 @@ make_rss() {
     echo '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">' >> "$rssfile"
     echo '<channel><title>'$global_title'</title><link>'$global_url'</link>' >> "$rssfile"
     echo '<description>'$global_description'</description><language>en</language>' >> "$rssfile"
-    echo '<lastBuildDate>'$(date -R)'</lastBuildDate>' >> "$rssfile"
-    echo '<pubDate>'$(date -R)'</pubDate>' >> "$rssfile"
+    echo '<lastBuildDate>'$(date "$date_R")'</lastBuildDate>' >> "$rssfile"
+    echo '<pubDate>'$(date "$date_R")'</pubDate>' >> "$rssfile"
     echo '<atom:link href="'$global_url/$blog_feed'" rel="self" type="application/rss+xml" />' >> "$rssfile"
 
     n=0
@@ -460,8 +466,9 @@ make_rss() {
         echo "]]></description><link>$global_url/$i</link>" >> "$rssfile"
         echo "<guid>$global_url/$i</guid>" >> "$rssfile"
         echo "<dc:creator>$global_author</dc:creator>" >> "$rssfile"
-        echo '<pubDate>'$(date -r "$i" -R)'</pubDate></item>' >> "$rssfile"
 
+        #echo '<pubDate>'$(date -r "$i" -R)'</pubDate></item>' >> "$rssfile"
+        echo '<pubDate>'$(stat -f "%Sm" -t "%a, %d %h %Y %H:%M:%S %z"  "$i" )'</pubDate></item>' >> "$rssfile"
         n=$(( $n + 1 ))
     done
 
@@ -557,11 +564,13 @@ rebuild_all_entries() {
         awk '/<!-- text begin -->/, /<!-- text end -->/{if (!/<!-- text begin -->/ && !/<!-- text end -->/) print}' "$i" >> "$contentfile"
 
         # Original post timestamp
-        timestamp="$(date -R -r $i)"
 
+        #timestamp="$(date -R -r $i)"
+        timestamp="$(stat -f "%Sm" -t "%a, %d %h %Y %H:%M:%S %z" $i)"
         create_html_page "$contentfile" "$i.rebuilt" no "$title" "$timestamp"
         # keep the original timestamp!
-        timestamp="$(date -r $i +'%Y%m%d%k%M')"
+        #timestamp="$(date -r $i +'%Y%m%d%k%M')"
+        timestamp="$(stat -f "%Sm" -t  '%Y%m%d%k%M' $i)"
         mv "$i.rebuilt" "$i"
         chmod 644 "$i"
         touch -t $timestamp "$i"
@@ -663,3 +672,4 @@ do_main() {
 # Do not change anything here. If you want to modify the code, edit do_main()
 #
 do_main $*
+
