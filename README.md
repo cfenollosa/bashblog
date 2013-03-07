@@ -20,7 +20,7 @@ This will show the available commands
 
 **Before creating a blog post, edit `bb.sh` and modify the variables in the `global_variables()` function**
 
-To create your first post, just do:
+To create your first post, make sure `$EDITOR` is set, and then just do:
 
     ./bb.sh post
 
