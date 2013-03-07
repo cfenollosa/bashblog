@@ -60,6 +60,7 @@
 #
 #########################################################################################
 #
+# 1.5.1    Misc bugfixes and parameter checks
 # 1.5      Durad Radojicic refactored some code and added flexibility and i18n
 # 1.4.2    Now issues are handled at Github
 # 1.4.1    Some code refactoring
@@ -88,7 +89,7 @@ global_variables() {
     # If you want to fork the project please contact me first, I wouldn't mind opening a git
     # or some shared code base and collaborate with other people.
     global_software_name="BashBlog"
-    global_software_version="1.5"
+    global_software_version="1.5.1"
 
     # Blog title
     global_title="My fancy blog"
@@ -605,6 +606,12 @@ reset() {
 # $2     file name of a draft to continue editing (optional)
 do_main() {
     global_variables
+
+    # Check for $EDITOR
+    if [[ -z "$EDITOR" ]]; then
+        echo "Please set your \$EDITOR environment variable"
+        exit
+    fi
 
     # Check for validity of argument
     if [ "$1" != "reset" ] && [ "$1" != "post" ] && [ "$1" != "rebuild" ] && [ "$1" != "list" ] && [ "$1" != "edit" ]; then 
