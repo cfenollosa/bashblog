@@ -590,7 +590,7 @@ reset() {
     echo "Are you sure you want to delete all blog entries? Please write \"Yes, I am!\" "
     read line
     if [ "$line" == "Yes, I am!" ]; then
-        rm "*.html" "*.css" "*.rss"
+        rm *.html *.css *.rss
         echo "Deleted all posts, stylesheets and feeds."
     else
         echo "Phew! You dodged a bullet there. Nothing was modified."
