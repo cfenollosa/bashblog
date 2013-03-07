@@ -557,7 +557,7 @@ rebuild_all_entries() {
         awk '/<!-- text begin -->/, /<!-- text end -->/{if (!/<!-- text begin -->/ && !/<!-- text end -->/) print}' "$i" >> "$contentfile"
 
         # Original post timestamp
-        timestamp="$(date -r $i)"
+        timestamp="$(date -R -r $i)"
 
         create_html_page "$contentfile" "$i.rebuilt" no "$title" "$timestamp"
         # keep the original timestamp!
