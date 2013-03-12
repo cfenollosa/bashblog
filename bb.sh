@@ -635,9 +635,11 @@ do_main() {
         exit
     fi
 
-    # We're going to back up just in case
-    tar cfz ".backup.tar.gz" *.html
-    chmod 600 ".backup.tar.gz"
+    if [ $? -ne 0 ]; then
+        # We're going to back up just in case
+        tar cfz ".backup.tar.gz" *.html
+        chmod 600 ".backup.tar.gz"
+    fi
 
     if [ "$1" == "reset" ]; then
         reset
