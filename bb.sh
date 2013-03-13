@@ -85,6 +85,10 @@
 
 # Global variables
 # It is recommended to perform a 'rebuild' after changing any of this in the code
+
+# Config file. Use instead of this function if you want to avoid merges in VCS
+global_config=".config"
+
 global_variables() {
     global_software_name="BashBlog"
     global_software_version="1.5.1"
@@ -424,6 +428,12 @@ rebuild_index() {
 
 # Displays a list of the posts
 list_posts() {
+    ls *.html &> /dev/null
+    if [[ $? -ne 0 ]]; then
+        echo "No posts yet. Use 'bb.sh post' to create one"
+        return
+    fi
+
     lines=""
     n=1
     for i in $(ls -t *.html); do
@@ -599,8 +609,10 @@ reset() {
     echo "Are you sure you want to delete all blog entries? Please write \"Yes, I am!\" "
     read line
     if [ "$line" == "Yes, I am!" ]; then
-        rm *.html *.css *.rss
+        rm .*.html *.html *.css *.rss &> /dev/null
+        echo
         echo "Deleted all posts, stylesheets and feeds."
+        echo "Kept your old '.backup.tar.gz' just in case, please delete it manually if needed."
     else
         echo "Phew! You dodged a bullet there. Nothing was modified."
     fi
@@ -612,7 +624,8 @@ reset() {
 # $1     command to run
 # $2     file name of a draft to continue editing (optional)
 do_main() {
-    global_variables
+    # Use config file or fallback to inline configuration
+    source "$global_config" ||  global_variables
 
     # Check for $EDITOR
     if [[ -z "$EDITOR" ]]; then
@@ -645,8 +658,11 @@ do_main() {
     fi
 
     # We're going to back up just in case
+    ls *.html &> /dev/null
+    if [[ $? -eq 0 ]]; then
     tar cfz ".backup.tar.gz" *.html
     chmod 600 ".backup.tar.gz"
+    fi
 
     if [ "$1" == "reset" ]; then
         reset
@@ -670,4 +686,3 @@ do_main() {
 # Do not change anything here. If you want to modify the code, edit do_main()
 #
 do_main $*
-
