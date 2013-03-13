@@ -86,8 +86,6 @@
 # Global variables
 # It is recommended to perform a 'rebuild' after changing any of this in the code
 global_variables() {
-    # If you want to fork the project please contact me first, I wouldn't mind opening a git
-    # or some shared code base and collaborate with other people.
     global_software_name="BashBlog"
     global_software_version="1.5.1"
 
@@ -172,7 +170,7 @@ google_analytics() {
 # Please note that this function does not automatically republish anything, as
 # it is usually called from 'main'.
 #
-# 'edit' is kind of an advanced function, as it leaves to the user the responsability
+# 'edit' is kind of an advanced function, as it leaves to the user the responsibility
 # of editing an html file
 #
 # $1 	the file to edit
@@ -407,7 +405,7 @@ rebuild_index() {
     if [ "$global_feedburner" == "" ]; then
         echo '<div id="all_posts"><a href="'$archive_index'">View more posts</a> &mdash; <a href="'$blog_feed'">'$template_subscribe'</a></div>' >> "$contentfile"
     else
-        echo '<div id="all_posts"><a href="'$archive_index'">'$template_archive'</a> &mdash; <a href="'$global_feedburner'">Susbcribe</a></div>' >> "$contentfile"
+        echo '<div id="all_posts"><a href="'$archive_index'">'$template_archive'</a> &mdash; <a href="'$global_feedburner'">Subscribe</a></div>' >> "$contentfile"
     fi
 
     echo ""
@@ -608,7 +606,7 @@ reset() {
 }
 
 # Main function
-# Encapsuled on its own function for readability purposes
+# Encapsulated on its own function for readability purposes
 #
 # $1     command to run
 # $2     file name of a draft to continue editing (optional)
