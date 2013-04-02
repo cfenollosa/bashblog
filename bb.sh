@@ -85,6 +85,10 @@
 
 # Global variables
 # It is recommended to perform a 'rebuild' after changing any of this in the code
+
+# Config file. Use instead of this function if you want to avoid merges in VCS
+global_config=".config"
+
 global_variables() {
     global_software_name="BashBlog"
     global_software_version="1.5.1"
@@ -428,7 +432,7 @@ rebuild_index() {
 # Displays a list of the posts
 list_posts() {
     ls *.html &> /dev/null
-    if [[ $? -ne 0 ]]; then 
+    if [[ $? -ne 0 ]]; then
         echo "No posts yet. Use 'bb.sh post' to create one"
         return
     fi
@@ -623,7 +627,8 @@ reset() {
 # $1     command to run
 # $2     file name of a draft to continue editing (optional)
 do_main() {
-    global_variables
+    # Use config file or fallback to inline configuration
+    source "$global_config" ||  global_variables
 
     # Check for $EDITOR
     if [[ -z "$EDITOR" ]]; then
@@ -658,8 +663,8 @@ do_main() {
     # We're going to back up just in case
     ls *.html &> /dev/null
     if [[ $? -eq 0 ]]; then
-        tar cfz ".backup.tar.gz" *.html
-        chmod 600 ".backup.tar.gz"
+    tar cfz ".backup.tar.gz" *.html
+    chmod 600 ".backup.tar.gz"
     fi
 
     if [ "$1" == "reset" ]; then
@@ -684,4 +689,3 @@ do_main() {
 # Do not change anything here. If you want to modify the code, edit do_main()
 #
 do_main $*
-
