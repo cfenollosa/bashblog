@@ -90,6 +90,8 @@
 global_config=".config"
 
 global_variables() {
+	if [[ -z $EDITOR ]]; then EDITOR=vim; fi
+
     global_software_name="BashBlog"
     global_software_version="1.5.1"
 
@@ -191,8 +193,8 @@ edit() {
 #
 # $1 the post URL
 twitter() {
-    echo "<p id='twitter'>$template_comments &nbsp;"
-    echo "<a href=\"https://twitter.com/share\" class=\"twitter-share-button\" data-text=\"$template_twitter_comment\" data-url=\"$1\""
+    echo "<p id='twitter'> <a href=\"$1#disqus_thread\">$template_comments</a> &nbsp;"
+    echo "<a href=\"https://twitter.com/share\" class=\"twitter-share-button\" data-text=\"&lt;Type your comment here but please leave the URL so that other people can follow the comments&gt;\" data-url=\"$1\""
 
     if [ "$global_twitter_username" != "" ]; then
         echo " data-via=\"$global_twitter_username\""
@@ -262,10 +264,15 @@ create_html_page() {
     fi
 
     echo '</div>' >> "$filename" # content
+    echo ${filename%.*.*}
+    if [[ ${filename%.*.*} !=  "index" && ${filename%.*.*} != "all_posts" ]]; then
+    	cat disqus >> "$filename"
+    fi
     # page footer
     cat .footer.html >> "$filename"
     # close divs
     echo '</div></div>' >> "$filename" # divbody and divbodyholder 
+    cat disqus_footer >> "$filename"
     echo '</body></html>' >> "$filename"
 }
 
