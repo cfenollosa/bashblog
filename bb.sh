@@ -142,6 +142,9 @@ global_variables() {
     template_subscribe_browser_button="Subscribe to this page..."
     # "Tweet" (used as twitter text button for posting to twitter)
     template_twitter_button="Tweet"
+
+    template_twitter_comment="&lt;Type your comment here but please leave the URL so that other people can follow the comments&gt;"
+    
     # The locale to use for the dates displayed on screen (not for the timestamps)
     date_format="%B %d, %Y"
     date_locale="C"
@@ -185,7 +188,7 @@ edit() {
 # $1 the post URL
 twitter() {
     echo "<p id='twitter'>$template_comments &nbsp;"
-    echo "<a href=\"https://twitter.com/share\" class=\"twitter-share-button\" data-text=\"&lt;Type your comment here but please leave the URL so that other people can follow the comments&gt;\" data-url=\"$1\""
+    echo "<a href=\"https://twitter.com/share\" class=\"twitter-share-button\" data-text=\"$template_twitter_comment\" data-url=\"$1\""
 
     if [ "$global_twitter_username" != "" ]; then
         echo " data-via=\"$global_twitter_username\""
@@ -403,7 +406,7 @@ rebuild_index() {
     done
 
     if [ "$global_feedburner" == "" ]; then
-        echo '<div id="all_posts"><a href="'$archive_index'">View more posts</a> &mdash; <a href="'$blog_feed'">'$template_subscribe'</a></div>' >> "$contentfile"
+        echo '<div id="all_posts"><a href="'$archive_index'">'$template_archive'</a> &mdash; <a href="'$blog_feed'">'$template_subscribe'</a></div>' >> "$contentfile"
     else
         echo '<div id="all_posts"><a href="'$archive_index'">'$template_archive'</a> &mdash; <a href="'$global_feedburner'">Subscribe</a></div>' >> "$contentfile"
     fi
