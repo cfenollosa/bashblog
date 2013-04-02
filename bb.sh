@@ -90,10 +90,10 @@
 global_config=".config"
 
 global_variables() {
-	if [[ -z $EDITOR ]]; then EDITOR=vim; fi
+    echo Loading inline configuration
 
     global_software_name="BashBlog"
-    global_software_version="1.5.1"
+    global_software_version="1.6.0"
 
     # Blog title
     global_title="My fancy blog"
@@ -123,6 +123,10 @@ global_variables() {
     # Leave these empty if you don't want to use twitter for comments
     global_twitter="true"
     global_twitter_username="example"
+
+    # Leave these empty if you don't want to use disqus for comments
+    global_disqus="true"
+    global_disqus_username="disqus_undefined"
 
 
     # Blog generated files
@@ -173,6 +177,45 @@ google_analytics() {
 })();
 
 </script>"
+}
+
+# Prints the required code for disqus comments
+disqus_body() {
+if [ "$global_disqus" != "" ]; then
+    echo '<div id="disqus_thread"></div>
+            <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+               var disqus_shortname = '\'$global_disqus_username\''; // required: replace example with your forum shortname
+
+            /* * * DONT EDIT BELOW THIS LINE * * */
+            (function() {
+            var dsq = document.createElement("script"); dsq.type = "text/javascript"; dsq.async = true;
+            dsq.src = "//" + disqus_shortname + ".disqus.com/embed.js";
+            (document.getElementsByTagName("head")[0] || document.getElementsByTagName("body")[0]).appendChild(dsq);
+            })();
+            </script>
+            <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+            <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>'
+fi
+
+}
+# Prints the required code for disqus in the footer
+disqus_footer() {
+if [ "$global_disqus" != "" ]; then
+       echo '<script type="text/javascript">
+               /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+               var disqus_shortname = '\'$global_disqus_username\''; // required: replace example with your forum shortname
+
+               /* * * DONT EDIT BELOW THIS LINE * * */
+               (function () {
+               var s = document.createElement("script"); s.async = true;
+               s.type = "text/javascript";
+               s.src = "//" + disqus_shortname + ".disqus.com/count.js";
+               (document.getElementsByTagName("HEAD")[0] || document.getElementsByTagName("BODY")[0]).appendChild(s);
+               }());
+               </script>'
+
+    fi
 }
 
 # Edit an existing, published .html file while keeping its original timestamp
@@ -266,13 +309,13 @@ create_html_page() {
     echo '</div>' >> "$filename" # content
     echo ${filename%.*.*}
     if [[ ${filename%.*.*} !=  "index" && ${filename%.*.*} != "all_posts" ]]; then
-    	cat disqus >> "$filename"
+    	disqus_body >> "$filename"
     fi
     # page footer
     cat .footer.html >> "$filename"
     # close divs
     echo '</div></div>' >> "$filename" # divbody and divbodyholder 
-    cat disqus_footer >> "$filename"
+    disqus_footer >> "$filename"
     echo '</body></html>' >> "$filename"
 }
 
@@ -623,7 +666,7 @@ date_version_detect() {
 	if !(date --version >/dev/null 2>&1)  ; then
 		# date utility is BSD. Test if gdate is installed 
 		if gdate --version >/dev/null 2>&1 ; then
-                   alias date=gdate
+                   DATE_COMMAND=gdate
 		   echo Using gdate.
 		else
 		   echo ERROR: Not GNU date found.
@@ -631,9 +674,14 @@ date_version_detect() {
 		   echo Exiting...
 		   exit
 		fi
+
+	else
+		DATE_COMMAND=date
 	fi    
 }
-
+date() {
+$DATE_COMMAND "$@"
+} 
 # Main function
 # Encapsulated on its own function for readability purposes
 #
@@ -643,6 +691,7 @@ do_main() {
     # Detect if using BSD date or GNU date
     date_version_detect
     # Use config file or fallback to inline configuration
+    echo Loading configuration
     source "$global_config" &> /dev/null ||  global_variables
 
     # Check for $EDITOR
