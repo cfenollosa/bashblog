@@ -307,7 +307,8 @@ create_html_page() {
     fi
 
     echo '</div>' >> "$filename" # content
-    echo ${filename%.*.*}
+
+    # Add disqus commments except for index and all_posts pages
     if [[ ${filename%.*.*} !=  "index" && ${filename%.*.*} != "all_posts" ]]; then
     	disqus_body >> "$filename"
     fi
@@ -663,7 +664,8 @@ reset() {
 }
 
 date_version_detect() {
-	if !(date --version >/dev/null 2>&1)  ; then
+	date --version >/dev/null 2>&1
+	if [ $? -ne 0 ];  then
 		# date utility is BSD. Test if gdate is installed 
 		if gdate --version >/dev/null 2>&1 ; then
                    DATE_COMMAND=gdate
