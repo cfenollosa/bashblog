@@ -15,7 +15,7 @@
 # Basically it asks the user to create a text file, then converts it into a .html file
 # and then rebuilds the index.html and feed.rss.
 #
-# Comments are not supported.
+# Comments are supported via external service (Disqus).
 #
 # This script is standalone, it doesn't require any other file to run
 #
@@ -60,6 +60,8 @@
 #
 #########################################################################################
 #
+# 1.6.1    'date' fix when hours are 1 digit.
+# 1.6.0    Disqus comments. External configuration file. Check of 'date' command version.
 # 1.5.1    Misc bugfixes and parameter checks
 # 1.5      Durad Radojicic refactored some code and added flexibility and i18n
 # 1.4.2    Now issues are handled at Github
@@ -93,7 +95,7 @@ global_variables() {
     echo Loading inline configuration
 
     global_software_name="BashBlog"
-    global_software_version="1.6.0"
+    global_software_version="1.6.1"
 
     # Blog title
     global_title="My fancy blog"
