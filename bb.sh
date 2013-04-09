@@ -227,7 +227,7 @@ if [ "$global_disqus" != "" ]; then
 #
 # $1 	the file to edit
 edit() {
-    timestamp="$(date -r $1 +'%Y%m%d%k%M')"
+    timestamp="$(date -r $1 +'%Y%m%d%H%M')"
     $EDITOR "$1"
     touch -t $timestamp "$1"
 }
@@ -623,7 +623,7 @@ rebuild_all_entries() {
 
         create_html_page "$contentfile" "$i.rebuilt" no "$title" "$timestamp"
         # keep the original timestamp!
-        timestamp="$(date -r $i +'%Y%m%d%k%M')"
+        timestamp="$(date -r $i +'%Y%m%d%H%M')"
         mv "$i.rebuilt" "$i"
         chmod 644 "$i"
         touch -t $timestamp "$i"
