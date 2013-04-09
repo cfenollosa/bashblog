@@ -668,7 +668,9 @@ date_version_detect() {
 	if [ $? -ne 0 ];  then
 		# date utility is BSD. Test if gdate is installed 
 		if gdate --version >/dev/null 2>&1 ; then
-                   DATE_COMMAND=gdate
+                   date() {
+                     gdate "$@"
+                   }
 		   echo Using gdate.
 		else
 		   echo ERROR: Not GNU date found.
@@ -676,14 +678,9 @@ date_version_detect() {
 		   echo Exiting...
 		   exit
 		fi
-
-	else
-		DATE_COMMAND=date
 	fi    
 }
-date() {
-$DATE_COMMAND "$@"
-} 
+
 # Main function
 # Encapsulated on its own function for readability purposes
 #
