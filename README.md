@@ -18,7 +18,7 @@ Download bb.sh into a public folder of yours and run it:
 
 This will show the available commands
 
-**Before creating a blog post, edit `bb.sh` and modify the variables in the `global_variables()` function**
+**Before creating a blog post, edit `bb.sh` and modify the variables in the `global_variables()` function or create a `.config` file with your configutation values**
 
 To create your first post, make sure `$EDITOR` is set, and then just do:
 
@@ -46,9 +46,5 @@ Features
 - Backup of the site every time you post
 - Everything contained in a single 700-line bash script!
 - A simple but nice and readable design, with nothing but the blog posts
-
-Non features (not planned)
---------------------------
-
 
 Read the CHANGELOG section of the script header for more updates
