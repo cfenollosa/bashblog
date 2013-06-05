@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
 # BashBlog, a simple blog system written in a single bash script
-# Author: Carles Fenollosa <carles.fenollosa@bsc.es>, 2011-2012
+# Author: Carles Fenollosa <carles.fenollosa@bsc.es>, 2011-2013
+# With contributions from many others: 
+# https://github.com/carlesfe/bashblog/commits/master
 
 
 #########################################################################################
@@ -60,6 +62,7 @@
 #
 #########################################################################################
 #
+# 1.6.2    Simplified some functions and variables to avoid duplicated information
 # 1.6.1    'date' fix when hours are 1 digit.
 # 1.6.0    Disqus comments. External configuration file. Check of 'date' command version.
 # 1.5.1    Misc bugfixes and parameter checks
@@ -88,14 +91,16 @@
 # Global variables
 # It is recommended to perform a 'rebuild' after changing any of this in the code
 
-# Config file. Use instead of this function if you want to avoid merges in VCS
+# Config file. Any settings "key=value" written there will override the
+# global_variables defaults. Useful to avoid editing bb.sh and having to deal
+# with merges in VCS
 global_config=".config"
 
+# This function will load all the variables defined here. They might be overriden
+# by the 'global_config' file contents
 global_variables() {
-    echo Loading inline configuration
-
     global_software_name="BashBlog"
-    global_software_version="1.6.1"
+    global_software_version="1.6.2"
 
     # Blog title
     global_title="My fancy blog"
@@ -122,13 +127,11 @@ global_variables() {
     # or change it to your own URL
     global_feedburner=""
 
-    # Leave these empty if you don't want to use twitter for comments
-    global_twitter="true"
-    global_twitter_username="example"
+    # Change this to your username if you want to use twitter for comments
+    global_twitter_username=""
 
-    # Leave these empty if you don't want to use disqus for comments
-    global_disqus="true"
-    global_disqus_username="disqus_undefined"
+    # Change this to your disqus username to use disqus for comments
+    global_disqus_username=""
 
 
     # Blog generated files
@@ -183,7 +186,8 @@ google_analytics() {
 
 # Prints the required code for disqus comments
 disqus_body() {
-if [ "$global_disqus" != "" ]; then
+    if [ "$global_disqus_username" == "" ]; then return; fi
+
     echo '<div id="disqus_thread"></div>
             <script type="text/javascript">
             /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
@@ -198,12 +202,11 @@ if [ "$global_disqus" != "" ]; then
             </script>
             <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
             <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>'
-fi
-
 }
+
 # Prints the required code for disqus in the footer
 disqus_footer() {
-if [ "$global_disqus" != "" ]; then
+    if [ "$global_disqus_username" == "" ]; then return; fi
        echo '<script type="text/javascript">
                /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
                var disqus_shortname = '\'$global_disqus_username\''; // required: replace example with your forum shortname
@@ -216,8 +219,6 @@ if [ "$global_disqus" != "" ]; then
                (document.getElementsByTagName("HEAD")[0] || document.getElementsByTagName("BODY")[0]).appendChild(s);
                }());
                </script>'
-
-    fi
 }
 
 # Edit an existing, published .html file while keeping its original timestamp
@@ -238,12 +239,17 @@ edit() {
 #
 # $1 the post URL
 twitter() {
-    echo "<p id='twitter'> <a href=\"$1#disqus_thread\">$template_comments</a> &nbsp;"
+    if [[ "$global_twitter_username" == "" ]]; then return; fi
+
+    if [[ "$global_disqus_username" == "" ]]; then
+        echo "<p id='twitter'>$template_comments&nbsp;"
+    else
+        echo "<p id='twitter'><a href=\"$1#disqus_thread\">$template_comments</a> &nbsp;"
+    fi  
+
     echo "<a href=\"https://twitter.com/share\" class=\"twitter-share-button\" data-text=\"&lt;Type your comment here but please leave the URL so that other people can follow the comments&gt;\" data-url=\"$1\""
 
-    if [ "$global_twitter_username" != "" ]; then
-        echo " data-via=\"$global_twitter_username\""
-    fi
+    echo " data-via=\"$global_twitter_username\""
 
     echo ">$template_twitter_button</a>	<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=\"//platform.twitter.com/widgets.js\";fjs.parentNode.insertBefore(js,fjs);}}(document,\"script\",\"twitter-wjs\");</script>"
     echo "</p>"
@@ -301,9 +307,7 @@ create_html_page() {
     if [ "$index" == "no" ]; then
         echo '<!-- text end -->' >> "$filename"
 
-        if [ "$global_twitter" == "true" ]; then
-            twitter "$global_url/$file_url" >> "$filename"
-        fi
+        twitter "$global_url/$file_url" >> "$filename"
 
         echo '<!-- entry end -->' >> "$filename" # absolute end of the post
     fi
@@ -665,19 +669,18 @@ reset() {
     fi
 }
 
+# Detects if GNU date is installed
 date_version_detect() {
 	date --version >/dev/null 2>&1
 	if [ $? -ne 0 ];  then
 		# date utility is BSD. Test if gdate is installed 
 		if gdate --version >/dev/null 2>&1 ; then
-                   date() {
-                     gdate "$@"
-                   }
-		   echo Using gdate.
+            date() {
+                gdate "$@"
+            }
 		else
-		   echo ERROR: Not GNU date found.
+		   echo ERROR: GNU date not found.
 		   echo Try installing gdate utility or coreutils.
-		   echo Exiting...
 		   exit
 		fi
 	fi    
@@ -691,9 +694,9 @@ date_version_detect() {
 do_main() {
     # Detect if using BSD date or GNU date
     date_version_detect
-    # Use config file or fallback to inline configuration
-    echo Loading configuration
-    source "$global_config" &> /dev/null ||  global_variables
+    # Load default configuration, then override settings with the config file
+    global_variables
+    [[ -f "$global_config" ]] && source "$global_config" &> /dev/null 
 
     # Check for $EDITOR
     if [[ -z "$EDITOR" ]]; then
