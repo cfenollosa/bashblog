@@ -50,6 +50,5 @@ Features
 Non features (not planned)
 --------------------------
 
-- Comments. Would need a CAPTCHA or another antispam mechanism. Comments are handled through twitter, with a Twitter button
 
 Read the CHANGELOG section of the script header for more updates
