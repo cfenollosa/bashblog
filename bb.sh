@@ -66,7 +66,7 @@
 # 1.6.1    'date' fix when hours are 1 digit.
 # 1.6.0    Disqus comments. External configuration file. Check of 'date' command version.
 # 1.5.1    Misc bugfixes and parameter checks
-# 1.5      Durad Radojicic refactored some code and added flexibility and i18n
+# 1.5      Đurađ Radojičić (djura-san) refactored some code and added flexibility and i18n
 # 1.4.2    Now issues are handled at Github
 # 1.4.1    Some code refactoring
 # 1.4      Using twitter for comments, improved 'rebuild' command
