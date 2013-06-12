@@ -62,6 +62,7 @@
 #
 #########################################################################################
 #
+# 1.6.3    Now supporting BSD date
 # 1.6.2    Simplified some functions and variables to avoid duplicated information
 # 1.6.1    'date' fix when hours are 1 digit.
 # 1.6.0    Disqus comments. External configuration file. Check of 'date' command version.
@@ -100,7 +101,7 @@ global_config=".config"
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
-    global_software_version="1.6.2"
+    global_software_version="1.6.3"
 
     # Blog title
     global_title="My fancy blog"
