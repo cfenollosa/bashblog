@@ -12,11 +12,14 @@ You can read [the initial blog post](http://mmb.pcb.ub.es/~carlesfe/blog/creatin
 Usage
 -----
 
-Download bb.sh into a public folder of yours and run it:
+You only need SSH access to a server which allows its users to run shell scripts.
+
+Copy bb.sh into a public folder of yours and run it:
 
     ./bb.sh
 
-This will show the available commands
+This will show the available commands. If the file is not executable, you can either `chmod +x bb.sh`
+or run it with `bash bb.sh`
 
 **Before creating a blog post, edit `bb.sh` and modify the variables in the `global_variables()` function or create a `.config` file with your configutation values**
 
