@@ -52,3 +52,15 @@ Features
 - A simple but nice and readable design, with nothing but the blog posts
 
 Read the CHANGELOG section of the script header for more updates
+
+Future ideas
+------------
+
+This software is still maintained, however, it can be considered finished. It has been used by many people
+and no bugs have been found.
+
+In the issues tab you can find some improvements; the main one is the addition of Markdown support for posts.
+This requires a Markdown parser, which would add more dependencies and/or increase the code length.
+
+If you happen to find a concise, elegant Markdown to HTML parser which runs in Bash and is portable, please
+comment on issue #14
