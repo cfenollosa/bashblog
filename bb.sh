@@ -297,9 +297,9 @@ create_html_page() {
         echo "$title" >> "$filename"
         echo '</a></h3>' >> "$filename"
         if [ "$timestamp" == "" ]; then
-            echo '<div class="subtitle">'$(LC_ALL=date_locale date +"$date_format")' &mdash; ' >> "$filename"
+            echo '<div class="subtitle">'$(LC_ALL=$date_locale date +"$date_format")' &mdash; ' >> "$filename"
         else
-            echo '<div class="subtitle">'$(LC_ALL=date_locale date +"$date_format" --date="$timestamp") ' &mdash; ' >> "$filename"
+            echo '<div class="subtitle">'$(LC_ALL=$date_locale date +"$date_format" --date="$timestamp") ' &mdash; ' >> "$filename"
         fi
         echo "$global_author</div>" >> "$filename"
         echo '<!-- text begin -->' >> "$filename" # This marks the text body, after the title, date...
@@ -434,7 +434,7 @@ all_posts() {
         title="$(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i)"
         echo -n '<li><a href="'$global_url/$i'">'$title'</a> &mdash;' >> "$contentfile"
         # Date
-        date="$(LC_ALL=date_locale date -r "$i" +"$date_format")"
+        date="$(LC_ALL=$date_locale date -r "$i" +"$date_format")"
         echo " $date</li>" >> "$contentfile"
     done
     echo ""
@@ -493,7 +493,7 @@ list_posts() {
     n=1
     for i in $(ls -t *.html); do
         if [ "$i" == "$index_file" ] || [ "$i" == "$archive_index" ]; then continue; fi
-        line="$n # $(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i) # $(LC_ALL=date_locale date -r $i +"date_format")"
+        line="$n # $(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i) # $(LC_ALL=$date_locale date -r $i +"date_format")"
         lines="${lines}""$line""\n" # Weird stuff needed for the newlines
         n=$(( $n + 1 ))
     done 
@@ -588,7 +588,7 @@ create_css() {
 
     # This is the CSS file from my main page. Any other person would need it to run the blog
     # so it's attached here for convenience.
-    if [ "$(whoami)" == "carlesfe" ] && [ ! -f "main.css" ]; then
+    if [ "$(whoami)" == "carlesfe" ] && [ "$(hostname)" == "mmb" ] && [ ! -f "main.css" ]; then
         ln -s "../style.css" "main.css" # XXX This is clearly machine-dependent, beware!
     elif [ ! -f "main.css" ]; then
         echo 'body{font-family:Georgia,"Times New Roman",Times,serif;margin:0;padding:0;background-color:#F3F3F3;}
