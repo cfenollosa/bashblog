@@ -177,7 +177,7 @@ global_variables() {
 
 # Test if the markdown script is working correctly
 test_markdown() {
-    [[ -z "$markdown_bin" ]] && echo "Markdown binary not found" && return 1
+    [[ -z "$markdown_bin" ]] && return 1
 
     in="/tmp/md-in-$(echo $RANDOM).md"
     out="/tmp/md-out-$(echo $RANDOM).html"
@@ -188,7 +188,6 @@ test_markdown() {
     diff $good $out &> /dev/null # output is irrelevant, we'll check $?
     if [[ $? -ne 0 ]]; then
         rm -f $in $good $out
-        echo "Markdown binary not converting properly"
         return 1
     fi
     
@@ -402,9 +401,14 @@ parse_file() {
 write_entry() {
     fmt="html"; f="$2"
     [[ "$2" == "-m" ]] && fmt="md" && f="$3"
-    [[ "$fmt" == "md" ]] && [[ $(test_markdown) -ne 0 ]] &&
-        echo "Markdown is not working, please use HTML. Press a key to continue..." &&
-        fmt="html" && read
+    if [[ "$fmt" == "md" ]]; then
+        test_markdown
+        if [[ "$?" -ne 0 ]]; then
+            echo "Markdown is not working, please use HTML. Press a key to continue..."
+            fmt="html" 
+            read 
+        fi
+    fi
 
     if [[ "$f" != "" ]]; then
         TMPFILE="$f"
