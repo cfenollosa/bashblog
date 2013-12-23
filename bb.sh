@@ -61,6 +61,8 @@
 #
 #########################################################################################
 #
+# 2.0      Added Markdown support
+#          Fully support BSD date
 # 1.6.4    Fixed bug in localized dates
 # 1.6.3    Now supporting BSD date
 # 1.6.2    Simplified some functions and variables to avoid duplicated information
@@ -101,7 +103,7 @@ global_config=".config"
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
-    global_software_version="1.6.4"
+    global_software_version="2.0"
 
     # Blog title
     global_title="My fancy blog"
@@ -164,11 +166,46 @@ global_variables() {
     # The locale to use for the dates displayed on screen (not for the timestamps)
     date_format="%B %d, %Y"
     date_locale="C"
+
+    # Markdown location. Trying to autodetect by default, but change this
+    # to the script location
+    markdown_bin="$(which Markdown.pl)"
 }
+
+# Test if the markdown script is working correctly
+test_markdown() {
+    [[ -z "$markdown_bin" ]] && echo "Markdown binary not found" && return 1
+
+    in="/tmp/md-in-$(echo $RANDOM).md"
+    out="/tmp/md-out-$(echo $RANDOM).html"
+    good="/tmp/md-good-$(echo $RANDOM).html"
+    echo -e "line 1\n\nline 2" > $in
+    echo -e "<p>line 1</p>\n\n<p>line 2</p>" > $good
+    $markdown_bin $in > $out 2> /dev/null
+    diff $good $out &> /dev/null # output is irrelevant, we'll check $?
+    if [[ $? -ne 0 ]]; then
+        rm -f $in $good $out
+        echo "Markdown binary not converting properly"
+        return 1
+    fi
+    
+    rm -f $in $good $out
+    return 0
+}
+
+
+# Parse a Markdown file into HTML and return the generated file
+markdown() {
+    out="$(echo $1 | sed 's/md$/html/g')"
+    while [ -f "$out" ]; do out="$(echo $out | sed 's/\.html$/\.'$RANDOM'\.html')"; done
+    $markdown_bin $1 > $out
+    echo $out
+}
+
 
 # Prints the required google analytics code
 google_analytics() {
-    if [ "$global_analytics" == "" ]; then return; fi
+    [[ -z "$global_analytics" ]] && return
 
     echo "<script type=\"text/javascript\">
 
@@ -187,7 +224,7 @@ google_analytics() {
 
 # Prints the required code for disqus comments
 disqus_body() {
-    if [ "$global_disqus_username" == "" ]; then return; fi
+    [[ -z "$global_disqus_username" ]] && return
 
     echo '<div id="disqus_thread"></div>
             <script type="text/javascript">
@@ -207,19 +244,19 @@ disqus_body() {
 
 # Prints the required code for disqus in the footer
 disqus_footer() {
-    if [ "$global_disqus_username" == "" ]; then return; fi
-       echo '<script type="text/javascript">
-               /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
-               var disqus_shortname = '\'$global_disqus_username\''; // required: replace example with your forum shortname
+    [[ -z "$global_disqus_username" ]] && return
+    echo '<script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = '\'$global_disqus_username\''; // required: replace example with your forum shortname
 
-               /* * * DONT EDIT BELOW THIS LINE * * */
-               (function () {
-               var s = document.createElement("script"); s.async = true;
-               s.type = "text/javascript";
-               s.src = "//" + disqus_shortname + ".disqus.com/count.js";
-               (document.getElementsByTagName("HEAD")[0] || document.getElementsByTagName("BODY")[0]).appendChild(s);
-               }());
-               </script>'
+        /* * * DONT EDIT BELOW THIS LINE * * */
+        (function () {
+        var s = document.createElement("script"); s.async = true;
+        s.type = "text/javascript";
+        s.src = "//" + disqus_shortname + ".disqus.com/count.js";
+        (document.getElementsByTagName("HEAD")[0] || document.getElementsByTagName("BODY")[0]).appendChild(s);
+    }());
+    </script>'
 }
 
 # Edit an existing, published .html file while keeping its original timestamp
@@ -240,9 +277,9 @@ edit() {
 #
 # $1 the post URL
 twitter() {
-    if [[ "$global_twitter_username" == "" ]]; then return; fi
+    [[ -z "$global_twitter_username" ]] && return
 
-    if [[ "$global_disqus_username" == "" ]]; then
+    if [[ "$global_disqus_username" ]]; then
         echo "<p id='twitter'>$template_comments&nbsp;"
     else
         echo "<p id='twitter'><a href=\"$1#disqus_thread\">$template_comments</a> &nbsp;"
@@ -291,12 +328,13 @@ create_html_page() {
 
     file_url="$(sed 's/.rebuilt//g' <<< $filename)" # Get the correct URL when rebuilding
     # one blog entry
-    if [ "$index" == "no" ]; then
+    if [[ "$index" == "no" ]]; then
         echo '<!-- entry begin -->' >> "$filename" # marks the beginning of the whole post
         echo '<h3><a class="ablack" href="'$global_url/$file_url'">' >> "$filename"
-        echo "$title" >> "$filename"
+        # remove possible <p>'s on the title because of markdown conversion
+        echo "$(echo "$title" | sed 's/\<\/*p\>//g')" >> "$filename"
         echo '</a></h3>' >> "$filename"
-        if [ "$timestamp" == "" ]; then
+        if [[ "$timestamp" == "" ]]; then
             echo '<div class="subtitle">'$(LC_ALL=$date_locale date +"$date_format")' &mdash; ' >> "$filename"
         else
             echo '<div class="subtitle">'$(LC_ALL=$date_locale date +"$date_format" --date="$timestamp") ' &mdash; ' >> "$filename"
@@ -305,7 +343,7 @@ create_html_page() {
         echo '<!-- text begin -->' >> "$filename" # This marks the text body, after the title, date...
     fi
     cat "$content" >> "$filename" # Actual content
-    if [ "$index" == "no" ]; then
+    if [[ "$index" == "no" ]]; then
         echo '<!-- text end -->' >> "$filename"
 
         twitter "$global_url/$file_url" >> "$filename"
@@ -332,9 +370,10 @@ parse_file() {
     # Read for the title and check that the filename is ok
     title=""
     while read line; do
-        if [ "$title" == "" ]; then
+        if [[ "$title" == "" ]]; then
             title="$line"
-            filename="$(echo $title | tr [:upper:] [:lower:])"
+            # remove extra <p> and </p> added by markdown
+            filename="$(echo $title | sed 's/\<\/*p\>//g' | tr [:upper:] [:lower:])"
             filename="$(echo $filename | sed 's/\ /-/g')"
             filename="$(echo $filename | tr -dc '[:alnum:]-')" # html likes alphanumeric
             filename="$filename.html"
@@ -348,7 +387,7 @@ parse_file() {
         else
             echo "$line" >> "$content"
         fi
-    done < "$TMPFILE"
+    done < "$1"
 
     # Create the actual html page
     create_html_page "$content" "$filename" no "$title"
@@ -358,38 +397,57 @@ parse_file() {
 # Manages the creation of the text file and the parsing to html file
 # also the drafts
 write_entry() {
-    if [ "$1" != "" ]; then
-        TMPFILE="$1"
-        if [ ! -f "$TMPFILE" ]; then
+    fmt="html"; f="$2"
+    [[ "$2" == "-m" ]] && fmt="md" && f="$3"
+    [[ "$fmt" == "md" ]] && [[ $(test_markdown) -ne 0 ]] &&
+        echo "Markdown is not working, please use HTML. Press a key to continue..." &&
+        fmt="html" && read
+
+    if [[ "$f" != "" ]]; then
+        TMPFILE="$f"
+        if [[ ! -f "$TMPFILE" ]]; then
             echo "The file doesn't exist"
             delete_includes
             exit
         fi
+        # check if TMPFILE is markdown even though the user didn't specify it
+        extension="${TMPFILE##*.}"
+        [[ "$extension" == "md" ]] && fmt="md"
     else
-        TMPFILE=".entry-$RANDOM.html"
+        TMPFILE=".entry-$RANDOM.$fmt"
         echo "Title on this line" >> "$TMPFILE"
         echo "" >> "$TMPFILE"
-        echo "<p>The rest of the text file is an <b>html</b> blog post. The process" >> "$TMPFILE"
-        echo "will continue as soon as you exit your editor</p>" >> "$TMPFILE"
+        [[ "$fmt" == "html" ]] && echo -n "<p>" >> "$TMPFILE"
+        echo -n "The rest of the text file is " >> "$TMPFILE"
+        [[ "$fmt" == "html" ]] && echo -n "an <b>html</b> " >> "$TMPFILE"
+        [[ "$fmt" == "md" ]] && echo -n "a **Markdown** " >> "$TMPFILE"
+        echo -n "blog post. The process will continue as soon as you exit your editor" >> "$TMPFILE"
+        [[ "$fmt" == "html" ]] && echo "</p>" >> "$TMPFILE"
     fi
     chmod 600 "$TMPFILE"
 
     post_status="E"
     while [ "$post_status" != "p" ] && [ "$post_status" != "P" ]; do
         $EDITOR "$TMPFILE"
-        parse_file "$TMPFILE" # this command sets $filename as the html processed file
+        if [[ "$fmt" == "md" ]]; then
+            html_from_md="$(markdown "$TMPFILE")"
+            parse_file "$html_from_md"
+            rm "$html_from_md"
+        else
+            parse_file "$TMPFILE" # this command sets $filename as the html processed file
+        fi
         chmod 600 "$filename"
 
         echo -n "Preview? (Y/n) "
         read p
-        if [ "$p" != "n" ] && [ "$p" != "N" ]; then
+        if [[ "$p" != "n" ]] && [[ "$p" != "N" ]]; then
             chmod 644 "$filename"
             echo "Open $global_url/$filename in your browser"
         fi
 
         echo -n "[P]ost this entry, [E]dit again, [D]raft for later? (p/E/d) "
         read post_status
-        if [ "$post_status" == "d" ] || [ "$post_status" == "D" ]; then
+        if [[ "$post_status" == "d" ]] || [[ "$post_status" == "D" ]]; then
             mkdir -p "drafts/"
             chmod 700 "drafts/"
 
@@ -397,8 +455,8 @@ write_entry() {
             title="$(echo $title | tr [:upper:] [:lower:])"
             title="$(echo $title | sed 's/\ /-/g')"
             title="$(echo $title | tr -dc '[:alnum:]-')"
-            draft="drafts/$title.html"
-            while [ -f "$draft" ]; do draft="drafts/$title-$RANDOM.html"; done
+            draft="drafts/$title.$fmt"
+            while [ -f "$draft" ]; do draft="drafts/$title-$RANDOM.$fmt"; done
 
             mv "$TMPFILE" "$draft"
             chmod 600 "$draft"
@@ -407,7 +465,7 @@ write_entry() {
             echo "Saved your draft as '$draft'"
             exit
         fi
-        if [ "$post_status" == "e" ] || [ "$post_status" == "E" ]; then
+        if [[ "$post_status" == "e" ]] || [[ "$post_status" == "E" ]]; then
             rm "$filename" # Delete the html file as it will be generated again
         fi
     done
@@ -428,7 +486,7 @@ all_posts() {
     echo "<h3>All posts</h3>" >> "$contentfile"
     echo "<ul>" >> "$contentfile"
     for i in $(ls -t *.html); do
-        if [ "$i" == "$index_file" ] || [ "$i" == "$archive_index" ]; then continue; fi
+        if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
         echo -n "."
         # Title
         title="$(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i)"
@@ -460,14 +518,14 @@ rebuild_index() {
     # Create the content file
     n=0
     for i in $(ls -t *.html); do # sort by date, newest first
-        if [ "$i" == "$index_file" ] || [ "$i" == "$archive_index" ]; then continue; fi
-        if [ "$n" -ge "$number_of_index_articles" ]; then break; fi
+        if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
+        if [[ "$n" -ge "$number_of_index_articles" ]]; then break; fi
         awk '/<!-- entry begin -->/, /<!-- entry end -->/' "$i" >> "$contentfile"
         echo -n "."
         n=$(( $n + 1 ))
     done
 
-    if [ "$global_feedburner" == "" ]; then
+    if [[ "$global_feedburner" == "" ]]; then
         echo '<div id="all_posts"><a href="'$archive_index'">'$template_archive'</a> &mdash; <a href="'$blog_feed'">'$template_subscribe'</a></div>' >> "$contentfile"
     else
         echo '<div id="all_posts"><a href="'$archive_index'">'$template_archive'</a> &mdash; <a href="'$global_feedburner'">Subscribe</a></div>' >> "$contentfile"
@@ -484,15 +542,12 @@ rebuild_index() {
 # Displays a list of the posts
 list_posts() {
     ls *.html &> /dev/null
-    if [[ $? -ne 0 ]]; then
-        echo "No posts yet. Use 'bb.sh post' to create one"
-        return
-    fi
+    [[ $? -ne 0 ]] && echo "No posts yet. Use 'bb.sh post' to create one" && return
 
     lines=""
     n=1
     for i in $(ls -t *.html); do
-        if [ "$i" == "$index_file" ] || [ "$i" == "$archive_index" ]; then continue; fi
+        if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
         line="$n # $(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i) # $(LC_ALL=$date_locale date -r $i +"date_format")"
         lines="${lines}""$line""\n" # Weird stuff needed for the newlines
         n=$(( $n + 1 ))
@@ -518,8 +573,8 @@ make_rss() {
 
     n=0
     for i in $(ls -t *.html); do
-        if [ "$i" == "$index_file" ] || [ "$i" == "$archive_index" ]; then continue; fi
-        if [ "$n" -ge "$number_of_feed_articles" ]; then break; fi # max 10 items
+        if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
+        [[ "$n" -ge "$number_of_feed_articles" ]] && break # max 10 items
         echo -n "."
         echo '<item><title>' >> "$rssfile"
         echo "$(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i)" >> "$rssfile"
@@ -551,7 +606,7 @@ create_includes() {
     echo '<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />' >> ".header.html"
     echo '<link rel="stylesheet" href="main.css" type="text/css" />' >> ".header.html"
     echo '<link rel="stylesheet" href="blog.css" type="text/css" />' >> ".header.html"
-    if [ "$global_feedburner" == "" ]; then
+    if [[ "$global_feedburner" == "" ]]; then
         echo '<link rel="alternate" type="application/rss+xml" title="'$template_subscribe_browser_button'" href="'$blog_feed'" />' >> ".header.html"
     else 
         echo '<link rel="alternate" type="application/rss+xml" title="'$template_subscribe_browser_button'" href="'$global_feedburner'" />' >> ".header.html"
@@ -570,7 +625,7 @@ delete_includes() {
 create_css() {
     # To avoid overwriting manual changes. However it is recommended that
     # this function is modified if the user changes the blog.css file
-    if [ ! -f "blog.css" ]; then 
+    if [[ ! -f "blog.css" ]]; then 
         # blog.css directives will be loaded after main.css and thus will prevail
         echo '#title{font-size: x-large;}
         a.ablack{color:black !important;}
@@ -586,11 +641,12 @@ create_css() {
         #twitter{line-height:20px;vertical-align:top;text-align:right;font-style:italic;color:#333;margin-top:24px;font-size:14px;}' > blog.css
     fi
 
-    # This is the CSS file from my main page. Any other person would need it to run the blog
-    # so it's attached here for convenience.
-    if [ "$(whoami)" == "carlesfe" ] && [ "$(hostname)" == "mmb" ] && [ ! -f "main.css" ]; then
-        ln -s "../style.css" "main.css" # XXX This is clearly machine-dependent, beware!
-    elif [ ! -f "main.css" ]; then
+    # If there is a style.css from the parent page (i.e. some landing page)
+    # then use it. This directive is here for compatibility with my own
+    # home page. Feel free to edit it out, though it doesn't hurt
+    if [[ -f "../style.css" ]] && [[ ! -f "main.css" ]]; then
+        ln -s "../style.css" "main.css" 
+    elif [[ ! -f "main.css" ]]; then
         echo 'body{font-family:Georgia,"Times New Roman",Times,serif;margin:0;padding:0;background-color:#F3F3F3;}
         #divbodyholder{padding:5px;background-color:#DDD;width:874px;margin:24px auto;}
         #divbody{width:776px;border:solid 1px #ccc;background-color:#fff;padding:0px 48px 24px 48px;top:0;}
@@ -616,7 +672,7 @@ rebuild_all_entries() {
     echo -n "Rebuilding all entries "
 
     for i in *.html; do # no need to sort
-        if [ "$i" == "$index_file" ] || [ "$i" == "$archive_index" ]; then continue; fi
+        if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
         contentfile=".tmp.$RANDOM"
         while [ -f "$contentfile" ]; do contentfile=".tmp.$RANDOM"; done
 
@@ -645,13 +701,14 @@ echo "$global_software_name v$global_software_version"
 echo "Usage: $0 command [filename]"
 echo ""
 echo "Commands:"
-echo "    post [filename]    insert a new blog post, or the FILENAME of a draft to continue editing it"
-echo "    edit [filename]    edit an already published .html file. Never edit manually a published .html file,"
-echo "                       always use this function as it keeps the original timestamp "
-echo "                       and rebuilds whatever indices are needed"
-echo "    rebuild            regenerates all the pages and posts, preserving the content of the entries"
-echo "    reset              deletes blog-generated files. Use with a lot of caution and back up first!"
-echo "    list               list all entries. Useful for debug"
+echo "    post [-m] [filename]    insert a new blog post, or the FILENAME of a draft to continue editing it"
+echo "                            use '-m' to edit the post as Markdown text"
+echo "    edit [filename]         edit an already published .html file. Never edit manually a published .html file,"
+echo "                            always use this function as it keeps the original timestamp "
+echo "                            and rebuilds whatever indices are needed"
+echo "    rebuild                 regenerates all the pages and posts, preserving the content of the entries"
+echo "    reset                   deletes blog-generated files. Use with a lot of caution and back up first!"
+echo "    list                    list all entries. Useful for debug"
 echo ""
 echo "For more information please open $0 in a code editor and read the header and comments"
 }
@@ -660,7 +717,7 @@ echo "For more information please open $0 in a code editor and read the header a
 reset() {
     echo "Are you sure you want to delete all blog entries? Please write \"Yes, I am!\" "
     read line
-    if [ "$line" == "Yes, I am!" ]; then
+    if [[ "$line" == "Yes, I am!" ]]; then
         rm .*.html *.html *.css *.rss &> /dev/null
         echo
         echo "Deleted all posts, stylesheets and feeds."
@@ -673,18 +730,29 @@ reset() {
 # Detects if GNU date is installed
 date_version_detect() {
 	date --version >/dev/null 2>&1
-	if [ $? -ne 0 ];  then
+	if [[ $? -ne 0 ]];  then
 		# date utility is BSD. Test if gdate is installed 
 		if gdate --version >/dev/null 2>&1 ; then
             date() {
                 gdate "$@"
             }
 		else
-		   echo ERROR: GNU date not found.
-		   echo Try installing gdate utility or coreutils.
-		   exit
-		fi
-	fi    
+            # BSD date
+            date() {
+                if [[ "$1" == "-r" ]]; then
+                    # Fall back to using stat for 'date -r'
+                    format=$(echo $3 | sed 's/\+//g')
+                    stat -f "%Sm" -t "$format" "$2"
+                elif [[ $(echo $@ | grep '\-\-date') ]]; then
+                    # convert between dates using BSD date syntax
+                    /bin/date -j -f "%a, %d %b %Y %H:%M:%S %z" "$(echo $3 | sed 's/\-\-date\=//g')" "$2" 
+                else
+                    # acceptable format for BSD date
+                    /bin/date -j "$@"
+                fi
+            }
+        fi
+    fi    
 }
 
 # Main function
@@ -700,20 +768,15 @@ do_main() {
     [[ -f "$global_config" ]] && source "$global_config" &> /dev/null 
 
     # Check for $EDITOR
-    if [[ -z "$EDITOR" ]]; then
-        echo "Please set your \$EDITOR environment variable"
-        exit
-    fi
+    [[ -z "$EDITOR" ]] && 
+        echo "Please set your \$EDITOR environment variable" && exit
 
     # Check for validity of argument
-    if [ "$1" != "reset" ] && [ "$1" != "post" ] && [ "$1" != "rebuild" ] && [ "$1" != "list" ] && [ "$1" != "edit" ]; then 
-        usage; exit; 
-    fi
+    [[ "$1" != "reset" ]] && [[ "$1" != "post" ]] && [[ "$1" != "rebuild" ]] && [[ "$1" != "list" ]] && [[ "$1" != "edit" ]] &&
+        usage && exit
 
-    if [ "$1" == "list" ]; then
-        list_posts
-        exit
-    fi
+    [[ "$1" == "list" ]] &&
+        list_posts && exit
 
     if [[ "$1" == "edit" ]]; then
         if [[ $# -lt 2 ]] || [[ ! -f "$2" ]]; then
@@ -724,28 +787,23 @@ do_main() {
 
     # Test for existing html files
     ls *.html &> /dev/null
-    if [ $? -ne 0 ] && [ "$1" == "rebuild" ]; then
-        echo "Can't find any html files, nothing to rebuild"
-        exit
-    fi
+    [[ $? -ne 0 ]] && [[ "$1" == "rebuild" ]] &&
+        echo "Can't find any html files, nothing to rebuild" && exit
 
     # We're going to back up just in case
     ls *.html &> /dev/null
-    if [[ $? -eq 0 ]]; then
-        tar cfz ".backup.tar.gz" *.html
+    [[ $? -eq 0 ]] &&
+        tar cfz ".backup.tar.gz" *.html &&
         chmod 600 ".backup.tar.gz"
-    fi
 
-    if [ "$1" == "reset" ]; then
-        reset
-        exit
-    fi
+    [[ "$1" == "reset" ]] &&
+        reset && exit
 
     create_includes
     create_css
-    if [ "$1" == "post" ]; then write_entry "$2"; fi
-    if [ "$1" == "rebuild" ]; then rebuild_all_entries; fi
-    if [ "$1" == "edit" ]; then edit "$2"; fi
+    [[ "$1" == "post" ]] && write_entry "$@"
+    [[ "$1" == "rebuild" ]] && rebuild_all_entries
+    [[ "$1" == "edit" ]] && edit "$2"
     rebuild_index
     all_posts
     make_rss
