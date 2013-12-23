@@ -34,6 +34,10 @@ Features
 --------
 
 - Simple creation and edition of the posts with your favorite text editor
+- **NEW** Markdown support via a third-party library (e.g. 
+  [Markdown.pl](http://daringfireball.net/projects/markdown/)). Use
+  it via `./bb.sh post -m`. The third party library must support an invokation
+  like `markdown_bin in.html > out.md` as the code calls it that way.
 - Post preview
 - Save posts as drafts and resume later
 - Transformation of every post to its own html page, using the title as the URL
@@ -41,11 +45,11 @@ Features
 - Generation of an RSS file! Blog's magic is the RSS file, isn't it...?
 - Generation of a page with all posts, to solve the index.html pagination problem
 - Rebuilding the index files without the need to create a new entry
-- Optional comments, using the Disqus platform
+- By default, comments are delegated to Twitter. Can be configured for Disqus 
 - Google Analytics support
 - Feedburner support
 - Auto-generated CSS support
-- Headers, footers, and in general everything that a well-structured html file has
+- Headers, footers, and in general everything that a well-structured html file needs
 - xhtml validation, CSS validation, RSS validation by the w3c
 - Backup of the site every time you post
 - Everything contained in a single 700-line bash script!
@@ -56,11 +60,6 @@ Read the CHANGELOG section of the script header for more updates
 Future ideas
 ------------
 
-This software is still maintained, however, it can be considered finished. It has been used by many people
-and no bugs have been found.
-
-In the issues tab you can find some improvements; the main one is the addition of Markdown support for posts.
-This requires a Markdown parser, which would add more dependencies and/or increase the code length.
-
-If you happen to find a concise, elegant Markdown to HTML parser which runs in Bash and is portable, please
-comment on issue #14
+This software is still maintained, however, it can be considered more or less finished. 
+It has been used by many people and no bugs have been found, but if you happen to find one,
+please report it.

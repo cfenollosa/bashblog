@@ -17,6 +17,7 @@
 # and then rebuilds the index.html and feed.rss.
 #
 # Comments are supported via external service (Disqus).
+# Markdown syntax is supported via third party library (e.g. Gruber's Markdown.pl)
 #
 # This script is standalone, it doesn't require any other file to run
 #
@@ -33,6 +34,8 @@
 # There are many loops which iterate on '*.html' so make sure that the only html files 
 # on this folder are the blog entries and index.html and all_posts.html. Drafts must go
 # into drafts/ and any other *.html file should be moved out of the way
+#
+# Read more: https://github.com/cfenollosa/bashblog
 
 
 #########################################################################################
@@ -167,8 +170,8 @@ global_variables() {
     date_format="%B %d, %Y"
     date_locale="C"
 
-    # Markdown location. Trying to autodetect by default, but change this
-    # to the script location
+    # Markdown location. Trying to autodetect by default.
+    # The invocation must support the signature 'markdown_bin in.html > out.md'
     markdown_bin="$(which Markdown.pl)"
 }
 
