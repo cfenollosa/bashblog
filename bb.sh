@@ -178,6 +178,7 @@ global_variables() {
 # Test if the markdown script is working correctly
 test_markdown() {
     [[ -z "$markdown_bin" ]] && return 1
+    [[ -z "$(which diff)" ]] && return 1
 
     in="/tmp/md-in-$(echo $RANDOM).md"
     out="/tmp/md-out-$(echo $RANDOM).html"
