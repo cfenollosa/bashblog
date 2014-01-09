@@ -719,11 +719,11 @@ rebuild_all_entries() {
         awk '/<!-- text begin -->/, /<!-- text end -->/{if (!/<!-- text begin -->/ && !/<!-- text end -->/) print}' "$i" >> "$contentfile"
 
         # Original post timestamp
-        timestamp="$(date -r $i +"%a, %d %b %Y %H:%M:%S %z" )"
+        timestamp="$(LC_ALL=$date_locale date -r $i +"%a, %d %b %Y %H:%M:%S %z" )"
 
         create_html_page "$contentfile" "$i.rebuilt" no "$title" "$timestamp"
         # keep the original timestamp!
-        timestamp="$(date -r $i +'%Y%m%d%H%M')"
+        timestamp="$(LC_ALL=$date_locale date -r $i +'%Y%m%d%H%M')"
         mv "$i.rebuilt" "$i"
         chmod 644 "$i"
         touch -t $timestamp "$i"
@@ -782,7 +782,8 @@ date_version_detect() {
                     stat -f "%Sm" -t "$format" "$2"
                 elif [[ $(echo $@ | grep '\-\-date') ]]; then
                     # convert between dates using BSD date syntax
-                    /bin/date -j -f "%a, %d %b %Y %H:%M:%S %z" "$(echo $3 | sed 's/\-\-date\=//g')" "$2" 
+                    echo 3="$3" 2="$2"
+                    /bin/date -j -f "%a, %d %b %Y %H:%M:%S %z" "$(echo $2 | sed 's/\-\-date\=//g')" "$1" 
                 else
                     # acceptable format for BSD date
                     /bin/date -j "$@"
