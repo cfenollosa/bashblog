@@ -155,6 +155,9 @@ global_variables() {
     # leave blank to generate them, recommended
     header_file=""
     footer_file=""
+    # extra content to add just after we open the <body> tag
+    # and before the actual blog content
+    body_begin_file=""
 
     # Localization and i18n
     # "Comments?" (used in twitter link after every post)
@@ -338,6 +341,8 @@ create_html_page() {
     echo "<title>$title</title>" >> "$filename"
     google_analytics >> "$filename"
     echo "</head><body>" >> "$filename"
+    # stuff to add before the actual body content
+    cat "$body_begin_file" >> "$filename"
     # body divs
     echo '<div id="divbodyholder">' >> "$filename"
     echo '<div class="headerholder"><div class="header">' >> "$filename"
@@ -624,11 +629,11 @@ make_rss() {
 
 # generate headers, footers, etc
 create_includes() {
+    echo '<h1 class="nomargin"><a class="ablack" href="'$global_url'">'$global_title'</a></h1>' > ".title.html"
+    echo '<div id="description">'$global_description'</div>' >> ".title.html"
+
     if [[ -f "$header_file" ]]; then cp "$header_file" .header.html
     else
-        echo '<h1 class="nomargin"><a class="ablack" href="'$global_url'">'$global_title'</a></h1>' > ".title.html"
-        echo '<div id="description">'$global_description'</div>' >> ".title.html"
-
         echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">' > ".header.html"
         echo '<html xmlns="http://www.w3.org/1999/xhtml"><head>' >> ".header.html"
         echo '<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />' >> ".header.html"
