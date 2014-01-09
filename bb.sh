@@ -64,6 +64,7 @@
 #
 #########################################################################################
 #
+# 2.0.1    Allow personalized header/footer files
 # 2.0      Added Markdown support
 #          Fully support BSD date
 # 1.6.4    Fixed bug in localized dates
@@ -106,7 +107,7 @@ global_config=".config"
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
-    global_software_version="2.0"
+    global_software_version="2.0.1"
 
     # Blog title
     global_title="My fancy blog"
@@ -149,6 +150,11 @@ global_variables() {
     # feed file (rss in this case)
     blog_feed="feed.rss"
     number_of_feed_articles="10"
+    # personalized header and footer (only if you know what you're doing)
+    # DO NOT name them .header.html, .footer.html or they will be overwritten
+    # leave blank to generate them, recommended
+    header_file=""
+    footer_file=""
 
     # Localization and i18n
     # "Comments?" (used in twitter link after every post)
@@ -174,6 +180,18 @@ global_variables() {
     # The invocation must support the signature 'markdown_bin in.html > out.md'
     markdown_bin="$(which Markdown.pl)"
 }
+
+# Check for the validity of some variables
+# DO NOT EDIT THIS FUNCTION unless you know what you're doing
+global_variables_check() {
+    [[ "$header_file" == ".header.html" ]] &&
+        echo "Please check your configuration. '.header.html' is not a valid value for the setting 'header_file'" &&
+        exit
+    [[ "$footer_file" == ".footer.html" ]] &&
+        echo "Please check your configuration. '.footer.html' is not a valid value for the setting 'footer_file'" &&
+        exit
+}
+
 
 # Test if the markdown script is working correctly
 test_markdown() {
@@ -606,22 +624,28 @@ make_rss() {
 
 # generate headers, footers, etc
 create_includes() {
-    echo '<h1 class="nomargin"><a class="ablack" href="'$global_url'">'$global_title'</a></h1>' > ".title.html"
-    echo '<div id="description">'$global_description'</div>' >> ".title.html"
+    if [[ -f "$header_file" ]]; then cp "$header_file" .header.html
+    else
+        echo '<h1 class="nomargin"><a class="ablack" href="'$global_url'">'$global_title'</a></h1>' > ".title.html"
+        echo '<div id="description">'$global_description'</div>' >> ".title.html"
 
-    echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">' > ".header.html"
-    echo '<html xmlns="http://www.w3.org/1999/xhtml"><head>' >> ".header.html"
-    echo '<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />' >> ".header.html"
-    echo '<link rel="stylesheet" href="main.css" type="text/css" />' >> ".header.html"
-    echo '<link rel="stylesheet" href="blog.css" type="text/css" />' >> ".header.html"
-    if [[ "$global_feedburner" == "" ]]; then
-        echo '<link rel="alternate" type="application/rss+xml" title="'$template_subscribe_browser_button'" href="'$blog_feed'" />' >> ".header.html"
-    else 
-        echo '<link rel="alternate" type="application/rss+xml" title="'$template_subscribe_browser_button'" href="'$global_feedburner'" />' >> ".header.html"
+        echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">' > ".header.html"
+        echo '<html xmlns="http://www.w3.org/1999/xhtml"><head>' >> ".header.html"
+        echo '<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />' >> ".header.html"
+        echo '<link rel="stylesheet" href="main.css" type="text/css" />' >> ".header.html"
+        echo '<link rel="stylesheet" href="blog.css" type="text/css" />' >> ".header.html"
+        if [[ "$global_feedburner" == "" ]]; then
+            echo '<link rel="alternate" type="application/rss+xml" title="'$template_subscribe_browser_button'" href="'$blog_feed'" />' >> ".header.html"
+        else 
+            echo '<link rel="alternate" type="application/rss+xml" title="'$template_subscribe_browser_button'" href="'$global_feedburner'" />' >> ".header.html"
+        fi
     fi
 
-    protected_mail="$(echo "$global_email" | sed 's/@/\&#64;/g' | sed 's/\./\&#46;/g')"
-    echo '<div id="footer">'$global_license '<a href="'$global_author_url'">'$global_author'</a> &mdash; <a href="mailto:'$protected_mail'">'$protected_mail'</a></div>' >> ".footer.html"
+    if [[ -f "$footer_file" ]]; then cp "$footer_file" .footer.html
+    else 
+        protected_mail="$(echo "$global_email" | sed 's/@/\&#64;/g' | sed 's/\./\&#46;/g')"
+        echo '<div id="footer">'$global_license '<a href="'$global_author_url'">'$global_author'</a> &mdash; <a href="mailto:'$protected_mail'">'$protected_mail'</a></div>' >> ".footer.html"
+    fi
 }
 
 # Delete the temporarily generated include files
@@ -774,6 +798,7 @@ do_main() {
     # Load default configuration, then override settings with the config file
     global_variables
     [[ -f "$global_config" ]] && source "$global_config" &> /dev/null 
+    global_variables_check
 
     # Check for $EDITOR
     [[ -z "$EDITOR" ]] && 
