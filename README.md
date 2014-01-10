@@ -13,10 +13,11 @@ You can read [the initial blog post](http://mmb.pcb.ub.es/~carlesfe/blog/creatin
 Features
 --------
 
-- Everything stored in a single 700-line bash script! Just download and start writing.
+- Everything stored in a single 700-line bash script! Download `bb.sh` and start writing.
 - GNU/Linux, BSD and OSX compatible out of the box (no need for GNU `coreutils` on a Mac)
 - Simple creation and edition of the posts with your favorite text editor
-- Support for Markdown, Disqus comments, Twitter, RSS, Feedburner, Google Analytics
+- Allows drafts, includes a simple but clean stylesheet, generates the RSS file automatically
+- Support for Markdown, Disqus comments, Twitter, Feedburner, Google Analytics
 
 
 Usage
@@ -52,12 +53,15 @@ want to change the default titles, author names, etc, to match your own.
 There are two ways to configure the blog strings:
 
 - Edit `bb.sh` and modify the variables in the `global_variables()` function
-- Create a `.config` file with your configuration values (useful if you don't want to touch the script). You can find
-  the `global_variables()` function on the script 
+- Create a `.config` file with your configuration values (useful if you don't want to touch the script)
 
 The software will load the values in the script first, then overwrite them with the values in the `.config` file.
 This means that you don't need to define all variables in the config file, only those which you need to override
 from the defaults.
+
+The format of the `.config` file is just one `variablename="value"` per line, just like in the `global_variables()`
+function. Remember to quote the values, do not declare a variable with the dollar sign, and do not use spaces around the
+equal sign.
 
 Please note that bashblog uses the `$EDITOR` environment value to open the text editor.
 
@@ -82,13 +86,6 @@ Detailed features
 - Contains its own CSS so that everything is reasonably styled by default
 - Headers, footers, and in general everything that a well-structured html file needs
 - xhtml validation, CSS validation, RSS validation by the w3c
-- Backup of the site every time you post
+- Automatic backup of the site every time you post (stored as `.backup.tar.gz`)
 
 Read the CHANGELOG section of the script header for more updates
-
-Future ideas
-------------
-
-This software is still maintained, however, it can be considered more or less finished. 
-It has been used by many people and no bugs have been found, but if you happen to find one,
-please report it.
