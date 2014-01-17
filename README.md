@@ -1,47 +1,45 @@
 bashblog
 ========
 
-A Bash script that handles blog posting. 
+A single Bash script to create blogs. 
 
-Download it to a public folder, run `./bb.sh post`, write the post, and that's it. No templating, just plain text editing (HTML or Markdown). All the boilerplate (front page, headers, titles, RSS, etc) is handled by the script.
+I created it because I wanted a very, very simple way to post entries to a blog by using a public folder on my server, without any special requirements and dependencies. Works on GNU/Linux, OSX and BSD.
 
-I created it because I wanted a very, very simple way to post entries to a blog by using a public folder on my server, without any special requirements and dependencies.
-
-You can read [the initial blog post](http://mmb.pcb.ub.es/~carlesfe/blog/creating-a-simple-blog-system-with-a-500-line-bash-script.html) for more information and as a demo, as my site has been 100% generated using bashblog.
+You can see it live here: [read the initial blog post](http://mmb.pcb.ub.es/~carlesfe/blog/creating-a-simple-blog-system-with-a-500-line-bash-script.html). My blog has been 100% generated using bashblog, no additional tweaking.
 
 
 Features
 --------
 
-- Everything stored in a single 700-line bash script! Download `bb.sh` and start writing.
+- No installation required. Download `bb.sh` and start blogging.
+- Ultra simple usage: Just type a post with your favorite editor and the script does the rest. No templating.
+- All content is static. You only need shell access to a machine with a public web folder.
+  *Tip: advanced users could mount a remote public folder via `ftpfs` and run this script locally*
+- Allows drafts, includes a simple but clean stylesheet, generates the RSS file automatically.
+- Support for Markdown, Disqus comments, Twitter, Feedburner, Google Analytics.
 - GNU/Linux, BSD and OSX compatible out of the box (no need for GNU `coreutils` on a Mac)
-- Simple creation and edition of the posts with your favorite text editor
-- Allows drafts, includes a simple but clean stylesheet, generates the RSS file automatically
-- Support for Markdown, Disqus comments, Twitter, Feedburner, Google Analytics
+- Everything stored in a single 700-line bash script, how cool is that?! ;) 
 
 
 Usage
 -----
 
-You will need SSH access to a server which allows its users to run shell scripts. More advanced users could
-mount a server folder via `ftpfs` and run this script locally, however, it can be quite slow.
-
-Copy bb.sh into a public folder of yours (for example, `public_html/blog`) and run it:
+Copy bb.sh into a public folder (for example, `$HOME/public_html/blog`) and run
 
     ./bb.sh
 
 This will show the available commands. If the file is not executable, you can either `chmod +x bb.sh`
 or run it with `bash bb.sh`
 
-**Before creating your first post, you may want to configure the blog settings (title, author name, etc).
+**Before creating your first post, you may want to configure the blog settings (title, author, etc).
 Read the Configuration section below for more information**
 
 To create your first post, just run:
 
     ./bb.sh post
 
-When you're done, access the public URL for that folder and you should see the index
-file and a new page for that post!
+When you're done, access the public URL for that folder  (e.g. `http://server.com/~username/blog`) 
+and you should see the index file and a new page for that post!
 
 
 Configuration
@@ -60,10 +58,10 @@ This means that you don't need to define all variables in the config file, only 
 from the defaults.
 
 The format of the `.config` file is just one `variablename="value"` per line, just like in the `global_variables()`
-function. Remember to quote the values, do not declare a variable with the dollar sign, and do not use spaces around the
-equal sign.
+function. **Please remember:** quote the values, do not declare a variable with the dollar sign, do not use 
+spaces around the equal sign.
 
-Please note that bashblog uses the `$EDITOR` environment value to open the text editor.
+bashblog uses the `$EDITOR` environment value to open the text editor.
 
 
 Detailed features
@@ -85,6 +83,7 @@ Detailed features
 - Google Analytics code support
 - Contains its own CSS so that everything is reasonably styled by default
 - Headers, footers, and in general everything that a well-structured html file needs
+- Support to add extra content on top of every page (e.g. banners, images, etc)
 - xhtml validation, CSS validation, RSS validation by the w3c
 - Automatic backup of the site every time you post (stored as `.backup.tar.gz`)
 
