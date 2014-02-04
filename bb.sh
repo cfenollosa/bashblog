@@ -305,7 +305,7 @@ edit() {
 twitter() {
     [[ -z "$global_twitter_username" ]] && return
 
-    if [[ "$global_disqus_username" ]]; then
+    if [[ -z "$global_disqus_username" ]]; then
         echo "<p id='twitter'>$template_comments&nbsp;"
     else
         echo "<p id='twitter'><a href=\"$1#disqus_thread\">$template_comments</a> &nbsp;"
