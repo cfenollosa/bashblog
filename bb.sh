@@ -712,7 +712,7 @@ rebuild_all_entries() {
     echo -n "Rebuilding all entries "
 
     for i in *.html; do # no need to sort
-        if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
+        if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]] || [[ "$i" == "$footer_file" ]] || [[ "$i" == "$header_file" ]]; then continue; fi
         contentfile=".tmp.$RANDOM"
         while [ -f "$contentfile" ]; do contentfile=".tmp.$RANDOM"; done
 
