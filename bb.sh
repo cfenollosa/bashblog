@@ -64,6 +64,8 @@
 #
 #########################################################################################
 #
+# 2.0.2    Fixed bug when $body_begin_file was empty
+#          Added extra line in the footer linking to the github project
 # 2.0.1    Allow personalized header/footer files
 # 2.0      Added Markdown support
 #          Fully support BSD date
@@ -107,7 +109,7 @@ global_config=".config"
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
-    global_software_version="2.0.1"
+    global_software_version="2.0.2"
 
     # Blog title
     global_title="My fancy blog"
@@ -303,7 +305,7 @@ edit() {
 twitter() {
     [[ -z "$global_twitter_username" ]] && return
 
-    if [[ "$global_disqus_username" ]]; then
+    if [[ -z "$global_disqus_username" ]]; then
         echo "<p id='twitter'>$template_comments&nbsp;"
     else
         echo "<p id='twitter'><a href=\"$1#disqus_thread\">$template_comments</a> &nbsp;"
@@ -342,7 +344,7 @@ create_html_page() {
     google_analytics >> "$filename"
     echo "</head><body>" >> "$filename"
     # stuff to add before the actual body content
-    cat "$body_begin_file" >> "$filename"
+    [[ -n "$body_begin_file" ]] && cat "$body_begin_file" >> "$filename"
     # body divs
     echo '<div id="divbodyholder">' >> "$filename"
     echo '<div class="headerholder"><div class="header">' >> "$filename"
@@ -649,7 +651,8 @@ create_includes() {
     if [[ -f "$footer_file" ]]; then cp "$footer_file" .footer.html
     else 
         protected_mail="$(echo "$global_email" | sed 's/@/\&#64;/g' | sed 's/\./\&#46;/g')"
-        echo '<div id="footer">'$global_license '<a href="'$global_author_url'">'$global_author'</a> &mdash; <a href="mailto:'$protected_mail'">'$protected_mail'</a></div>' >> ".footer.html"
+        echo '<div id="footer">'$global_license '<a href="'$global_author_url'">'$global_author'</a> &mdash; <a href="mailto:'$protected_mail'">'$protected_mail'</a><br/>' >> ".footer.html"
+        echo 'Generated with <a href="https://github.com/cfenollosa/bashblog">bashblog</a>, a single bash script to easily create blogs like this one</div>' >> ".footer.html"
     fi
 }
 
@@ -709,7 +712,7 @@ rebuild_all_entries() {
     echo -n "Rebuilding all entries "
 
     for i in *.html; do # no need to sort
-        if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
+        if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]] || [[ "$i" == "$footer_file" ]] || [[ "$i" == "$header_file" ]]; then continue; fi
         contentfile=".tmp.$RANDOM"
         while [ -f "$contentfile" ]; do contentfile=".tmp.$RANDOM"; done
 
