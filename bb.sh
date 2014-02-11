@@ -782,7 +782,6 @@ date_version_detect() {
                     stat -f "%Sm" -t "$format" "$2"
                 elif [[ $(echo $@ | grep '\-\-date') ]]; then
                     # convert between dates using BSD date syntax
-                    echo 3="$3" 2="$2"
                     /bin/date -j -f "%a, %d %b %Y %H:%M:%S %z" "$(echo $2 | sed 's/\-\-date\=//g')" "$1" 
                 else
                     # acceptable format for BSD date
