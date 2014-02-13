@@ -399,9 +399,9 @@ parse_file() {
     title=""
     while read line; do
         if [[ "$title" == "" ]]; then
-            title="$line"
+            title=$(echo "$line" | sed 's/<\/*p>//g')
             # remove extra <p> and </p> added by markdown
-            filename="$(echo $title | sed 's/<\/*p>//g' | tr [:upper:] [:lower:])"
+            filename="$(echo $title | tr [:upper:] [:lower:])"
             filename="$(echo $filename | sed 's/\ /-/g')"
             filename="$(echo $filename | tr -dc '[:alnum:]-')" # html likes alphanumeric
             filename="$filename.html"
