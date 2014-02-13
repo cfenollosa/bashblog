@@ -360,7 +360,7 @@ create_html_page() {
         echo '<!-- entry begin -->' >> "$filename" # marks the beginning of the whole post
         echo '<h3><a class="ablack" href="'$global_url/$file_url'">' >> "$filename"
         # remove possible <p>'s on the title because of markdown conversion
-        echo "$(echo "$title" | sed 's/\<\/*p\>//g')" >> "$filename"
+        echo "$(echo "$title" | sed 's/<\/*p>//g')" >> "$filename"
         echo '</a></h3>' >> "$filename"
         if [[ "$timestamp" == "" ]]; then
             echo '<div class="subtitle">'$(LC_ALL=$date_locale date +"$date_format")' &mdash; ' >> "$filename"
@@ -399,9 +399,10 @@ parse_file() {
     title=""
     while read line; do
         if [[ "$title" == "" ]]; then
-            title="$line"
+            # set title and
             # remove extra <p> and </p> added by markdown
-            filename="$(echo $title | sed 's/\<\/*p\>//g' | tr [:upper:] [:lower:])"
+            title=$(echo "$line" | sed 's/<\/*p>//g')
+            filename="$(echo $title | tr [:upper:] [:lower:])"
             filename="$(echo $filename | sed 's/\ /-/g')"
             filename="$(echo $filename | tr -dc '[:alnum:]-')" # html likes alphanumeric
             filename="$filename.html"
