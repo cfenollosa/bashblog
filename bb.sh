@@ -64,6 +64,9 @@
 #
 #########################################################################################
 #
+# 2.1.0    Source files now kept in source/
+#          Can edit from source and automatically overwrite 
+# 2.0.3    Fixed bug when posting with markdown
 # 2.0.2    Fixed bug when $body_begin_file was empty
 #          Added extra line in the footer linking to the github project
 # 2.0.1    Allow personalized header/footer files
@@ -285,18 +288,21 @@ disqus_footer() {
     </script>'
 }
 
-# Edit an existing, published .html file while keeping its original timestamp
-# Please note that this function does not automatically republish anything, as
-# it is usually called from 'main'.
-#
-# 'edit' is kind of an advanced function, as it leaves to the user the responsibility
-# of editing an html file
+# Edit either a file from source (found in the source/ subdirectory)
+# or edit an existing, published .html file while keeping its original timestamp
+# Please note that this function only automatically republishes when
+# editing from source.
 #
 # $1 	the file to edit
 edit() {
-    timestamp="$(date -r $1 +'%Y%m%d%H%M')"
-    $EDITOR "$1"
-    touch -t $timestamp "$1"
+    if [[ "$@" != *source/* ]]; then
+        timestamp="$(date -r $1 +'%Y%m%d%H%M')"
+        $EDITOR "$1"
+        touch -t $timestamp "$1"
+    else
+        write_entry "overwrite" "$@"
+    fi
+    
 }
 
 # Adds the code needed by the twitter button
@@ -408,11 +414,13 @@ parse_file() {
             filename="$filename.html"
             content="$filename.tmp"
 
+        if [[ $2 != "overwrite" ]]; then
             # Check for duplicate file names
             while [ -f "$filename" ]; do
                 suffix="$RANDOM"
                 filename="$(echo $filename | sed 's/\.html/'$suffix'\.html/g')"
             done
+        fi
         else
             echo "$line" >> "$content"
         fi
@@ -424,7 +432,10 @@ parse_file() {
 }
 
 # Manages the creation of the text file and the parsing to html file
-# also the drafts
+# also the drafts and editing/republishing from source
+# $1 "overwrite" or "post" 
+# $2 "-m" or filename
+# $3 if set, filename and $2 == "-m"
 write_entry() {
     fmt="html"; f="$2"
     [[ "$2" == "-m" ]] && fmt="md" && f="$3"
@@ -443,6 +454,8 @@ write_entry() {
             echo "The file doesn't exist"
             delete_includes
             exit
+        else [[ "$f" == *source/*.$fmt ]]
+            echo "Editing from file $f"
         fi
         # check if TMPFILE is markdown even though the user didn't specify it
         extension="${TMPFILE##*.}"
@@ -465,10 +478,14 @@ write_entry() {
         $EDITOR "$TMPFILE"
         if [[ "$fmt" == "md" ]]; then
             html_from_md="$(markdown "$TMPFILE")"
-            parse_file "$html_from_md"
+            if [[ "$1" == "overwrite" ]]; then 
+                parse_file "$html_from_md" "overwrite"  # sets $filename as the html processed file
+            else 
+                parse_file "$html_from_md" # sets $filename as the html processed file
+            fi
             rm "$html_from_md"
         else
-            parse_file "$TMPFILE" # this command sets $filename as the html processed file
+            parse_file "$TMPFILE" # sets $filename as the html processed file
         fi
         chmod 600 "$filename"
 
@@ -504,7 +521,15 @@ write_entry() {
         fi
     done
 
-    rm "$TMPFILE"
+	title="$(echo $title | tr [:upper:] [:lower:])"
+	title="$(echo $title | sed 's/\ /-/g')"
+	title="$(echo $title | tr -dc '[:alnum:]-')"
+    mkdir -p "source/"
+    chmod 700 "source/"
+    source="source/$title.$fmt"
+    [[ "$1" != "overwrite" ]] && while [ -f "$source" ]; do source="source/$title-$RANDOM.$fmt"; done;
+    mv "$TMPFILE" "$source"
+
     chmod 644 "$filename"
     echo "Posted $filename"
 }
@@ -822,7 +847,7 @@ do_main() {
 
     if [[ "$1" == "edit" ]]; then
         if [[ $# -lt 2 ]] || [[ ! -f "$2" ]]; then
-            echo "Please enter a valid html file to edit"
+            echo "Please enter a valid file to edit"
             exit
         fi
     fi
