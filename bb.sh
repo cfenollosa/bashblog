@@ -2,7 +2,7 @@
 
 # BashBlog, a simple blog system written in a single bash script
 # Copyright: Carles Fenollosa <carles.fenollosa@bsc.es>, 2011-2013
-# With contributions from many others: 
+# With contributions from many others:
 # https://github.com/carlesfe/bashblog/contributors
 
 #########################################################################################
@@ -31,7 +31,7 @@
 #
 # It generates valid html and rss files, so keep care to use valid xhtml when editing a post
 #
-# There are many loops which iterate on '*.html' so make sure that the only html files 
+# There are many loops which iterate on '*.html' so make sure that the only html files
 # on this folder are the blog entries and index.html and all_posts.html. Drafts must go
 # into drafts/ and any other *.html file should be moved out of the way
 #
@@ -64,6 +64,9 @@
 #
 #########################################################################################
 #
+# 2.1.0    Source files now kept in source/
+#          Can edit from source and automatically overwrite
+# 2.0.3    Fixed bug when posting with markdown
 # 2.0.2    Fixed bug when $body_begin_file was empty
 #          Added extra line in the footer linking to the github project
 # 2.0.1    Allow personalized header/footer files
@@ -121,7 +124,7 @@ global_variables() {
     # Your name
     global_author="John Smith"
     # You can use twitter or facebook or anything for global_author_url
-    global_author_url="http://twitter.com/example" 
+    global_author_url="http://twitter.com/example"
     # Your email
     global_email="john@smith.com"
 
@@ -132,7 +135,7 @@ global_variables() {
     # If left empty (i.e. "") Analytics will be disabled
     global_analytics=""
 
-    # Leave this empty (i.e. "") if you don't want to use feedburner, 
+    # Leave this empty (i.e. "") if you don't want to use feedburner,
     # or change it to your own URL
     global_feedburner=""
 
@@ -176,7 +179,7 @@ global_variables() {
     template_twitter_button="Tweet"
 
     template_twitter_comment="&lt;Type your comment here but please leave the URL so that other people can follow the comments&gt;"
-    
+
     # The locale to use for the dates displayed on screen (not for the timestamps)
     date_format="%B %d, %Y"
     date_locale="C"
@@ -214,7 +217,7 @@ test_markdown() {
         rm -f $in $good $out
         return 1
     fi
-    
+
     rm -f $in $good $out
     return 0
 }
@@ -285,18 +288,21 @@ disqus_footer() {
     </script>'
 }
 
-# Edit an existing, published .html file while keeping its original timestamp
-# Please note that this function does not automatically republish anything, as
-# it is usually called from 'main'.
-#
-# 'edit' is kind of an advanced function, as it leaves to the user the responsibility
-# of editing an html file
+# Edit either a file from source (found in the source/ subdirectory)
+# or edit an existing, published .html file while keeping its original timestamp
+# Please note that this function only automatically republishes when
+# editing from source.
 #
 # $1 	the file to edit
 edit() {
-    timestamp="$(date -r $1 +'%Y%m%d%H%M')"
-    $EDITOR "$1"
-    touch -t $timestamp "$1"
+    if [[ "$@" != *source/* ]]; then
+        timestamp="$(date -r $1 +'%Y%m%d%H%M')"
+        $EDITOR "$1"
+        touch -t $timestamp "$1"
+    else
+        write_entry "overwrite" "$@"
+    fi
+
 }
 
 # Adds the code needed by the twitter button
@@ -309,7 +315,7 @@ twitter() {
         echo "<p id='twitter'>$template_comments&nbsp;"
     else
         echo "<p id='twitter'><a href=\"$1#disqus_thread\">$template_comments</a> &nbsp;"
-    fi  
+    fi
 
     echo "<a href=\"https://twitter.com/share\" class=\"twitter-share-button\" data-text=\"$template_twitter_comment\" data-url=\"$1\""
 
@@ -381,14 +387,14 @@ create_html_page() {
 
     echo '</div>' >> "$filename" # content
 
-    # Add disqus commments except for index and all_posts pages
-    if [[ ${filename%.*.*} !=  "index" && ${filename%.*.*} != "all_posts" ]]; then
+    # Add disqus commments except for index and archive_index pages
+    if [[ "$filename" != "$index_file"]] && [[ "$filename" != "$archive_index" ]]; then
     	disqus_body >> "$filename"
     fi
     # page footer
     cat .footer.html >> "$filename"
     # close divs
-    echo '</div></div>' >> "$filename" # divbody and divbodyholder 
+    echo '</div></div>' >> "$filename" # divbody and divbodyholder
     disqus_footer >> "$filename"
     echo '</body></html>' >> "$filename"
 }
@@ -408,11 +414,13 @@ parse_file() {
             filename="$filename.html"
             content="$filename.tmp"
 
+        if [[ $2 != "overwrite" ]]; then
             # Check for duplicate file names
             while [ -f "$filename" ]; do
                 suffix="$RANDOM"
                 filename="$(echo $filename | sed 's/\.html/'$suffix'\.html/g')"
             done
+        fi
         else
             echo "$line" >> "$content"
         fi
@@ -424,7 +432,10 @@ parse_file() {
 }
 
 # Manages the creation of the text file and the parsing to html file
-# also the drafts
+# also the drafts and editing/republishing from source
+# $1 "overwrite" or "post"
+# $2 "-m" or filename
+# $3 if set, filename and $2 == "-m"
 write_entry() {
     fmt="html"; f="$2"
     [[ "$2" == "-m" ]] && fmt="md" && f="$3"
@@ -432,8 +443,8 @@ write_entry() {
         test_markdown
         if [[ "$?" -ne 0 ]]; then
             echo "Markdown is not working, please use HTML. Press a key to continue..."
-            fmt="html" 
-            read 
+            fmt="html"
+            read
         fi
     fi
 
@@ -443,6 +454,8 @@ write_entry() {
             echo "The file doesn't exist"
             delete_includes
             exit
+        else [[ "$f" == *source/*.$fmt ]]
+            echo "Editing from file $f"
         fi
         # check if TMPFILE is markdown even though the user didn't specify it
         extension="${TMPFILE##*.}"
@@ -465,10 +478,14 @@ write_entry() {
         $EDITOR "$TMPFILE"
         if [[ "$fmt" == "md" ]]; then
             html_from_md="$(markdown "$TMPFILE")"
-            parse_file "$html_from_md"
+            if [[ "$1" == "overwrite" ]]; then
+                parse_file "$html_from_md" "overwrite"  # sets $filename as the html processed file
+            else
+                parse_file "$html_from_md" # sets $filename as the html processed file
+            fi
             rm "$html_from_md"
         else
-            parse_file "$TMPFILE" # this command sets $filename as the html processed file
+            parse_file "$TMPFILE" # sets $filename as the html processed file
         fi
         chmod 600 "$filename"
 
@@ -504,7 +521,15 @@ write_entry() {
         fi
     done
 
-    rm "$TMPFILE"
+	title="$(echo $title | tr [:upper:] [:lower:])"
+	title="$(echo $title | sed 's/\ /-/g')"
+	title="$(echo $title | tr -dc '[:alnum:]-')"
+    mkdir -p "source/"
+    chmod 700 "source/"
+    source="source/$title.$fmt"
+    [[ "$1" != "overwrite" ]] && while [ -f "$source" ]; do source="source/$title-$RANDOM.$fmt"; done;
+    mv "$TMPFILE" "$source"
+
     chmod 644 "$filename"
     echo "Posted $filename"
 }
@@ -544,7 +569,7 @@ rebuild_index() {
     echo -n "Rebuilding the index "
     newindexfile="$index_file.$RANDOM"
     contentfile="$newindexfile.content"
-    while [ -f "$newindexfile" ]; do 
+    while [ -f "$newindexfile" ]; do
         newindexfile="$index_file.$RANDOM"
         contentfile="$newindexfile.content"
     done
@@ -585,7 +610,7 @@ list_posts() {
         line="$n # $(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i) # $(LC_ALL=$date_locale date -r $i +"date_format")"
         lines="${lines}""$line""\n" # Weird stuff needed for the newlines
         n=$(( $n + 1 ))
-    done 
+    done
 
     echo -e "$lines" | column -t -s "#"
 }
@@ -644,13 +669,13 @@ create_includes() {
         echo '<link rel="stylesheet" href="blog.css" type="text/css" />' >> ".header.html"
         if [[ "$global_feedburner" == "" ]]; then
             echo '<link rel="alternate" type="application/rss+xml" title="'$template_subscribe_browser_button'" href="'$blog_feed'" />' >> ".header.html"
-        else 
+        else
             echo '<link rel="alternate" type="application/rss+xml" title="'$template_subscribe_browser_button'" href="'$global_feedburner'" />' >> ".header.html"
         fi
     fi
 
     if [[ -f "$footer_file" ]]; then cp "$footer_file" .footer.html
-    else 
+    else
         protected_mail="$(echo "$global_email" | sed 's/@/\&#64;/g' | sed 's/\./\&#46;/g')"
         echo '<div id="footer">'$global_license '<a href="'$global_author_url'">'$global_author'</a> &mdash; <a href="mailto:'$protected_mail'">'$protected_mail'</a><br/>' >> ".footer.html"
         echo 'Generated with <a href="https://github.com/cfenollosa/bashblog">bashblog</a>, a single bash script to easily create blogs like this one</div>' >> ".footer.html"
@@ -666,7 +691,7 @@ delete_includes() {
 create_css() {
     # To avoid overwriting manual changes. However it is recommended that
     # this function is modified if the user changes the blog.css file
-    if [[ ! -f "blog.css" ]]; then 
+    if [[ ! -f "blog.css" ]]; then
         # blog.css directives will be loaded after main.css and thus will prevail
         echo '#title{font-size: x-large;}
         a.ablack{color:black !important;}
@@ -686,7 +711,7 @@ create_css() {
     # then use it. This directive is here for compatibility with my own
     # home page. Feel free to edit it out, though it doesn't hurt
     if [[ -f "../style.css" ]] && [[ ! -f "main.css" ]]; then
-        ln -s "../style.css" "main.css" 
+        ln -s "../style.css" "main.css"
     elif [[ ! -f "main.css" ]]; then
         echo 'body{font-family:Georgia,"Times New Roman",Times,serif;margin:0;padding:0;background-color:#F3F3F3;}
         #divbodyholder{padding:5px;background-color:#DDD;width:874px;margin:24px auto;}
@@ -772,7 +797,7 @@ reset() {
 date_version_detect() {
 	date --version >/dev/null 2>&1
 	if [[ $? -ne 0 ]];  then
-		# date utility is BSD. Test if gdate is installed 
+		# date utility is BSD. Test if gdate is installed
 		if gdate --version >/dev/null 2>&1 ; then
             date() {
                 gdate "$@"
@@ -786,14 +811,14 @@ date_version_detect() {
                     stat -f "%Sm" -t "$format" "$2"
                 elif [[ $(echo $@ | grep '\-\-date') ]]; then
                     # convert between dates using BSD date syntax
-                    /bin/date -j -f "%a, %d %b %Y %H:%M:%S %z" "$(echo $2 | sed 's/\-\-date\=//g')" "$1" 
+                    /bin/date -j -f "%a, %d %b %Y %H:%M:%S %z" "$(echo $2 | sed 's/\-\-date\=//g')" "$1"
                 else
                     # acceptable format for BSD date
                     /bin/date -j "$@"
                 fi
             }
         fi
-    fi    
+    fi
 }
 
 # Main function
@@ -806,11 +831,11 @@ do_main() {
     date_version_detect
     # Load default configuration, then override settings with the config file
     global_variables
-    [[ -f "$global_config" ]] && source "$global_config" &> /dev/null 
+    [[ -f "$global_config" ]] && source "$global_config" &> /dev/null
     global_variables_check
 
     # Check for $EDITOR
-    [[ -z "$EDITOR" ]] && 
+    [[ -z "$EDITOR" ]] &&
         echo "Please set your \$EDITOR environment variable" && exit
 
     # Check for validity of argument
@@ -822,7 +847,7 @@ do_main() {
 
     if [[ "$1" == "edit" ]]; then
         if [[ $# -lt 2 ]] || [[ ! -f "$2" ]]; then
-            echo "Please enter a valid html file to edit"
+            echo "Please enter a valid file to edit"
             exit
         fi
     fi
@@ -835,7 +860,7 @@ do_main() {
     # We're going to back up just in case
     ls *.html &> /dev/null
     [[ $? -eq 0 ]] &&
-        tar cfz ".backup.tar.gz" *.html &&
+        tar cfz ".backup.tar.gz" *.html drafts/ source/ &&
         chmod 600 ".backup.tar.gz"
 
     [[ "$1" == "reset" ]] &&
