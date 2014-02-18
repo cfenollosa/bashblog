@@ -64,6 +64,7 @@
 #
 #########################################################################################
 #
+# 2.0.3    Support for other analytics code, via external file
 # 2.0.2    Fixed bug when $body_begin_file was empty
 #          Added extra line in the footer linking to the github project
 # 2.0.1    Allow personalized header/footer files
@@ -109,7 +110,7 @@ global_config=".config"
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
-    global_software_version="2.0.2"
+    global_software_version="2.0.3"
 
     # Blog title
     global_title="My fancy blog"
@@ -128,9 +129,12 @@ global_variables() {
     # CC by-nc-nd is a good starting point, you can change this to "&copy;" for Copyright
     global_license="CC by-nc-nd"
 
-    # If you have a Google Analytics ID (UA-XXXXX), put it here.
-    # If left empty (i.e. "") Analytics will be disabled
+    # If you have a Google Analytics ID (UA-XXXXX) and wish to use the standard
+    # embedding code, put it on global_analytics
+    # If you have custom analytics code (i.e. non-google) or want to use the Universal
+    # code, leave global_analytics empty and specify a global_analytics_file
     global_analytics=""
+    global_analytics_file=""
 
     # Leave this empty (i.e. "") if you don't want to use feedburner, 
     # or change it to your own URL
@@ -231,21 +235,25 @@ markdown() {
 
 # Prints the required google analytics code
 google_analytics() {
-    [[ -z "$global_analytics" ]] && return
+    [[ -z "$global_analytics" ]] && [[ -z "$global_analytics_file" ]]  && return
 
-    echo "<script type=\"text/javascript\">
+    if [[ -z "$global_analytics_file" ]]; then
+        echo "<script type=\"text/javascript\">
 
-    var _gaq = _gaq || [];
-    _gaq.push(['_setAccount', '"$global_analytics"']);
-    _gaq.push(['_trackPageview']);
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', '"$global_analytics"']);
+        _gaq.push(['_trackPageview']);
 
-    (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-})();
+        (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        })();
 
-</script>"
+        </script>"
+    else
+        cat "$global_analytics_file"
+    fi
 }
 
 # Prints the required code for disqus comments
@@ -712,7 +720,7 @@ rebuild_all_entries() {
     echo -n "Rebuilding all entries "
 
     for i in *.html; do # no need to sort
-        if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]] || [[ "$i" == "$footer_file" ]] || [[ "$i" == "$header_file" ]]; then continue; fi
+        if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]] || [[ "$i" == "$footer_file" ]] || [[ "$i" == "$header_file" ]] || [[ "$i" == "global_analytics_file" ]]; then continue; fi
         contentfile=".tmp.$RANDOM"
         while [ -f "$contentfile" ]; do contentfile=".tmp.$RANDOM"; done
 
