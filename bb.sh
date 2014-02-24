@@ -170,6 +170,8 @@ global_variables() {
     template_comments="Comments?"
     # "View more posts" (used on bottom of index page as link to archive)
     template_archive="View more posts"
+    # "All posts" (title of archive page)
+    template_archive_title="All posts"
     # "Back to the index page" (used on archive page, it is link to blog index)
     template_archive_index_page="Back to the index page"
     # "Subscribe" (used on bottom of index page, it is link to RSS feed)
@@ -525,7 +527,7 @@ all_posts() {
         contentfile="$archive_index.$RANDOM"
     done
 
-    echo "<h3>All posts</h3>" >> "$contentfile"
+    echo "<h3>$template_archive_title</h3>" >> "$contentfile"
     echo "<ul>" >> "$contentfile"
     for i in $(ls -t *.html); do
         if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
