@@ -368,7 +368,7 @@ create_html_page() {
     # one blog entry
     if [[ "$index" == "no" ]]; then
         echo '<!-- entry begin -->' >> "$filename" # marks the beginning of the whole post
-        echo '<h3><a class="ablack" href="'$global_url/$file_url'">' >> "$filename"
+        echo '<h3><a class="ablack" href="'$file_url'">' >> "$filename"
         # remove possible <p>'s on the title because of markdown conversion
         echo "$(echo "$title" | sed 's/<\/*p>//g')" >> "$filename"
         echo '</a></h3>' >> "$filename"
@@ -534,14 +534,14 @@ all_posts() {
         echo -n "."
         # Title
         title="$(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i)"
-        echo -n '<li><a href="'$global_url/$i'">'$title'</a> &mdash;' >> "$contentfile"
+        echo -n '<li><a href="'$i'">'$title'</a> &mdash;' >> "$contentfile"
         # Date
         date="$(LC_ALL=$date_locale date -r "$i" +"$date_format")"
         echo " $date</li>" >> "$contentfile"
     done
     echo ""
     echo "</ul>" >> "$contentfile"
-    echo '<div id="all_posts"><a href="'$global_url'">'$template_archive_index_page'</a></div>' >> "$contentfile"
+    echo '<div id="all_posts"><a href="'./'">'$template_archive_index_page'</a></div>' >> "$contentfile"
 
     create_html_page "$contentfile" "$archive_index.tmp" yes "$global_title &mdash; All posts"
     mv "$archive_index.tmp" "$archive_index"
