@@ -310,10 +310,19 @@ disqus_footer() {
 }
 
 # Reads HTML file from stdin, prints its content to stdout
-# $1	where to start ("text" or "entry")
-# $2	where to stop ("text" or "entry")
+# $1    where to start ("text" or "entry")
+# $2    where to stop ("text" or "entry")
+# $3    "cut" to remove text from <!-- text cut --> to <!-- text end -->
+#       note that this does not remove <!-- text cut --> comment itself,
+#       so you can see if text was cut or not
 get_html_file_content() {
-        awk '/<!-- '$1' begin -->/, /<!-- '$2' end -->/{if (!/<!-- '$1' begin -->/ && !/<!-- '$2' end -->/) print}'
+    awk '/<!-- '$1' begin -->/, /<!-- '$2' end -->/{
+        if (!/<!-- '$1' begin -->/ && !/<!-- '$2' end -->/) print
+        if ("'$3'" == "cut" && /<!-- text cut -->/){
+            if ("'$2'" == "text") exit # no need to read further
+            while (getline > 0 && !/<!-- text end -->/) {}
+        }
+    }'
 }
 
 # Edit an existing, published .html file while keeping its original timestamp
@@ -648,7 +657,7 @@ rebuild_index() {
     for i in $(ls -t *.html); do # sort by date, newest first
         is_boilerplate_file "$i" && continue;
         if [[ "$n" -ge "$number_of_index_articles" ]]; then break; fi
-        get_html_file_content 'entry' 'entry' <$1 >> "$contentfile"
+        get_html_file_content 'entry' 'entry' 'cut' <$i >> "$contentfile"
         echo -n "."
         n=$(( $n + 1 ))
     done
@@ -747,7 +756,7 @@ make_rss() {
         echo '<item><title>' >> "$rssfile"
         echo "$(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i)" >> "$rssfile"
         echo '</title><description><![CDATA[' >> "$rssfile"
-        echo "$(get_html_file_content 'text' 'entry' <$i)" >> "$rssfile"
+        echo "$(get_html_file_content 'text' 'entry' 'cut' <$i)" >> "$rssfile"
         echo "]]></description><link>$global_url/$i</link>" >> "$rssfile"
         echo "<guid>$global_url/$i</guid>" >> "$rssfile"
         echo "<dc:creator>$global_author</dc:creator>" >> "$rssfile"
