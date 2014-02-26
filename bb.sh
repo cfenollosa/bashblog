@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # BashBlog, a simple blog system written in a single bash script
-# Copyright: Carles Fenollosa <carles.fenollosa@bsc.es>, 2011-2013
+# Copyright: Carles Fenollosa <carles.fenollosa@bsc.es>, 2011-2014
 # With contributions from many others: 
 # https://github.com/carlesfe/bashblog/contributors
 
