@@ -309,6 +309,11 @@ disqus_footer() {
     </script>'
 }
 
+# Reads HTML file from stdin, prints its content to stdout
+get_html_file_content() {
+        awk '/<!-- text begin -->/, /<!-- text end -->/{if (!/<!-- text begin -->/ && !/<!-- text end -->/) print}'
+}
+
 # Edit an existing, published .html file while keeping its original timestamp
 # Please note that this function does not automatically republish anything, as
 # it is usually called from 'main'.
@@ -847,7 +852,7 @@ rebuild_all_entries() {
         echo -n "."
         # Get the title and entry, and rebuild the html structure from scratch (divs, title, description...)
         title="$(get_post_title "$i")"
-        awk '/<!-- text begin -->/, /<!-- text end -->/{if (!/<!-- text begin -->/ && !/<!-- text end -->/) print}' "$i" >> "$contentfile"
+        get_html_file_content <$i >> "$contentfile"
 
         # Original post timestamp
         timestamp="$(LC_ALL=$date_locale date -r $i +"%a, %d %b %Y %H:%M:%S %z" )"
