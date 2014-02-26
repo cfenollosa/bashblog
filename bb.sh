@@ -168,6 +168,8 @@ global_variables() {
     # Localization and i18n
     # "Comments?" (used in twitter link after every post)
     template_comments="Comments?"
+    # "Read more..." (link under cut article on index page)
+    template_read_more="Read more..."
     # "View more posts" (used on bottom of index page as link to archive)
     template_archive="View more posts"
     # "All posts" (title of archive page)
@@ -585,7 +587,7 @@ rebuild_index() {
     for i in $(ls -t *.html); do # sort by date, newest first
         if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
         if [[ "$n" -ge "$number_of_index_articles" ]]; then break; fi
-        get_html_file_content 'entry' 'entry' 'cut' <$i >> "$contentfile"
+        get_html_file_content 'entry' 'entry' 'cut' <$i | sed "s|<.-- text cut -->|<p class=\"readmore\"><a href=\"$i\">$template_read_more</a></p>|" >> "$contentfile"
         echo -n "."
         n=$(( $n + 1 ))
     done
