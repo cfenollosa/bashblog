@@ -295,6 +295,16 @@ disqus_footer() {
     </script>'
 }
 
+# Reads HTML file from stdin, prints its title to stdout
+get_html_file_title() {
+        awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}'
+}
+
+# Reads HTML file from stdin, prints its content to stdout
+get_html_file_content() {
+        awk '/<!-- text begin -->/, /<!-- text end -->/{if (!/<!-- text begin -->/ && !/<!-- text end -->/) print}'
+}
+
 # Edit an existing, published .html file while keeping its original timestamp
 # Please note that this function does not automatically republish anything, as
 # it is usually called from 'main'.
@@ -533,7 +543,7 @@ all_posts() {
         if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
         echo -n "."
         # Title
-        title="$(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i)"
+        title="$(get_html_file_title <$i)"
         echo -n '<li><a href="'$i'">'$title'</a> &mdash;' >> "$contentfile"
         # Date
         date="$(LC_ALL=$date_locale date -r "$i" +"$date_format")"
@@ -592,7 +602,7 @@ list_posts() {
     n=1
     for i in $(ls -t *.html); do
         if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
-        line="$n # $(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i) # $(LC_ALL=$date_locale date -r $i +"$date_format")"
+        line="$n # $(get_html_file_title <$i) # $(LC_ALL=$date_locale date -r $i +"$date_format")"
         lines="${lines}""$line""\n" # Weird stuff needed for the newlines
         n=$(( $n + 1 ))
     done 
@@ -621,7 +631,7 @@ make_rss() {
         [[ "$n" -ge "$number_of_feed_articles" ]] && break # max 10 items
         echo -n "."
         echo '<item><title>' >> "$rssfile"
-        echo "$(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i)" >> "$rssfile"
+        echo "$(get_html_file_title <$i)" >> "$rssfile"
         echo '</title><description><![CDATA[' >> "$rssfile"
         echo "$(awk '/<!-- text begin -->/, /<!-- entry end -->/{if (!/<!-- text begin -->/ && !/<!-- entry end -->/) print}' $i)" >> "$rssfile"
 
@@ -729,8 +739,8 @@ rebuild_all_entries() {
 
         echo -n "."
         # Get the title and entry, and rebuild the html structure from scratch (divs, title, description...)
-        title="$(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i)"
-        awk '/<!-- text begin -->/, /<!-- text end -->/{if (!/<!-- text begin -->/ && !/<!-- text end -->/) print}' "$i" >> "$contentfile"
+        title="$(get_html_file_title <$i)"
+        get_html_file_content <$i >> "$contentfile"
 
         # Original post timestamp
         timestamp="$(LC_ALL=$date_locale date -r $i +"%a, %d %b %Y %H:%M:%S %z" )"
