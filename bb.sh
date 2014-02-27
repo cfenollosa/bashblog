@@ -64,6 +64,7 @@
 #
 #########################################################################################
 #
+# 2.1      Support for tags/categories
 # 2.0.3    Support for other analytics code, via external file
 # 2.0.2    Fixed bug when $body_begin_file was empty
 #          Added extra line in the footer linking to the github project
@@ -110,7 +111,7 @@ global_config=".config"
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
-    global_software_version="2.0.3"
+    global_software_version="2.1"
 
     # Blog title
     global_title="My fancy blog"
@@ -156,7 +157,7 @@ global_variables() {
     # feed file (rss in this case)
     blog_feed="feed.rss"
     number_of_feed_articles="10"
-    # prefix for category/tag files
+    # prefix for tags/categories files
     # please make sure that no other html file starts with this prefix
     prefix_tags="tag_"
     # personalized header and footer (only if you know what you're doing)
@@ -301,7 +302,7 @@ disqus_footer() {
 # Please note that this function does not automatically republish anything, as
 # it is usually called from 'main'.
 #
-# 'edit' is kind of an advanced function, as it leaves to the user the responsibility
+# 'edit' is kind of an advanced feature, as it leaves to the user the responsibility
 # of editing an html file
 #
 # $1 	the file to edit
@@ -340,7 +341,7 @@ twitter() {
 # Return 0 (bash return value 'true') if the input file is am index, feed, etc
 # or 1 (bash return value 'false') if it is a blogpost
 is_boilerplate_file() {
-    if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]] || [[ "$i" == "$footer_file" ]] || [[ "$i" == "$header_file" ]] || [[ "$i" == "global_analytics_file" ]] || [[ "$1" = "$prefix_tags"* ]] ; then return 0
+    if [[ "$1" == "$index_file" ]] || [[ "$1" == "$archive_index" ]] || [[ "$1" == "$footer_file" ]] || [[ "$1" == "$header_file" ]] || [[ "$1" == "$global_analytics_file" ]] || [[ "$1" = "$prefix_tags"* ]] ; then return 0
     else return 1
     fi
 }
@@ -475,14 +476,20 @@ write_entry() {
         [[ "$extension" == "md" ]] && fmt="md"
     else
         TMPFILE=".entry-$RANDOM.$fmt"
-        echo "Title on this line" >> "$TMPFILE"
-        echo "" >> "$TMPFILE"
-        [[ "$fmt" == "html" ]] && echo -n "<p>" >> "$TMPFILE"
-        echo -n "The rest of the text file is " >> "$TMPFILE"
-        [[ "$fmt" == "html" ]] && echo -n "an <b>html</b> " >> "$TMPFILE"
-        [[ "$fmt" == "md" ]] && echo -n "a **Markdown** " >> "$TMPFILE"
-        echo -n "blog post. The process will continue as soon as you exit your editor" >> "$TMPFILE"
-        [[ "$fmt" == "html" ]] && echo "</p>" >> "$TMPFILE"
+        echo -e "Title on this line\n" >> "$TMPFILE"
+
+        [[ "$fmt" == "html" ]] && cat << EOF >> "$TMPFILE"
+<p>The rest of the text file is an <b>html</b> blog post. The process will continue as soon
+as you exit your editor.</p>
+
+<p>Tags: keep-this-tag-format, tags-are-optional, example</p>
+EOF
+        [[ "$fmt" == "md" ]] && cat << EOF >> "$TMPFILE"
+The rest of the text file is a **Markdown** blog post. The process will continue
+as soon as you exit your editor.
+
+Tags: keep-this-tag-format, tags-are-optional, beware-with-underscores-in-markdown, example
+EOF
     fi
     chmod 600 "$TMPFILE"
 
@@ -531,6 +538,23 @@ write_entry() {
     done
 
     rm "$TMPFILE"
+    # Parse possible tags
+    cp "$filename" "$filename.bak"
+    while read line; do
+        if [[ "$line" = "<p>Tags:"* ]]; then
+            tags="$(echo "$line" | cut -d ":" -f 2- | sed -e 's/<\/p>//g' -e 's/^ *//' -e 's/ *$//' -e 's/, /,/g')"
+            IFS=, read -r -a array <<< "$tags"
+
+            echo -n "<p>Tags: "
+            (for item in "${array[@]}"; do
+                echo -n "<a href='$prefix_tags$item.html'>$item</a>, "
+            done ) | sed 's/, $//g'
+            echo -e "</p>"
+        else echo "$line"
+        fi
+    done < "$filename.bak" > "$filename"
+    rm "$filename.bak"
+
     chmod 644 "$filename"
     echo "Posted $filename"
 }
@@ -599,12 +623,39 @@ rebuild_index() {
     chmod 644 "$index_file"
 }
 
+# Rebuilds all tag_*.html files
 rebuild_tags() {
     echo -n "Rebuilding tag pages "
     n=0
+    rm $prefix_tags*.tmp.html &> /dev/null
+    # First we will process all files and create temporal tag files
+    # with just the content of the posts
     for i in $(ls -t *.html); do
-        echo
+        is_boilerplate_file "$i" && continue;
+        echo -n "."
+        tmpfile="$(mktemp tmp.XXX)"
+        awk '/<!-- entry begin -->/, /<!-- entry end -->/' "$i" >> "$tmpfile"
+        while read line; do
+            if [[ "$line" = "<p>Tags:"* ]]; then
+                # 'split' tags by commas
+                echo "$line" | cut -c 10- | while IFS="," read -a tags; do
+                    for dirty_tag in "${tags[@]}"; do # extract html around it
+                        tag="$(echo $dirty_tag | grep -o ">.*</a>" | awk '{print substr($0, 2, length($0)-5)}' | tr " " "_")"
+                        # Add the content of this post to the tag file
+                        cat "$tmpfile" >> "$prefix_tags$tag".tmp.html
+                    done
+                done
+            fi
+        done < "$tmpfile"
+        rm "$tmpfile"
     done
+    # Now generate the tag files with headers, footers, etc
+    for i in $(ls -t $prefix_tags*.tmp.html); do
+        tagname="$(echo $i | cut -c $((${#prefix_tags}+1))- | sed 's/\.tmp\.html//g')"
+        create_html_page "$i" "$prefix_tags$tagname.html" yes "$global_title &mdash; Posts tagged \"$tagname\""
+        rm "$i"
+    done
+    echo
 }
 
 # Return the post title
@@ -890,6 +941,7 @@ do_main() {
     rebuild_index
     all_posts
     make_rss
+    rebuild_tags
     delete_includes
 }
 
