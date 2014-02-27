@@ -64,6 +64,7 @@
 #
 #########################################################################################
 #
+# 2.0.4    index.html shows text up to cut line, if it's present
 # 2.0.3    Support for other analytics code, via external file
 # 2.0.2    Fixed bug when $body_begin_file was empty
 #          Added extra line in the footer linking to the github project
@@ -110,7 +111,7 @@ global_config=".config"
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
-    global_software_version="2.0.3"
+    global_software_version="2.0.4"
 
     # Blog title
     global_title="My fancy blog"
