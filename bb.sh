@@ -156,6 +156,9 @@ global_variables() {
     # feed file (rss in this case)
     blog_feed="feed.rss"
     number_of_feed_articles="10"
+    # prefix for category/tag files
+    # please make sure that no other html file starts with this prefix
+    prefix_tags="tag_"
     # personalized header and footer (only if you know what you're doing)
     # DO NOT name them .header.html, .footer.html or they will be overwritten
     # leave blank to generate them, recommended
@@ -180,7 +183,6 @@ global_variables() {
     template_subscribe_browser_button="Subscribe to this page..."
     # "Tweet" (used as twitter text button for posting to twitter)
     template_twitter_button="Tweet"
-
     template_twitter_comment="&lt;Type your comment here but please leave the URL so that other people can follow the comments&gt;"
     
     # The locale to use for the dates displayed on screen (not for the timestamps)
@@ -327,6 +329,20 @@ twitter() {
 
     echo ">$template_twitter_button</a>	<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=\"//platform.twitter.com/widgets.js\";fjs.parentNode.insertBefore(js,fjs);}}(document,\"script\",\"twitter-wjs\");</script>"
     echo "</p>"
+}
+
+# Check if the file is a 'boilerplate' (i.e. not a post)
+# The return values are designed to be used like this inside a loop:
+# is_boilerplate_file <file> && continue
+#
+# $1 the file
+#
+# Return 0 (bash return value 'true') if the input file is am index, feed, etc
+# or 1 (bash return value 'false') if it is a blogpost
+is_boilerplate_file() {
+    if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]] || [[ "$i" == "$footer_file" ]] || [[ "$i" == "$header_file" ]] || [[ "$i" == "global_analytics_file" ]] || [[ "$1" = "$prefix_tags"* ]] ; then return 0
+    else return 1
+    fi
 }
 
 # Adds all the bells and whistles to format the html page
@@ -530,10 +546,10 @@ all_posts() {
     echo "<h3>$template_archive_title</h3>" >> "$contentfile"
     echo "<ul>" >> "$contentfile"
     for i in $(ls -t *.html); do
-        if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
+        is_boilerplate_file "$i" && continue
         echo -n "."
         # Title
-        title="$(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i)"
+        title="$(get_post_title "$i")"
         echo -n '<li><a href="'$i'">'$title'</a> &mdash;' >> "$contentfile"
         # Date
         date="$(LC_ALL=$date_locale date -r "$i" +"$date_format")"
@@ -562,7 +578,7 @@ rebuild_index() {
     # Create the content file
     n=0
     for i in $(ls -t *.html); do # sort by date, newest first
-        if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
+        is_boilerplate_file "$i" && continue;
         if [[ "$n" -ge "$number_of_index_articles" ]]; then break; fi
         awk '/<!-- entry begin -->/, /<!-- entry end -->/' "$i" >> "$contentfile"
         echo -n "."
@@ -583,6 +599,21 @@ rebuild_index() {
     chmod 644 "$index_file"
 }
 
+rebuild_tags() {
+    echo -n "Rebuilding tag pages "
+    n=0
+    for i in $(ls -t *.html); do
+        echo
+    done
+}
+
+# Return the post title
+#
+# $1 the html file
+get_post_title() {
+    awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' "$1"
+}
+
 # Displays a list of the posts
 list_posts() {
     ls *.html &> /dev/null
@@ -591,8 +622,8 @@ list_posts() {
     lines=""
     n=1
     for i in $(ls -t *.html); do
-        if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
-        line="$n # $(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i) # $(LC_ALL=$date_locale date -r $i +"$date_format")"
+        is_boilerplate_file "$i" && continue
+        line="$n # $(get_post_title "$i") # $(LC_ALL=$date_locale date -r $i +"$date_format")"
         lines="${lines}""$line""\n" # Weird stuff needed for the newlines
         n=$(( $n + 1 ))
     done 
@@ -617,7 +648,7 @@ make_rss() {
 
     n=0
     for i in $(ls -t *.html); do
-        if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
+        is_boilerplate_file "$i" && continue
         [[ "$n" -ge "$number_of_feed_articles" ]] && break # max 10 items
         echo -n "."
         echo '<item><title>' >> "$rssfile"
@@ -723,13 +754,13 @@ rebuild_all_entries() {
     echo -n "Rebuilding all entries "
 
     for i in *.html; do # no need to sort
-        if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]] || [[ "$i" == "$footer_file" ]] || [[ "$i" == "$header_file" ]] || [[ "$i" == "global_analytics_file" ]]; then continue; fi
+        is_boilerplate_file "$i" && continue;
         contentfile=".tmp.$RANDOM"
         while [ -f "$contentfile" ]; do contentfile=".tmp.$RANDOM"; done
 
         echo -n "."
         # Get the title and entry, and rebuild the html structure from scratch (divs, title, description...)
-        title="$(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i)"
+        title="$(get_post_title "$i")"
         awk '/<!-- text begin -->/, /<!-- text end -->/{if (!/<!-- text begin -->/ && !/<!-- text end -->/) print}' "$i" >> "$contentfile"
 
         # Original post timestamp
