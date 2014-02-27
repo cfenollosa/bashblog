@@ -971,9 +971,9 @@ do_main() {
     [[ "$1" == "delete" ]] && rm "$2" &> /dev/null 
     rebuild_index
     all_posts
+    rebuild_tags
     all_tags
     make_rss
-    rebuild_tags
     delete_includes
 }
 
