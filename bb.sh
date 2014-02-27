@@ -64,6 +64,7 @@
 #
 #########################################################################################
 #
+# 2.0.4    index.html shows text up to cut line, if it's present
 # 2.0.3    Support for other analytics code, via external file
 # 2.0.2    Fixed bug when $body_begin_file was empty
 #          Added extra line in the footer linking to the github project
@@ -110,7 +111,7 @@ global_config=".config"
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
-    global_software_version="2.0.3"
+    global_software_version="2.0.4"
 
     # Blog title
     global_title="My fancy blog"
@@ -168,6 +169,8 @@ global_variables() {
     # Localization and i18n
     # "Comments?" (used in twitter link after every post)
     template_comments="Comments?"
+    # "Read more..." (link under cut article on index page)
+    template_read_more="Read more..."
     # "View more posts" (used on bottom of index page as link to archive)
     template_archive="View more posts"
     # "All posts" (title of archive page)
@@ -293,6 +296,27 @@ disqus_footer() {
         (document.getElementsByTagName("HEAD")[0] || document.getElementsByTagName("BODY")[0]).appendChild(s);
     }());
     </script>'
+}
+
+# Reads HTML file from stdin, prints its title to stdout
+get_html_file_title() {
+    awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}'
+}
+
+# Reads HTML file from stdin, prints its content to stdout
+# $1    where to start ("text" or "entry")
+# $2    where to stop ("text" or "entry")
+# $3    "cut" to remove text from <!-- text cut --> to <!-- text end -->
+#       note that this does not remove <!-- text cut --> comment itself,
+#       so you can see if text was cut or not
+get_html_file_content() {
+    awk '/<!-- '$1' begin -->/, /<!-- '$2' end -->/{
+        if (!/<!-- '$1' begin -->/ && !/<!-- '$2' end -->/) print
+        if ("'$3'" == "cut" && /<!-- text cut -->/){
+            if ("'$2'" == "text") exit # no need to read further
+            while (getline > 0 && !/<!-- text end -->/) {}
+        }
+    }'
 }
 
 # Edit an existing, published .html file while keeping its original timestamp
@@ -533,7 +557,7 @@ all_posts() {
         if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
         echo -n "."
         # Title
-        title="$(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i)"
+        title="$(get_html_file_title <$i)"
         echo -n '<li><a href="'$i'">'$title'</a> &mdash;' >> "$contentfile"
         # Date
         date="$(LC_ALL=$date_locale date -r "$i" +"$date_format")"
@@ -564,7 +588,7 @@ rebuild_index() {
     for i in $(ls -t *.html); do # sort by date, newest first
         if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
         if [[ "$n" -ge "$number_of_index_articles" ]]; then break; fi
-        awk '/<!-- entry begin -->/, /<!-- entry end -->/' "$i" >> "$contentfile"
+        get_html_file_content 'entry' 'entry' 'cut' <$i | sed "s|<.-- text cut -->|<p class=\"readmore\"><a href=\"$i\">$template_read_more</a></p>|" >> "$contentfile"
         echo -n "."
         n=$(( $n + 1 ))
     done
@@ -592,7 +616,7 @@ list_posts() {
     n=1
     for i in $(ls -t *.html); do
         if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
-        line="$n # $(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i) # $(LC_ALL=$date_locale date -r $i +"$date_format")"
+        line="$n # $(get_html_file_title <$i) # $(LC_ALL=$date_locale date -r $i +"$date_format")"
         lines="${lines}""$line""\n" # Weird stuff needed for the newlines
         n=$(( $n + 1 ))
     done 
@@ -621,10 +645,9 @@ make_rss() {
         [[ "$n" -ge "$number_of_feed_articles" ]] && break # max 10 items
         echo -n "."
         echo '<item><title>' >> "$rssfile"
-        echo "$(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i)" >> "$rssfile"
+        echo "$(get_html_file_title <$i)" >> "$rssfile"
         echo '</title><description><![CDATA[' >> "$rssfile"
-        echo "$(awk '/<!-- text begin -->/, /<!-- entry end -->/{if (!/<!-- text begin -->/ && !/<!-- entry end -->/) print}' $i)" >> "$rssfile"
-
+        echo "$(get_html_file_content 'text' 'entry' 'cut' <$i)" >> "$rssfile"
         echo "]]></description><link>$global_url/$i</link>" >> "$rssfile"
         echo "<guid>$global_url/$i</guid>" >> "$rssfile"
         echo "<dc:creator>$global_author</dc:creator>" >> "$rssfile"
@@ -729,8 +752,8 @@ rebuild_all_entries() {
 
         echo -n "."
         # Get the title and entry, and rebuild the html structure from scratch (divs, title, description...)
-        title="$(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i)"
-        awk '/<!-- text begin -->/, /<!-- text end -->/{if (!/<!-- text begin -->/ && !/<!-- text end -->/) print}' "$i" >> "$contentfile"
+        title="$(get_html_file_title <$i)"
+        get_html_file_content 'text' 'text' <$i >> "$contentfile"
 
         # Original post timestamp
         timestamp="$(LC_ALL=$date_locale date -r $i +"%a, %d %b %Y %H:%M:%S %z" )"
