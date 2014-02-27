@@ -16,6 +16,7 @@ Features
 - All content is static. You only need shell access to a machine with a public web folder.
   *Tip: advanced users could mount a remote public folder via `ftpfs` and run this script locally*
 - Allows drafts, includes a simple but clean stylesheet, generates the RSS file automatically.
+- Support for tags/categories
 - Support for Markdown, Disqus comments, Twitter, Feedburner, Google Analytics.
 - GNU/Linux, BSD and OSX compatible out of the box (no need for GNU `coreutils` on a Mac)
 - Everything stored in a single 700-line bash script, how cool is that?! ;) 
@@ -78,6 +79,7 @@ Detailed features
 - Configurable number of posts on the front page
 - Automatic generation of an RSS file, feedburner support
 - Additional page containing an index of all posts
+- Automatically generates pages for each tag
 - Rebuild all files while keeping the original data
 - Comments delegated to Twitter, with additional Disqus support
 - Google Analytics code support
