@@ -89,4 +89,4 @@ Detailed features
 - xhtml validation, CSS validation, RSS validation by the w3c
 - Automatic backup of the site every time you post (stored as `.backup.tar.gz`)
 
-Read the CHANGELOG section of the script header for more updates
+Read the CHANGELOG section of the script header for more updates or [check out the news on my blog](http://cfenollosa.com/blog/tag_bashblog.html)
