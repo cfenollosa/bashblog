@@ -756,7 +756,7 @@ make_rss() {
         [[ "$n" -ge "$number_of_feed_articles" ]] && break # max 10 items
         echo -n "."
         echo '<item><title>' >> "$rssfile"
-        echo "$(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i)" >> "$rssfile"
+        echo "$(get_post_title "$i")" >> "$rssfile"
         echo '</title><description><![CDATA[' >> "$rssfile"
         echo "$(get_html_file_content 'text' 'entry' 'cut' <$i)" >> "$rssfile"
         echo "]]></description><link>$global_url/$i</link>" >> "$rssfile"
