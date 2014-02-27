@@ -160,6 +160,9 @@ global_variables() {
     # feed file (rss in this case)
     blog_feed="feed.rss"
     number_of_feed_articles="10"
+    # Regexp matching the HTML line where to do the cut
+    # note that slash is regexp separator so you need to prepend it with backslash
+    cut_line='<hr ?\/?>'
     # prefix for tags/categories files
     # please make sure that no other html file starts with this prefix
     prefix_tags="tag_"
@@ -314,13 +317,13 @@ disqus_footer() {
 # Reads HTML file from stdin, prints its content to stdout
 # $1    where to start ("text" or "entry")
 # $2    where to stop ("text" or "entry")
-# $3    "cut" to remove text from <!-- text cut --> to <!-- text end -->
-#       note that this does not remove <!-- text cut --> comment itself,
+# $3    "cut" to remove text from <hr /> to <!-- text end -->
+#       note that this does not remove <hr /> line itself,
 #       so you can see if text was cut or not
 get_html_file_content() {
     awk '/<!-- '$1' begin -->/, /<!-- '$2' end -->/{
         if (!/<!-- '$1' begin -->/ && !/<!-- '$2' end -->/) print
-        if ("'$3'" == "cut" && /<!-- text cut -->/){
+        if ("'$3'" == "cut" && /'"$cut_line"'/){
             if ("'$2'" == "text") exit # no need to read further
             while (getline > 0 && !/<!-- text end -->/) {}
         }
@@ -659,7 +662,7 @@ rebuild_index() {
     for i in $(ls -t *.html); do # sort by date, newest first
         is_boilerplate_file "$i" && continue;
         if [[ "$n" -ge "$number_of_index_articles" ]]; then break; fi
-        get_html_file_content 'entry' 'entry' 'cut' <$i | sed "s|<.-- text cut -->|<p class=\"readmore\"><a href=\"$i\">$template_read_more</a></p>|" >> "$contentfile"
+        get_html_file_content 'entry' 'entry' 'cut' <$i | awk '/'"$cut_line"'/ { print "<p class=\"readmore\"><a href=\"'$i'\">'"$template_read_more"'</a></p>" ; next } 1' >> "$contentfile"
         echo -n "."
         n=$(( $n + 1 ))
     done
