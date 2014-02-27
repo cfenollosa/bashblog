@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # BashBlog, a simple blog system written in a single bash script
-# Copyright: Carles Fenollosa <carles.fenollosa@bsc.es>, 2011-2013
+# Copyright: Carles Fenollosa <carles.fenollosa@bsc.es>, 2011-2014
 # With contributions from many others: 
 # https://github.com/carlesfe/bashblog/contributors
 
@@ -592,7 +592,7 @@ list_posts() {
     n=1
     for i in $(ls -t *.html); do
         if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
-        line="$n # $(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i) # $(LC_ALL=$date_locale date -r $i +"date_format")"
+        line="$n # $(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i) # $(LC_ALL=$date_locale date -r $i +"$date_format")"
         lines="${lines}""$line""\n" # Weird stuff needed for the newlines
         n=$(( $n + 1 ))
     done 
