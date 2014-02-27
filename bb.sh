@@ -181,6 +181,12 @@ global_variables() {
     template_archive_title="All posts"
     # "All tags"
     template_tags_title="All tags"
+    # "posts" (on "All tags" page, text at the end of each tag line, like "2. Music - 15 posts")
+    template_tags_posts="posts"
+    # "Posts tagged" (text on a title of a page with index of one tag, like "My Blog - Posts tagged "Music"")
+    template_tag_title="Posts tagged"
+    # "Tags:" (beginning of line in HTML file with list of all tags for this article)
+    template_tags_line_header="Tags:"
     # "Back to the index page" (used on archive page, it is link to blog index)
     template_archive_index_page="Back to the index page"
     # "Subscribe" (used on bottom of index page, it is link to RSS feed)
@@ -487,13 +493,13 @@ write_entry() {
 <p>The rest of the text file is an <b>html</b> blog post. The process will continue as soon
 as you exit your editor.</p>
 
-<p>Tags: keep-this-tag-format, tags-are-optional, example</p>
+<p>$template_tags_line_header keep-this-tag-format, tags-are-optional, example</p>
 EOF
         [[ "$fmt" == "md" ]] && cat << EOF >> "$TMPFILE"
 The rest of the text file is a **Markdown** blog post. The process will continue
 as soon as you exit your editor.
 
-Tags: keep-this-tag-format, tags-are-optional, beware-with-underscores-in-markdown, example
+$template_tags_line_header keep-this-tag-format, tags-are-optional, beware-with-underscores-in-markdown, example
 EOF
     fi
     chmod 600 "$TMPFILE"
@@ -546,11 +552,11 @@ EOF
     # Parse possible tags
     cp "$filename" "$filename.bak"
     while read line; do
-        if [[ "$line" = "<p>Tags:"* ]]; then
+        if [[ "$line" = "<p>$template_tags_line_header"* ]]; then
             tags="$(echo "$line" | cut -d ":" -f 2- | sed -e 's/<\/p>//g' -e 's/^ *//' -e 's/ *$//' -e 's/, /,/g')"
             IFS=, read -r -a array <<< "$tags"
 
-            echo -n "<p>Tags: "
+            echo -n "<p>$template_tags_line_header "
             (for item in "${array[@]}"; do
                 echo -n "<a href='$prefix_tags$item.html'>$item</a>, "
             done ) | sed 's/, $//g'
@@ -604,11 +610,11 @@ all_tags() {
 
     echo "<h3>$template_tags_title</h3>" >> "$contentfile"
     echo "<ul>" >> "$contentfile"
-    for i in $(ls tag_*.html); do
+    for i in $(ls $prefix_tags*.html); do
         echo -n "."
         nposts="$(grep -c "^<\!-- entry begin -->$" $i)"
         tagname="$(echo $i | cut -c $((${#prefix_tags}+1))- | sed 's/\.html//g')"
-        echo "<li><a href="$i">$tagname</a> &mdash; $nposts posts</li>" >> "$contentfile"
+        echo "<li><a href="$i">$tagname</a> &mdash; $nposts $template_tags_posts</li>" >> "$contentfile"
     done
     echo ""
     echo "</ul>" >> "$contentfile"
@@ -665,7 +671,7 @@ rebuild_tags() {
         tmpfile="$(mktemp tmp.XXX)"
         awk '/<!-- entry begin -->/, /<!-- entry end -->/' "$i" >> "$tmpfile"
         while read line; do
-            if [[ "$line" = "<p>Tags:"* ]]; then
+            if [[ "$line" = "<p>$template_tags_line_header"* ]]; then
                 # 'split' tags by commas
                 echo "$line" | cut -c 10- | while IFS="," read -a tags; do
                     for dirty_tag in "${tags[@]}"; do # extract html around it
@@ -681,7 +687,7 @@ rebuild_tags() {
     # Now generate the tag files with headers, footers, etc
     for i in $(ls -t $prefix_tags*.tmp.html); do
         tagname="$(echo $i | cut -c $((${#prefix_tags}+1))- | sed 's/\.tmp\.html//g')"
-        create_html_page "$i" "$prefix_tags$tagname.html" yes "$global_title &mdash; Posts tagged \"$tagname\""
+        create_html_page "$i" "$prefix_tags$tagname.html" yes "$global_title &mdash; $template_tag_title \"$tagname\""
         rm "$i"
     done
     echo
