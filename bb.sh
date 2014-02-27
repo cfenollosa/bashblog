@@ -160,6 +160,10 @@ global_variables() {
     # feed file (rss in this case)
     blog_feed="feed.rss"
     number_of_feed_articles="10"
+    # "cut" blog entry when putting it to index page
+    # i.e. include only up to first <hr> (---- in markdown)
+    # possible values: "cut", ""
+    cut_do="cut"
     # Regexp matching the HTML line where to do the cut
     # note that slash is regexp separator so you need to prepend it with backslash
     cut_line='<hr ?\/?>'
@@ -662,7 +666,11 @@ rebuild_index() {
     for i in $(ls -t *.html); do # sort by date, newest first
         is_boilerplate_file "$i" && continue;
         if [[ "$n" -ge "$number_of_index_articles" ]]; then break; fi
-        get_html_file_content 'entry' 'entry' 'cut' <$i | awk '/'"$cut_line"'/ { print "<p class=\"readmore\"><a href=\"'$i'\">'"$template_read_more"'</a></p>" ; next } 1' >> "$contentfile"
+        if [ "$cut_do" ]; then
+            get_html_file_content 'entry' 'entry' 'cut' <$i | awk '/'"$cut_line"'/ { print "<p class=\"readmore\"><a href=\"'$i'\">'"$template_read_more"'</a></p>" ; next } 1' >> "$contentfile"
+        else
+            get_html_file_content 'entry' 'entry' <$i >> "$contentfile"
+        fi
         echo -n "."
         n=$(( $n + 1 ))
     done
@@ -761,7 +769,7 @@ make_rss() {
         echo '<item><title>' >> "$rssfile"
         echo "$(get_post_title "$i")" >> "$rssfile"
         echo '</title><description><![CDATA[' >> "$rssfile"
-        echo "$(get_html_file_content 'text' 'entry' 'cut' <$i)" >> "$rssfile"
+        echo "$(get_html_file_content 'text' 'entry' $cut_do <$i)" >> "$rssfile"
         echo "]]></description><link>$global_url/$i</link>" >> "$rssfile"
         echo "<guid>$global_url/$i</guid>" >> "$rssfile"
         echo "<dc:creator>$global_author</dc:creator>" >> "$rssfile"
