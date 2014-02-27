@@ -24,16 +24,17 @@
 # Files that this script generates:
 #	- main.css (inherited from my web page) and blog.css (blog-specific stylesheet)
 #	- one .html for each post
+#   - one tag_*.html file for each tag
 #	- index.html (regenerated each run)
-# 	- feed.rss (regenerated each run)
-#	- all_posts.html (regenerated each run)
+# 	- feed.rss (idem)
+#	- all_posts.html (idem)
+#   - all_tags.html (idem)
 # 	- it also generates temporal files, which are removed afterwards
 #
 # It generates valid html and rss files, so keep care to use valid xhtml when editing a post
 #
-# There are many loops which iterate on '*.html' so make sure that the only html files 
-# on this folder are the blog entries and index.html and all_posts.html. Drafts must go
-# into drafts/ and any other *.html file should be moved out of the way
+# There are many loops which iterate on '*.html' so make sure not to manually put other
+# html files on this folder.
 #
 # Read more: https://github.com/cfenollosa/bashblog
 
@@ -65,6 +66,7 @@
 #########################################################################################
 #
 # 2.1      Support for tags/categories
+#          'delete' command
 # 2.0.3    Support for other analytics code, via external file
 # 2.0.2    Fixed bug when $body_begin_file was empty
 #          Added extra line in the footer linking to the github project
@@ -154,6 +156,7 @@ global_variables() {
     number_of_index_articles="8"
     # global archive
     archive_index="all_posts.html"
+    tags_index="all_tags.html"
     # feed file (rss in this case)
     blog_feed="feed.rss"
     number_of_feed_articles="10"
@@ -176,6 +179,8 @@ global_variables() {
     template_archive="View more posts"
     # "All posts" (title of archive page)
     template_archive_title="All posts"
+    # "All tags"
+    template_tags_title="All tags"
     # "Back to the index page" (used on archive page, it is link to blog index)
     template_archive_index_page="Back to the index page"
     # "Subscribe" (used on bottom of index page, it is link to RSS feed)
@@ -341,7 +346,7 @@ twitter() {
 # Return 0 (bash return value 'true') if the input file is am index, feed, etc
 # or 1 (bash return value 'false') if it is a blogpost
 is_boilerplate_file() {
-    if [[ "$1" == "$index_file" ]] || [[ "$1" == "$archive_index" ]] || [[ "$1" == "$footer_file" ]] || [[ "$1" == "$header_file" ]] || [[ "$1" == "$global_analytics_file" ]] || [[ "$1" = "$prefix_tags"* ]] ; then return 0
+    if [[ "$1" == "$index_file" ]] || [[ "$1" == "$archive_index" ]] || [[ "$1" == "$tags_index" ]] || [[ "$1" == "$footer_file" ]] || [[ "$1" == "$header_file" ]] || [[ "$1" == "$global_analytics_file" ]] || [[ "$1" = "$prefix_tags"* ]] ; then return 0
     else return 1
     fi
 }
@@ -589,6 +594,32 @@ all_posts() {
     rm "$contentfile"
 }
 
+# Create an index page with all the tags
+all_tags() {
+    echo -n "Creating an index page with all the tags "
+    contentfile="$tags_index.$RANDOM"
+    while [ -f "$contentfile" ]; do
+        contentfile="$tags_index.$RANDOM"
+    done
+
+    echo "<h3>$template_tags_title</h3>" >> "$contentfile"
+    echo "<ul>" >> "$contentfile"
+    for i in $(ls tag_*.html); do
+        echo -n "."
+        nposts="$(grep -c "^<\!-- entry begin -->$" $i)"
+        tagname="$(echo $i | cut -c $((${#prefix_tags}+1))- | sed 's/\.html//g')"
+        echo "<li><a href="$i">$tagname</a> &mdash; $nposts posts</li>" >> "$contentfile"
+    done
+    echo ""
+    echo "</ul>" >> "$contentfile"
+    echo '<div id="all_posts"><a href="'./'">'$template_archive_index_page'</a></div>' >> "$contentfile"
+
+    create_html_page "$contentfile" "$tags_index.tmp" yes "$global_title &mdash; $template_tags_title"
+    mv "$tags_index.tmp" "$tags_index"
+    chmod 644 "$tags_index"
+    rm "$contentfile"
+}
+
 # Generate the index.html with the content of the latest posts
 rebuild_index() {
     echo -n "Rebuilding the index "
@@ -609,11 +640,9 @@ rebuild_index() {
         n=$(( $n + 1 ))
     done
 
-    if [[ "$global_feedburner" == "" ]]; then
-        echo '<div id="all_posts"><a href="'$archive_index'">'$template_archive'</a> &mdash; <a href="'$blog_feed'">'$template_subscribe'</a></div>' >> "$contentfile"
-    else
-        echo '<div id="all_posts"><a href="'$archive_index'">'$template_archive'</a> &mdash; <a href="'$global_feedburner'">Subscribe</a></div>' >> "$contentfile"
-    fi
+    feed="$blog_feed"
+    if [[ "$global_feedburner" != "" ]]; then feed="$global_feedburner"; fi
+    echo '<div id="all_posts"><a href="'$archive_index'">'$template_archive'</a> &mdash; <a href="'$tags_index'">'$template_tags_title'</a> &mdash; <a href="'$feed'">'$template_subscribe'</a></div>' >> "$contentfile"
 
     echo ""
 
@@ -837,6 +866,7 @@ echo "Commands:"
 echo "    post [-m] [filename]    insert a new blog post, or the FILENAME of a draft to continue editing it"
 echo "                            use '-m' to edit the post as Markdown text"
 echo "    edit [filename]         edit an already published .html file. Never edit manually a published .html file,"
+echo "    delete [filename]       deletes the post"
 echo "                            always use this function as it keeps the original timestamp "
 echo "                            and rebuilds whatever indices are needed"
 echo "    rebuild                 regenerates all the pages and posts, preserving the content of the entries"
@@ -906,7 +936,7 @@ do_main() {
         echo "Please set your \$EDITOR environment variable" && exit
 
     # Check for validity of argument
-    [[ "$1" != "reset" ]] && [[ "$1" != "post" ]] && [[ "$1" != "rebuild" ]] && [[ "$1" != "list" ]] && [[ "$1" != "edit" ]] &&
+    [[ "$1" != "reset" ]] && [[ "$1" != "post" ]] && [[ "$1" != "rebuild" ]] && [[ "$1" != "list" ]] && [[ "$1" != "edit" ]] && [[ "$1" != "delete" ]] && 
         usage && exit
 
     [[ "$1" == "list" ]] &&
@@ -938,8 +968,10 @@ do_main() {
     [[ "$1" == "post" ]] && write_entry "$@"
     [[ "$1" == "rebuild" ]] && rebuild_all_entries
     [[ "$1" == "edit" ]] && edit "$2"
+    [[ "$1" == "delete" ]] && rm "$2" &> /dev/null 
     rebuild_index
     all_posts
+    all_tags
     make_rss
     rebuild_tags
     delete_includes
