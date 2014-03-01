@@ -178,6 +178,8 @@ global_variables() {
     # extra content to add just after we open the <body> tag
     # and before the actual blog content
     body_begin_file=""
+    # CSS files to include on every page
+    css_include=('main.css' 'blog.css')
 
     # Localization and i18n
     # "Comments?" (used in twitter link after every post)
@@ -817,8 +819,9 @@ create_includes() {
         echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">' > ".header.html"
         echo '<html xmlns="http://www.w3.org/1999/xhtml"><head>' >> ".header.html"
         echo '<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />' >> ".header.html"
-        echo '<link rel="stylesheet" href="main.css" type="text/css" />' >> ".header.html"
-        echo '<link rel="stylesheet" href="blog.css" type="text/css" />' >> ".header.html"
+        for css_file in ${css_include[*]}; do
+            echo '<link rel="stylesheet" href="'$css_file'" type="text/css" />' >> ".header.html"
+        done
         if [[ "$global_feedburner" == "" ]]; then
             echo '<link rel="alternate" type="application/rss+xml" title="'$template_subscribe_browser_button'" href="'$blog_feed'" />' >> ".header.html"
         else 
