@@ -338,14 +338,25 @@ get_html_file_content() {
 # Please note that this function does not automatically republish anything, as
 # it is usually called from 'main'.
 #
-# 'edit' is kind of an advanced feature, as it leaves to the user the responsibility
-# of editing an html file
+# Note that it edits HTML file, even if you wrote the post as markdown originally
+# Note that if you edit title then filename might also change
 #
 # $1 	the file to edit
 edit() {
-    timestamp="$(date -r $1 +'%Y%m%d%H%M')"
-    $EDITOR "$1"
-    touch -t $timestamp "$1"
+    edit_timestamp="$(date -r $1 +'%Y%m%d%H%M')"
+    # Create the content file
+    TMPFILE="$1.$RANDOM"
+    # Title
+    echo "$(get_post_title $1)" > "$TMPFILE"
+    # Post text with plaintext tags
+    get_html_file_content 'text' 'text' <$1 | sed "s|<a href='$prefix_tags\([^']*\).html'>\\1</a>|\\1|g" >> "$TMPFILE"
+    rm $1
+    $EDITOR "$TMPFILE"
+    parse_file "$TMPFILE" # this command sets $filename as the html processed file
+    touch -t $edit_timestamp "$filename"
+    rm "$TMPFILE"
+    chmod 644 "$filename"
+    echo "Posted $filename"
 }
 
 # Adds the code needed by the twitter button
