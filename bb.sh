@@ -499,7 +499,11 @@ parse_file() {
             title=$(echo "$line" | sed 's/<\/*p>//g')
             filename="$(echo $title | tr [:upper:] [:lower:])"
             filename="$(echo $filename | sed 's/\ /-/g')"
+            filename="$(echo $filename | sed 'y/йцукенгшщзхъфывапролджэячсмитьбю/jcukengsszh-fyvaproldzeahsmit-by/')"
+            filename="$(echo $filename | sed 'y/ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ/jcukengsszh-fyvaproldzeahsmit-by/')"
             filename="$(echo $filename | tr -dc '[:alnum:]-')" # html likes alphanumeric
+            filename="$(echo $filename | sed 's/^-*//')" # unix utilities are unhappy if filename starts with -
+            [ "$filename" ] || filename=$RANDOM # if filename gets empty, put something in it
             filename="$filename.html"
             content="$filename.tmp"
 
