@@ -178,8 +178,9 @@ global_variables() {
     # extra content to add just after we open the <body> tag
     # and before the actual blog content
     body_begin_file=""
-    # CSS files to include on every page
-    css_include=('main.css' 'blog.css')
+    # CSS files to include on every page, f.ex. css_include=('main.css' 'blog.css')
+    # leave empty to use generated
+    css_include=()
 
     # Localization and i18n
     # "Comments?" (used in twitter link after every post)
@@ -846,6 +847,7 @@ delete_includes() {
 create_css() {
     # To avoid overwriting manual changes. However it is recommended that
     # this function is modified if the user changes the blog.css file
+    [ $css_include ] && return || css_include=('main.css' 'blog.css')
     if [[ ! -f "blog.css" ]]; then 
         # blog.css directives will be loaded after main.css and thus will prevail
         echo '#title{font-size: x-large;}
@@ -1023,8 +1025,8 @@ do_main() {
     [[ "$1" == "reset" ]] &&
         reset && exit
 
-    create_includes
     create_css
+    create_includes
     [[ "$1" == "post" ]] && write_entry "$@"
     [[ "$1" == "rebuild" ]] && rebuild_all_entries
     [[ "$1" == "delete" ]] && rm "$2" &> /dev/null 
