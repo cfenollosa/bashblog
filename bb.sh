@@ -476,6 +476,16 @@ parse_file() {
                 suffix="$RANDOM"
                 filename="$(echo $filename | sed 's/\.html/'$suffix'\.html/g')"
             done
+	# Parse possible tags
+        elif [[ "$line" = "<p>$template_tags_line_header"* ]]; then
+            tags="$(echo "$line" | cut -d ":" -f 2- | sed -e 's/<\/p>//g' -e 's/^ *//' -e 's/ *$//' -e 's/, /,/g')"
+            IFS=, read -r -a array <<< "$tags"
+
+            echo -n "<p>$template_tags_line_header " >> "$content"
+            (for item in "${array[@]}"; do
+                echo -n "<a href='$prefix_tags$item.html'>$item</a>, "
+            done ) | sed 's/, $//g' >> "$content"
+            echo -e "</p>" >> "$content"
         else
             echo "$line" >> "$content"
         fi
@@ -574,23 +584,6 @@ EOF
     done
 
     rm "$TMPFILE"
-    # Parse possible tags
-    cp "$filename" "$filename.bak"
-    while read line; do
-        if [[ "$line" = "<p>$template_tags_line_header"* ]]; then
-            tags="$(echo "$line" | cut -d ":" -f 2- | sed -e 's/<\/p>//g' -e 's/^ *//' -e 's/ *$//' -e 's/, /,/g')"
-            IFS=, read -r -a array <<< "$tags"
-
-            echo -n "<p>$template_tags_line_header "
-            (for item in "${array[@]}"; do
-                echo -n "<a href='$prefix_tags$item.html'>$item</a>, "
-            done ) | sed 's/, $//g'
-            echo -e "</p>"
-        else echo "$line"
-        fi
-    done < "$filename.bak" > "$filename"
-    rm "$filename.bak"
-
     chmod 644 "$filename"
     echo "Posted $filename"
 }
