@@ -666,7 +666,7 @@ all_tags() {
     echo "<ul>" >> "$contentfile"
     for i in $(ls $prefix_tags*.html); do
         echo -n "."
-        nposts="$(grep -c "^<\!-- entry begin -->$" $i)"
+        nposts="$(grep -c "<\!-- text begin -->" $i)"
         tagname="$(echo $i | cut -c $((${#prefix_tags}+1))- | sed 's/\.html//g')"
         echo "<li><a href="$i">$tagname</a> &mdash; $nposts $template_tags_posts</li>" >> "$contentfile"
     done
@@ -720,14 +720,18 @@ rebuild_index() {
 rebuild_tags() {
     echo -n "Rebuilding tag pages "
     n=0
-    rm $prefix_tags*.tmp.html &> /dev/null
+    rm $prefix_tags*.html &> /dev/null
     # First we will process all files and create temporal tag files
     # with just the content of the posts
     for i in $(ls -t *.html); do
         is_boilerplate_file "$i" && continue;
         echo -n "."
         tmpfile="$(mktemp tmp.XXX)"
-        awk '/<!-- entry begin -->/, /<!-- entry end -->/' "$i" >> "$tmpfile"
+        if [ "$cut_do" ]; then
+            get_html_file_content 'entry' 'entry' 'cut' <$i | awk '/'"$cut_line"'/ { print "<p class=\"readmore\"><a href=\"'$i'\">'"$template_read_more"'</a></p>" ; next } 1' >> "$tmpfile"
+        else
+            get_html_file_content 'entry' 'entry' <$i >> "$tmpfile"
+        fi
         while read line; do
             if [[ "$line" = "<p>$template_tags_line_header"* ]]; then
                 # 'split' tags by commas
@@ -739,7 +743,7 @@ rebuild_tags() {
                     done
                 done
             fi
-        done < "$tmpfile"
+        done < "$i"
         rm "$tmpfile"
     done
     # Now generate the tag files with headers, footers, etc
