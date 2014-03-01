@@ -347,7 +347,8 @@ get_html_file_content() {
 #	"full" to edit full HTML, and not only text part (keeps old filename)
 #	leave empty for default behavior (edit only text part and change name)
 edit() {
-    edit_timestamp="$(date -r $1 +'%Y%m%d%H%M')"
+    # Original post timestamp
+    edit_timestamp="$(LC_ALL=$date_locale date -r $1 +"%a, %d %b %Y %H:%M:%S %z" )"
     if [ "$2" = "full" ]; then
         $EDITOR "$1"
         filename="$1"
@@ -360,14 +361,14 @@ edit() {
         get_html_file_content 'text' 'text' <$1 | sed "s|<a href='$prefix_tags\([^']*\).html'>\\1</a>|\\1|g" >> "$TMPFILE"
         rm $1
         $EDITOR "$TMPFILE"
-        parse_file "$TMPFILE" # this command sets $filename as the html processed file
+        parse_file "$TMPFILE" "$edit_timestamp" # this command sets $filename as the html processed file
         rm "$TMPFILE"
         if [ "$2" = "keep" ]; then
             mv $filename $1
             filename="$1"
         fi
     fi
-    touch -t $edit_timestamp "$filename"
+    touch -d "$edit_timestamp" "$filename"
     chmod 644 "$filename"
     echo "Posted $filename"
 }
@@ -481,6 +482,9 @@ create_html_page() {
 }
 
 # Parse the plain text file into an html file
+#
+# $1    file name
+# $2    (optional) timestamp for the file
 parse_file() {
     # Read for the title and check that the filename is ok
     title=""
@@ -516,7 +520,7 @@ parse_file() {
     done < "$1"
 
     # Create the actual html page
-    create_html_page "$content" "$filename" no "$title"
+    create_html_page "$content" "$filename" no "$title" "$2"
     rm "$content"
 }
 
