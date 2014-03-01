@@ -342,19 +342,32 @@ get_html_file_content() {
 # Note that if you edit title then filename might also change
 #
 # $1 	the file to edit
+# $2	(optional) edit mode:
+#	"keep" to keep old filename
+#	"full" to edit full HTML, and not only text part (keeps old filename)
+#	leave empty for default behavior (edit only text part and change name)
 edit() {
     edit_timestamp="$(date -r $1 +'%Y%m%d%H%M')"
-    # Create the content file
-    TMPFILE="$1.$RANDOM"
-    # Title
-    echo "$(get_post_title $1)" > "$TMPFILE"
-    # Post text with plaintext tags
-    get_html_file_content 'text' 'text' <$1 | sed "s|<a href='$prefix_tags\([^']*\).html'>\\1</a>|\\1|g" >> "$TMPFILE"
-    rm $1
-    $EDITOR "$TMPFILE"
-    parse_file "$TMPFILE" # this command sets $filename as the html processed file
+    if [ "$2" = "full" ]; then
+        $EDITOR "$1"
+        filename="$1"
+    else
+        # Create the content file
+        TMPFILE="$1.$RANDOM"
+        # Title
+        echo "$(get_post_title $1)" > "$TMPFILE"
+        # Post text with plaintext tags
+        get_html_file_content 'text' 'text' <$1 | sed "s|<a href='$prefix_tags\([^']*\).html'>\\1</a>|\\1|g" >> "$TMPFILE"
+        rm $1
+        $EDITOR "$TMPFILE"
+        parse_file "$TMPFILE" # this command sets $filename as the html processed file
+        rm "$TMPFILE"
+        if [ "$2" = "keep" ]; then
+            mv $filename $1
+            filename="$1"
+        fi
+    fi
     touch -t $edit_timestamp "$filename"
-    rm "$TMPFILE"
     chmod 644 "$filename"
     echo "Posted $filename"
 }
