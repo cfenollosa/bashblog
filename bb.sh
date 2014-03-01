@@ -1053,3 +1053,5 @@ do_main() {
 # Do not change anything here. If you want to modify the code, edit do_main()
 #
 do_main $*
+
+# vim: set shiftwidth=4 expandtab:
