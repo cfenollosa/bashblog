@@ -354,7 +354,7 @@ edit() {
         filename="$1"
     else
         # Create the content file
-        TMPFILE="$1.$RANDOM"
+        TMPFILE="$(basename $1).$RANDOM.html"
         # Title
         echo "$(get_post_title $1)" > "$TMPFILE"
         # Post text with plaintext tags
