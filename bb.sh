@@ -492,7 +492,7 @@ create_html_page() {
 parse_file() {
     # Read for the title and check that the filename is ok
     title=""
-    while read line; do
+    while IFS='' read line; do
         if [[ "$title" == "" ]]; then
             # set title and
             # remove extra <p> and </p> added by markdown
@@ -732,7 +732,7 @@ rebuild_tags() {
         else
             get_html_file_content 'entry' 'entry' <$i >> "$tmpfile"
         fi
-        while read line; do
+        while IFS='' read line; do
             if [[ "$line" = "<p>$template_tags_line_header"* ]]; then
                 # 'split' tags by commas
                 echo "$line" | cut -c 10- | while IFS="," read -a tags; do
