@@ -920,8 +920,10 @@ echo ""
 echo "Commands:"
 echo "    post [-m] [filename]    insert a new blog post, or the filename of a draft to continue editing it"
 echo "                            use '-m' to edit the post as Markdown text"
-echo "    edit [filename]         edit an already published .html file. **NEVER** edit manually a published .html file,"
+echo "    edit [-n|-f] [filename] edit an already published .html file. **NEVER** edit manually a published .html file,"
 echo "                            always use this function as it keeps internal data and rebuilds the blog"
+echo "                            use '-n' to give the file a new name, if title was changed"
+echo "                            use '-f' to edit full html file, instead of just text part (also preserves name)"
 echo "    delete [filename]       deletes the post and rebuilds the blog"
 echo "    rebuild                 regenerates all the pages and posts, preserving the content of the entries"
 echo "    reset                   deletes everything except this script. Use with a lot of caution and back up first!"
@@ -997,7 +999,7 @@ do_main() {
         list_posts && exit
 
     if [[ "$1" == "edit" ]]; then
-        if [[ $# -lt 2 ]] || [[ ! -f "$2" ]]; then
+        if [[ $# -lt 2 ]] || [[ ! -f "${!#}" ]]; then
             echo "Please enter a valid html file to edit"
             exit
         fi
@@ -1021,8 +1023,16 @@ do_main() {
     create_css
     [[ "$1" == "post" ]] && write_entry "$@"
     [[ "$1" == "rebuild" ]] && rebuild_all_entries
-    [[ "$1" == "edit" ]] && edit "$2"
     [[ "$1" == "delete" ]] && rm "$2" &> /dev/null 
+    if [[ "$1" == "edit" ]]; then
+        if [[ "$2" == "-n" ]]; then
+            edit "$3"
+        elif [[ "$2" == "-f" ]]; then
+            edit "$3" full
+        else
+            edit "$2" keep
+        fi
+    fi
     rebuild_index
     all_posts
     rebuild_tags
