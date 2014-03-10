@@ -338,14 +338,39 @@ get_html_file_content() {
 # Please note that this function does not automatically republish anything, as
 # it is usually called from 'main'.
 #
-# 'edit' is kind of an advanced feature, as it leaves to the user the responsibility
-# of editing an html file
+# Note that it edits HTML file, even if you wrote the post as markdown originally
+# Note that if you edit title then filename might also change
 #
 # $1 	the file to edit
+# $2	(optional) edit mode:
+#	"keep" to keep old filename
+#	"full" to edit full HTML, and not only text part (keeps old filename)
+#	leave empty for default behavior (edit only text part and change name)
 edit() {
-    timestamp="$(date -r $1 +'%Y%m%d%H%M')"
-    $EDITOR "$1"
-    touch -t $timestamp "$1"
+    # Original post timestamp
+    edit_timestamp="$(LC_ALL=$date_locale date -r $1 +"%a, %d %b %Y %H:%M:%S %z" )"
+    if [ "$2" = "full" ]; then
+        $EDITOR "$1"
+        filename="$1"
+    else
+        # Create the content file
+        TMPFILE="$(basename $1).$RANDOM.html"
+        # Title
+        echo "$(get_post_title $1)" > "$TMPFILE"
+        # Post text with plaintext tags
+        get_html_file_content 'text' 'text' <$1 | sed "s|<a href='$prefix_tags\([^']*\).html'>\\1</a>|\\1|g" >> "$TMPFILE"
+        rm $1
+        $EDITOR "$TMPFILE"
+        parse_file "$TMPFILE" "$edit_timestamp" # this command sets $filename as the html processed file
+        rm "$TMPFILE"
+        if [ "$2" = "keep" ]; then
+            mv $filename $1
+            filename="$1"
+        fi
+    fi
+    touch -d "$edit_timestamp" "$filename"
+    chmod 644 "$filename"
+    echo "Posted $filename"
 }
 
 # Adds the code needed by the twitter button
@@ -457,6 +482,9 @@ create_html_page() {
 }
 
 # Parse the plain text file into an html file
+#
+# $1    file name
+# $2    (optional) timestamp for the file
 parse_file() {
     # Read for the title and check that the filename is ok
     title=""
@@ -476,13 +504,23 @@ parse_file() {
                 suffix="$RANDOM"
                 filename="$(echo $filename | sed 's/\.html/'$suffix'\.html/g')"
             done
+	# Parse possible tags
+        elif [[ "$line" = "<p>$template_tags_line_header"* ]]; then
+            tags="$(echo "$line" | cut -d ":" -f 2- | sed -e 's/<\/p>//g' -e 's/^ *//' -e 's/ *$//' -e 's/, /,/g')"
+            IFS=, read -r -a array <<< "$tags"
+
+            echo -n "<p>$template_tags_line_header " >> "$content"
+            (for item in "${array[@]}"; do
+                echo -n "<a href='$prefix_tags$item.html'>$item</a>, "
+            done ) | sed 's/, $//g' >> "$content"
+            echo -e "</p>" >> "$content"
         else
             echo "$line" >> "$content"
         fi
     done < "$1"
 
     # Create the actual html page
-    create_html_page "$content" "$filename" no "$title"
+    create_html_page "$content" "$filename" no "$title" "$2"
     rm "$content"
 }
 
@@ -574,23 +612,6 @@ EOF
     done
 
     rm "$TMPFILE"
-    # Parse possible tags
-    cp "$filename" "$filename.bak"
-    while read line; do
-        if [[ "$line" = "<p>$template_tags_line_header"* ]]; then
-            tags="$(echo "$line" | cut -d ":" -f 2- | sed -e 's/<\/p>//g' -e 's/^ *//' -e 's/ *$//' -e 's/, /,/g')"
-            IFS=, read -r -a array <<< "$tags"
-
-            echo -n "<p>$template_tags_line_header "
-            (for item in "${array[@]}"; do
-                echo -n "<a href='$prefix_tags$item.html'>$item</a>, "
-            done ) | sed 's/, $//g'
-            echo -e "</p>"
-        else echo "$line"
-        fi
-    done < "$filename.bak" > "$filename"
-    rm "$filename.bak"
-
     chmod 644 "$filename"
     echo "Posted $filename"
 }
@@ -899,8 +920,10 @@ echo ""
 echo "Commands:"
 echo "    post [-m] [filename]    insert a new blog post, or the filename of a draft to continue editing it"
 echo "                            use '-m' to edit the post as Markdown text"
-echo "    edit [filename]         edit an already published .html file. **NEVER** edit manually a published .html file,"
+echo "    edit [-n|-f] [filename] edit an already published .html file. **NEVER** edit manually a published .html file,"
 echo "                            always use this function as it keeps internal data and rebuilds the blog"
+echo "                            use '-n' to give the file a new name, if title was changed"
+echo "                            use '-f' to edit full html file, instead of just text part (also preserves name)"
 echo "    delete [filename]       deletes the post and rebuilds the blog"
 echo "    rebuild                 regenerates all the pages and posts, preserving the content of the entries"
 echo "    reset                   deletes everything except this script. Use with a lot of caution and back up first!"
@@ -976,7 +999,7 @@ do_main() {
         list_posts && exit
 
     if [[ "$1" == "edit" ]]; then
-        if [[ $# -lt 2 ]] || [[ ! -f "$2" ]]; then
+        if [[ $# -lt 2 ]] || [[ ! -f "${!#}" ]]; then
             echo "Please enter a valid html file to edit"
             exit
         fi
@@ -1000,8 +1023,16 @@ do_main() {
     create_css
     [[ "$1" == "post" ]] && write_entry "$@"
     [[ "$1" == "rebuild" ]] && rebuild_all_entries
-    [[ "$1" == "edit" ]] && edit "$2"
     [[ "$1" == "delete" ]] && rm "$2" &> /dev/null 
+    if [[ "$1" == "edit" ]]; then
+        if [[ "$2" == "-n" ]]; then
+            edit "$3"
+        elif [[ "$2" == "-f" ]]; then
+            edit "$3" full
+        else
+            edit "$2" keep
+        fi
+    fi
     rebuild_index
     all_posts
     rebuild_tags
