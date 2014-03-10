@@ -349,6 +349,7 @@ get_html_file_content() {
 edit() {
     # Original post timestamp
     edit_timestamp="$(LC_ALL=$date_locale date -r $1 +"%a, %d %b %Y %H:%M:%S %z" )"
+    touch_timestamp="$(LC_ALL=$date_locale date -r $1 +'%Y%m%d%H%M')"
     if [ "$2" = "full" ]; then
         $EDITOR "$1"
         filename="$1"
@@ -368,7 +369,7 @@ edit() {
             filename="$1"
         fi
     fi
-    touch -d "$edit_timestamp" "$filename"
+    touch -t "$touch_timestamp" "$filename"
     chmod 644 "$filename"
     echo "Posted $filename"
 }
@@ -504,7 +505,7 @@ parse_file() {
                 suffix="$RANDOM"
                 filename="$(echo $filename | sed 's/\.html/'$suffix'\.html/g')"
             done
-	# Parse possible tags
+        # Parse possible tags
         elif [[ "$line" = "<p>$template_tags_line_header"* ]]; then
             tags="$(echo "$line" | cut -d ":" -f 2- | sed -e 's/<\/p>//g' -e 's/^ *//' -e 's/ *$//' -e 's/, /,/g')"
             IFS=, read -r -a array <<< "$tags"
