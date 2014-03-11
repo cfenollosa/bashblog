@@ -178,6 +178,9 @@ global_variables() {
     # extra content to add just after we open the <body> tag
     # and before the actual blog content
     body_begin_file=""
+    # CSS files to include on every page, f.ex. css_include=('main.css' 'blog.css')
+    # leave empty to use generated
+    css_include=()
 
     # Localization and i18n
     # "Comments?" (used in twitter link after every post)
@@ -489,14 +492,18 @@ create_html_page() {
 parse_file() {
     # Read for the title and check that the filename is ok
     title=""
-    while read line; do
+    while IFS='' read line; do
         if [[ "$title" == "" ]]; then
             # set title and
             # remove extra <p> and </p> added by markdown
             title=$(echo "$line" | sed 's/<\/*p>//g')
             filename="$(echo $title | tr [:upper:] [:lower:])"
             filename="$(echo $filename | sed 's/\ /-/g')"
+            filename="$(echo $filename | sed 'y/йцукенгшщзхъфывапролджэячсмитьбю/jcukengsszh-fyvaproldzeahsmit-by/')"
+            filename="$(echo $filename | sed 'y/ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ/jcukengsszh-fyvaproldzeahsmit-by/')"
             filename="$(echo $filename | tr -dc '[:alnum:]-')" # html likes alphanumeric
+            filename="$(echo $filename | sed 's/^-*//')" # unix utilities are unhappy if filename starts with -
+            [ "$filename" ] || filename=$RANDOM # if filename gets empty, put something in it
             filename="$filename.html"
             content="$filename.tmp"
 
@@ -659,7 +666,7 @@ all_tags() {
     echo "<ul>" >> "$contentfile"
     for i in $(ls $prefix_tags*.html); do
         echo -n "."
-        nposts="$(grep -c "^<\!-- entry begin -->$" $i)"
+        nposts="$(grep -c "<\!-- text begin -->" $i)"
         tagname="$(echo $i | cut -c $((${#prefix_tags}+1))- | sed 's/\.html//g')"
         echo "<li><a href="$i">$tagname</a> &mdash; $nposts $template_tags_posts</li>" >> "$contentfile"
     done
@@ -713,15 +720,19 @@ rebuild_index() {
 rebuild_tags() {
     echo -n "Rebuilding tag pages "
     n=0
-    rm $prefix_tags*.tmp.html &> /dev/null
+    rm $prefix_tags*.html &> /dev/null
     # First we will process all files and create temporal tag files
     # with just the content of the posts
     for i in $(ls -t *.html); do
         is_boilerplate_file "$i" && continue;
         echo -n "."
         tmpfile="$(mktemp tmp.XXX)"
-        awk '/<!-- entry begin -->/, /<!-- entry end -->/' "$i" >> "$tmpfile"
-        while read line; do
+        if [ "$cut_do" ]; then
+            get_html_file_content 'entry' 'entry' 'cut' <$i | awk '/'"$cut_line"'/ { print "<p class=\"readmore\"><a href=\"'$i'\">'"$template_read_more"'</a></p>" ; next } 1' >> "$tmpfile"
+        else
+            get_html_file_content 'entry' 'entry' <$i >> "$tmpfile"
+        fi
+        while IFS='' read line; do
             if [[ "$line" = "<p>$template_tags_line_header"* ]]; then
                 # 'split' tags by commas
                 echo "$line" | cut -c 10- | while IFS="," read -a tags; do
@@ -732,7 +743,7 @@ rebuild_tags() {
                     done
                 done
             fi
-        done < "$tmpfile"
+        done < "$i"
         rm "$tmpfile"
     done
     # Now generate the tag files with headers, footers, etc
@@ -817,8 +828,9 @@ create_includes() {
         echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">' > ".header.html"
         echo '<html xmlns="http://www.w3.org/1999/xhtml"><head>' >> ".header.html"
         echo '<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />' >> ".header.html"
-        echo '<link rel="stylesheet" href="main.css" type="text/css" />' >> ".header.html"
-        echo '<link rel="stylesheet" href="blog.css" type="text/css" />' >> ".header.html"
+        for css_file in ${css_include[*]}; do
+            echo '<link rel="stylesheet" href="'$css_file'" type="text/css" />' >> ".header.html"
+        done
         if [[ "$global_feedburner" == "" ]]; then
             echo '<link rel="alternate" type="application/rss+xml" title="'$template_subscribe_browser_button'" href="'$blog_feed'" />' >> ".header.html"
         else 
@@ -843,6 +855,7 @@ delete_includes() {
 create_css() {
     # To avoid overwriting manual changes. However it is recommended that
     # this function is modified if the user changes the blog.css file
+    [ $css_include ] && return || css_include=('main.css' 'blog.css')
     if [[ ! -f "blog.css" ]]; then 
         # blog.css directives will be loaded after main.css and thus will prevail
         echo '#title{font-size: x-large;}
@@ -1017,11 +1030,15 @@ do_main() {
         tar cfz ".backup.tar.gz" *.html &&
         chmod 600 ".backup.tar.gz"
 
+    # Keep first backup of this day containing yesterday's version of the blog
+    [ "$(date -r .yesterday.tar.gz +'%d')" != "$(date +'%d')" ] &&
+        cp .backup.tar.gz .yesterday.tar.gz &> /dev/null
+
     [[ "$1" == "reset" ]] &&
         reset && exit
 
-    create_includes
     create_css
+    create_includes
     [[ "$1" == "post" ]] && write_entry "$@"
     [[ "$1" == "rebuild" ]] && rebuild_all_entries
     [[ "$1" == "delete" ]] && rm "$2" &> /dev/null 
@@ -1048,3 +1065,5 @@ do_main() {
 # Do not change anything here. If you want to modify the code, edit do_main()
 #
 do_main $*
+
+# vim: set shiftwidth=4 expandtab:
