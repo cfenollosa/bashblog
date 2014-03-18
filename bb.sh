@@ -365,12 +365,12 @@ edit() {
         get_html_file_content 'text' 'text' <$1 | sed "s|<a href='$prefix_tags\([^']*\).html'>\\1</a>|\\1|g" >> "$TMPFILE"
         rm $1
         $EDITOR "$TMPFILE"
-        parse_file "$TMPFILE" "$edit_timestamp" # this command sets $filename as the html processed file
-        rm "$TMPFILE"
         if [ "$2" = "keep" ]; then
-            mv $filename $1
-            filename="$1"
+            parse_file "$TMPFILE" "$edit_timestamp" "$1"
+        else
+            parse_file "$TMPFILE" "$edit_timestamp" # this command sets $filename as the html processed file
         fi
+        rm "$TMPFILE"
     fi
     touch -t "$touch_timestamp" "$filename"
     chmod 644 "$filename"
@@ -487,8 +487,12 @@ create_html_page() {
 
 # Parse the plain text file into an html file
 #
-# $1    file name
+# $1    source file name
 # $2    (optional) timestamp for the file
+# $3    (optional) destination file name
+# note that although timestamp is optional, something must be provided at its
+# place if destination file name is provided, i.e:
+# parse_file source.txt "" destination.html
 parse_file() {
     # Read for the title and check that the filename is ok
     title=""
@@ -497,21 +501,25 @@ parse_file() {
             # set title and
             # remove extra <p> and </p> added by markdown
             title=$(echo "$line" | sed 's/<\/*p>//g')
-            filename="$(echo $title | tr [:upper:] [:lower:])"
-            filename="$(echo $filename | sed 's/\ /-/g')"
-            filename="$(echo $filename | sed 'y/йцукенгшщзхъфывапролджэячсмитьбю/jcukengsszh-fyvaproldzeahsmit-by/')"
-            filename="$(echo $filename | sed 'y/ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ/jcukengsszh-fyvaproldzeahsmit-by/')"
-            filename="$(echo $filename | tr -dc '[:alnum:]-')" # html likes alphanumeric
-            filename="$(echo $filename | sed 's/^-*//')" # unix utilities are unhappy if filename starts with -
-            [ "$filename" ] || filename=$RANDOM # if filename gets empty, put something in it
-            filename="$filename.html"
-            content="$filename.tmp"
+            if [ "$3" ]; then
+                filename=$3
+            else
+                filename="$(echo $title | tr [:upper:] [:lower:])"
+                filename="$(echo $filename | sed 's/\ /-/g')"
+                filename="$(echo $filename | sed 'y/йцукенгшщзхъфывапролджэячсмитьбю/jcukengsszh-fyvaproldzeahsmit-by/')"
+                filename="$(echo $filename | sed 'y/ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ/jcukengsszh-fyvaproldzeahsmit-by/')"
+                filename="$(echo $filename | tr -dc '[:alnum:]-')" # html likes alphanumeric
+                filename="$(echo $filename | sed 's/^-*//')" # unix utilities are unhappy if filename starts with -
+                [ "$filename" ] || filename=$RANDOM # if filename gets empty, put something in it
+                filename="$filename.html"
 
-            # Check for duplicate file names
-            while [ -f "$filename" ]; do
-                suffix="$RANDOM"
-                filename="$(echo $filename | sed 's/\.html/'$suffix'\.html/g')"
-            done
+                # Check for duplicate file names
+                while [ -f "$filename" ]; do
+                    suffix="$RANDOM"
+                    filename="$(echo $filename | sed 's/\.html/'$suffix'\.html/g')"
+                done
+            fi
+            content="$filename.tmp"
         # Parse possible tags
         elif [[ "$line" = "<p>$template_tags_line_header"* ]]; then
             tags="$(echo "$line" | cut -d ":" -f 2- | sed -e 's/<\/p>//g' -e 's/^ *//' -e 's/ *$//' -e 's/, /,/g')"
