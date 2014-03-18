@@ -744,7 +744,7 @@ rebuild_tags() {
                 # 'split' tags by commas
                 echo "$line" | cut -c 10- | while IFS="," read -a tags; do
                     for dirty_tag in "${tags[@]}"; do # extract html around it
-                        tag="$(echo $dirty_tag | grep -o ">.*</a>" | awk '{print substr($0, 2, length($0)-5)}' | tr " " "_")"
+                        tag="$(expr "$dirty_tag" : ".*>\(.*\)</a" | tr " " "_")"
                         # Add the content of this post to the tag file
                         cat "$tmpfile" >> "$prefix_tags$tag".tmp.html
                     done
