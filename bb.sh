@@ -584,7 +584,9 @@ EOF
     chmod 600 "$TMPFILE"
 
     post_status="E"
+    filename=""
     while [ "$post_status" != "p" ] && [ "$post_status" != "P" ]; do
+        [ "$filename" ] && rm "$filename" # Delete the generated html file, if any
         $EDITOR "$TMPFILE"
         if [[ "$fmt" == "md" ]]; then
             html_from_md="$(markdown "$TMPFILE")"
@@ -621,9 +623,6 @@ EOF
             delete_includes
             echo "Saved your draft as '$draft'"
             exit
-        fi
-        if [[ "$post_status" == "e" ]] || [[ "$post_status" == "E" ]]; then
-            rm "$filename" # Delete the html file as it will be generated again
         fi
     done
 
