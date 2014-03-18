@@ -1066,4 +1066,4 @@ do_main() {
 #
 do_main $*
 
-# vim: set shiftwidth=4 expandtab:
+# vim: set shiftwidth=4 tabstop=4 expandtab:
