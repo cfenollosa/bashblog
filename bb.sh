@@ -362,7 +362,7 @@ edit() {
         # Title
         echo "$(get_post_title $1)" > "$TMPFILE"
         # Post text with plaintext tags
-        get_html_file_content 'text' 'text' <$1 | sed "s|<a href='$prefix_tags\([^']*\).html'>\\1</a>|\\1|g" >> "$TMPFILE"
+        get_html_file_content 'text' 'text' <$1 | sed "/^<p>$template_tags_line_header/s|<a href='$prefix_tags\([^']*\).html'>\\1</a>|\\1|g" >> "$TMPFILE"
         rm $1
         $EDITOR "$TMPFILE"
         if [ "$2" = "keep" ]; then
