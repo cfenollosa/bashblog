@@ -496,7 +496,7 @@ create_html_page() {
 parse_file() {
     # Read for the title and check that the filename is ok
     title=""
-    while IFS='' read line; do
+    while IFS='' read -r line; do
         if [[ "$title" == "" ]]; then
             # set title and
             # remove extra <p> and </p> added by markdown
