@@ -167,6 +167,9 @@ global_variables() {
     # Regexp matching the HTML line where to do the cut
     # note that slash is regexp separator so you need to prepend it with backslash
     cut_line='<hr ?\/?>'
+    # save markdown file when posting with "bb post -m"
+    # possible values: "yes", ""
+    save_markdown="yes"
     # prefix for tags/categories files
     # please make sure that no other html file starts with this prefix
     prefix_tags="tag_"
@@ -626,7 +629,11 @@ EOF
         fi
     done
 
-    rm "$TMPFILE"
+    if [[ "$fmt" == "md" && "$save_markdown" ]]; then
+        mv "$TMPFILE" "${filename%%.*}.md"
+    else
+        rm "$TMPFILE"
+    fi
     chmod 644 "$filename"
     echo "Posted $filename"
 }
