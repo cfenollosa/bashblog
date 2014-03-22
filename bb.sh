@@ -380,6 +380,7 @@ edit() {
             parse_file "$TMPFILE" "$edit_timestamp" "$filename"
         else
             parse_file "$TMPFILE" "$edit_timestamp" # this command sets $filename as the html processed file
+            [[ "${1##*.}" == "md" ]] && mv "$1" "${filename%%.*}.md" 2>/dev/null
         fi
         rm "$TMPFILE"
     fi
