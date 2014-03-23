@@ -354,8 +354,8 @@ get_html_file_content() {
 #	leave empty for default behavior (edit only text part and change name)
 edit() {
     # Original post timestamp
-    edit_timestamp="$(LC_ALL=$date_locale date -r $1 +"%a, %d %b %Y %H:%M:%S %z" )"
-    touch_timestamp="$(LC_ALL=$date_locale date -r $1 +'%Y%m%d%H%M')"
+    edit_timestamp="$(LC_ALL=$date_locale date -r "${1%%.*}.html" +"%a, %d %b %Y %H:%M:%S %z" )"
+    touch_timestamp="$(LC_ALL=$date_locale date -r "${1%%.*}.html" +'%Y%m%d%H%M')"
     if [ "$2" = "full" ]; then
         $EDITOR "$1"
         filename="$1"
