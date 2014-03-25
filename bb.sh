@@ -167,6 +167,9 @@ global_variables() {
     # Regexp matching the HTML line where to do the cut
     # note that slash is regexp separator so you need to prepend it with backslash
     cut_line='<hr ?\/?>'
+    # save markdown file when posting with "bb post -m"
+    # possible values: "yes", ""
+    save_markdown="yes"
     # prefix for tags/categories files
     # please make sure that no other html file starts with this prefix
     prefix_tags="tag_"
@@ -255,7 +258,7 @@ test_markdown() {
 # Parse a Markdown file into HTML and return the generated file
 markdown() {
     out="$(echo $1 | sed 's/md$/html/g')"
-    while [ -f "$out" ]; do out="$(echo $out | sed 's/\.html$/\.'$RANDOM'\.html')"; done
+    while [ -f "$out" ]; do out="$(echo $out | sed 's/\.html$/\.'$RANDOM'\.html/')"; done
     $markdown_bin $1 > $out
     echo $out
 }
@@ -351,24 +354,33 @@ get_html_file_content() {
 #	leave empty for default behavior (edit only text part and change name)
 edit() {
     # Original post timestamp
-    edit_timestamp="$(LC_ALL=$date_locale date -r $1 +"%a, %d %b %Y %H:%M:%S %z" )"
-    touch_timestamp="$(LC_ALL=$date_locale date -r $1 +'%Y%m%d%H%M')"
+    edit_timestamp="$(LC_ALL=$date_locale date -r "${1%%.*}.html" +"%a, %d %b %Y %H:%M:%S %z" )"
+    touch_timestamp="$(LC_ALL=$date_locale date -r "${1%%.*}.html" +'%Y%m%d%H%M')"
     if [ "$2" = "full" ]; then
         $EDITOR "$1"
         filename="$1"
     else
-        # Create the content file
-        TMPFILE="$(basename $1).$RANDOM.html"
-        # Title
-        echo "$(get_post_title $1)" > "$TMPFILE"
-        # Post text with plaintext tags
-        get_html_file_content 'text' 'text' <$1 | sed "/^<p>$template_tags_line_header/s|<a href='$prefix_tags\([^']*\).html'>\\1</a>|\\1|g" >> "$TMPFILE"
-        rm $1
-        $EDITOR "$TMPFILE"
+        if [[ "${1##*.}" == "md" ]]; then
+            # editing markdown file
+            $EDITOR "$1"
+            TMPFILE="$(markdown "$1")"
+            filename="${1%%.*}.html"
+        else
+            # Create the content file
+            TMPFILE="$(basename $1).$RANDOM.html"
+            # Title
+            echo "$(get_post_title $1)" > "$TMPFILE"
+            # Post text with plaintext tags
+            get_html_file_content 'text' 'text' <$1 | sed "/^<p>$template_tags_line_header/s|<a href='$prefix_tags\([^']*\).html'>\\1</a>|\\1|g" >> "$TMPFILE"
+            $EDITOR "$TMPFILE"
+            filename="$1"
+        fi
+        rm "$filename"
         if [ "$2" = "keep" ]; then
-            parse_file "$TMPFILE" "$edit_timestamp" "$1"
+            parse_file "$TMPFILE" "$edit_timestamp" "$filename"
         else
             parse_file "$TMPFILE" "$edit_timestamp" # this command sets $filename as the html processed file
+            [[ "${1##*.}" == "md" ]] && mv "$1" "${filename%%.*}.md" 2>/dev/null
         fi
         rm "$TMPFILE"
     fi
@@ -626,7 +638,11 @@ EOF
         fi
     done
 
-    rm "$TMPFILE"
+    if [[ "$fmt" == "md" && "$save_markdown" ]]; then
+        mv "$TMPFILE" "${filename%%.*}.md"
+    else
+        rm "$TMPFILE"
+    fi
     chmod 644 "$filename"
     echo "Posted $filename"
 }
