@@ -1054,7 +1054,7 @@ do_main() {
         chmod 600 ".backup.tar.gz"
 
     # Keep first backup of this day containing yesterday's version of the blog
-    [ "$(date -r .yesterday.tar.gz +'%d')" != "$(date +'%d')" ] &&
+    [[ ! -f .yesterday.tar.gz ]] || [ "$(date -r .yesterday.tar.gz +'%d')" != "$(date +'%d')" ] &&
         cp .backup.tar.gz .yesterday.tar.gz &> /dev/null
 
     [[ "$1" == "reset" ]] &&
