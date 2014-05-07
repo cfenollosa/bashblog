@@ -813,8 +813,8 @@ make_rss() {
     echo '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">' >> "$rssfile"
     echo '<channel><title>'$global_title'</title><link>'$global_url'</link>' >> "$rssfile"
     echo '<description>'$global_description'</description><language>en</language>' >> "$rssfile"
-    echo '<lastBuildDate>'$(date +"%a, %d %b %Y %H:%M:%S %z")'</lastBuildDate>' >> "$rssfile"
-    echo '<pubDate>'$(date +"%a, %d %b %Y %H:%M:%S %z")'</pubDate>' >> "$rssfile"
+    echo '<lastBuildDate>'$(LC_ALL=$date_locale date +"%a, %d %b %Y %H:%M:%S %z")'</lastBuildDate>' >> "$rssfile"
+    echo '<pubDate>'$(LC_ALL=$date_locale date +"%a, %d %b %Y %H:%M:%S %z")'</pubDate>' >> "$rssfile"
     echo '<atom:link href="'$global_url/$blog_feed'" rel="self" type="application/rss+xml" />' >> "$rssfile"
 
     n=0
@@ -829,7 +829,7 @@ make_rss() {
         echo "]]></description><link>$global_url/$i</link>" >> "$rssfile"
         echo "<guid>$global_url/$i</guid>" >> "$rssfile"
         echo "<dc:creator>$global_author</dc:creator>" >> "$rssfile"
-        echo '<pubDate>'$(date -r "$i" +"%a, %d %b %Y %H:%M:%S %z")'</pubDate></item>' >> "$rssfile"
+        echo '<pubDate>'$(LC_ALL=$date_locale date -r "$i" +"%a, %d %b %Y %H:%M:%S %z")'</pubDate></item>' >> "$rssfile"
 
         n=$(( $n + 1 ))
     done
@@ -1054,7 +1054,7 @@ do_main() {
         chmod 600 ".backup.tar.gz"
 
     # Keep first backup of this day containing yesterday's version of the blog
-    [[ ! -f .yesterday.tar.gz ]] || [ "$(date -r .yesterday.tar.gz +'%d')" != "$(date +'%d')" ] &&
+    [[ ! -f .yesterday.tar.gz ]] || [ "$(LC_ALL=$date_locale date -r .yesterday.tar.gz +'%d')" != "$(LC_ALL=$date_locale date +'%d')" ] &&
         cp .backup.tar.gz .yesterday.tar.gz &> /dev/null
 
     [[ "$1" == "reset" ]] &&
