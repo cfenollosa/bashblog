@@ -687,7 +687,7 @@ all_tags() {
 
     echo "<h3>$template_tags_title</h3>" >> "$contentfile"
     echo "<ul>" >> "$contentfile"
-    for i in $(ls $prefix_tags*.html); do
+    for i in ./$prefix_tags*.html; do
         echo -n "."
         nposts="$(grep -c "<\!-- text begin -->" $i)"
         tagname="$(echo $i | cut -c $((${#prefix_tags}+1))- | sed 's/\.html//g')"
@@ -715,7 +715,7 @@ rebuild_index() {
 
     # Create the content file
     n=0
-    for i in $(ls -t *.html); do # sort by date, newest first
+    for i in $(ls -t ./*.html); do # sort by date, newest first
         is_boilerplate_file "$i" && continue;
         if [[ "$n" -ge "$number_of_index_articles" ]]; then break; fi
         if [ "$cut_do" ]; then
@@ -746,7 +746,7 @@ rebuild_tags() {
     rm $prefix_tags*.html &> /dev/null
     # First we will process all files and create temporal tag files
     # with just the content of the posts
-    for i in $(ls -t *.html); do
+    for i in $(ls -t ./*.html); do
         is_boilerplate_file "$i" && continue;
         echo -n "."
         tmpfile="$(mktemp tmp.XXX)"
@@ -770,7 +770,7 @@ rebuild_tags() {
         rm "$tmpfile"
     done
     # Now generate the tag files with headers, footers, etc
-    for i in $(ls -t $prefix_tags*.tmp.html); do
+    for i in $(ls -t ./$prefix_tags*.tmp.html); do
         tagname="$(echo $i | cut -c $((${#prefix_tags}+1))- | sed 's/\.tmp\.html//g')"
         create_html_page "$i" "$prefix_tags$tagname.html" yes "$global_title &mdash; $template_tag_title \"$tagname\""
         rm "$i"
@@ -792,7 +792,7 @@ list_posts() {
 
     lines=""
     n=1
-    for i in $(ls -t *.html); do
+    for i in $(ls -t ./*.html); do
         is_boilerplate_file "$i" && continue
         line="$n # $(get_post_title "$i") # $(LC_ALL=$date_locale date -r $i +"$date_format")"
         lines="${lines}""$line""\n" # Weird stuff needed for the newlines
@@ -818,7 +818,7 @@ make_rss() {
     echo '<atom:link href="'$global_url/$blog_feed'" rel="self" type="application/rss+xml" />' >> "$rssfile"
 
     n=0
-    for i in $(ls -t *.html); do
+    for i in $(ls -t ./*.html); do
         is_boilerplate_file "$i" && continue
         [[ "$n" -ge "$number_of_feed_articles" ]] && break # max 10 items
         echo -n "."
@@ -925,7 +925,7 @@ create_css() {
 rebuild_all_entries() {
     echo -n "Rebuilding all entries "
 
-    for i in *.html; do # no need to sort
+    for i in ./*.html; do # no need to sort
         is_boilerplate_file "$i" && continue;
         contentfile=".tmp.$RANDOM"
         while [ -f "$contentfile" ]; do contentfile=".tmp.$RANDOM"; done
