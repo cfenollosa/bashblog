@@ -418,11 +418,20 @@ twitter() {
 # Return 0 (bash return value 'true') if the input file is am index, feed, etc
 # or 1 (bash return value 'false') if it is a blogpost
 is_boilerplate_file() {
-    name="$1"
-    [[ "${name:0:2}" == "./" ]] && name=${name:2} # Delete leading './'
+    name="`clean_filename $1`"
     if [[ "$name" == "$index_file" ]] || [[ "$name" == "$archive_index" ]] || [[ "$name" == "$tags_index" ]] || [[ "$name" == "$footer_file" ]] || [[ "$name" == "$header_file" ]] || [[ "$name" == "$global_analytics_file" ]] || [[ "$name" = "$prefix_tags"* ]] ; then return 0
     else return 1
     fi
+}
+
+# Filenames sometimes have leading './' or other oddities which need to be cleaned
+#
+# $1 the file name
+# returns the clean file name
+clean_filename() {
+    name="$1"
+    [[ "${name:0:2}" == "./" ]] && name=${name:2} # Delete leading './'
+    echo $name
 }
 
 # Adds all the bells and whistles to format the html page
@@ -460,7 +469,8 @@ create_html_page() {
     echo '</div></div></div>' >> "$filename" # title, header, headerholder
     echo '<div id="divbody"><div class="content">' >> "$filename"
 
-    file_url="$(sed 's/.rebuilt//g' <<< $filename)" # Get the correct URL when rebuilding
+    file_url="`clean_filename $filename`"
+    file_url="$(sed 's/.rebuilt//g' <<< $file_url)" # Get the correct URL when rebuilding
     # one blog entry
     if [[ "$index" == "no" ]]; then
         echo '<!-- entry begin -->' >> "$filename" # marks the beginning of the whole post
@@ -488,7 +498,7 @@ create_html_page() {
     echo '</div>' >> "$filename" # content
 
     # Add disqus commments except for index and all_posts pages
-    if [[ ${filename%.*.*} !=  "index" && ${filename%.*.*} != "all_posts" ]]; then
+    if [[ ${filename%.*.*} != "index" && ${filename%.*.*} != "all_posts" ]]; then
     	disqus_body >> "$filename"
     fi
     # page footer
@@ -692,7 +702,7 @@ all_tags() {
     for i in ./$prefix_tags*.html; do
         echo -n "."
         nposts="$(grep -c "<\!-- text begin -->" $i)"
-        tagname="$(echo $i | cut -c $((${#prefix_tags}+1))- | sed 's/\.html//g')"
+        tagname="$(echo $i | cut -c $((${#prefix_tags}+3))- | sed 's/\.html//g')"
         echo "<li><a href="$i">$tagname</a> &mdash; $nposts $template_tags_posts</li>" >> "$contentfile"
     done
     echo ""
