@@ -418,7 +418,9 @@ twitter() {
 # Return 0 (bash return value 'true') if the input file is am index, feed, etc
 # or 1 (bash return value 'false') if it is a blogpost
 is_boilerplate_file() {
-    if [[ "$1" == "$index_file" ]] || [[ "$1" == "$archive_index" ]] || [[ "$1" == "$tags_index" ]] || [[ "$1" == "$footer_file" ]] || [[ "$1" == "$header_file" ]] || [[ "$1" == "$global_analytics_file" ]] || [[ "$1" = "$prefix_tags"* ]] ; then return 0
+    name="$1"
+    [[ "${name:0:2}" == "./" ]] && name=${name:2} # Delete leading './'
+    if [[ "$name" == "$index_file" ]] || [[ "$name" == "$archive_index" ]] || [[ "$name" == "$tags_index" ]] || [[ "$name" == "$footer_file" ]] || [[ "$name" == "$header_file" ]] || [[ "$name" == "$global_analytics_file" ]] || [[ "$name" = "$prefix_tags"* ]] ; then return 0
     else return 1
     fi
 }
@@ -743,7 +745,7 @@ rebuild_index() {
 rebuild_tags() {
     echo -n "Rebuilding tag pages "
     n=0
-    rm $prefix_tags*.html &> /dev/null
+    rm ./$prefix_tags*.html &> /dev/null
     # First we will process all files and create temporal tag files
     # with just the content of the posts
     for i in $(ls -t ./*.html); do
@@ -771,7 +773,7 @@ rebuild_tags() {
     done
     # Now generate the tag files with headers, footers, etc
     for i in $(ls -t ./$prefix_tags*.tmp.html); do
-        tagname="$(echo $i | cut -c $((${#prefix_tags}+1))- | sed 's/\.tmp\.html//g')"
+        tagname="$(echo $i | cut -c $((${#prefix_tags}+3))- | sed 's/\.tmp\.html//g')"
         create_html_page "$i" "$prefix_tags$tagname.html" yes "$global_title &mdash; $template_tag_title \"$tagname\""
         rm "$i"
     done
