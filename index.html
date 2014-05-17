@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+
+    <title>Bashblog by cfenollosa</title>
+  </head>
+
+  <body>
+
+    <header>
+      <div class="container">
+        <h1>Bashblog</h1>
+        <h2>A Bash script that handles blog posting</h2>
+
+        <section id="downloads">
+          <a href="https://github.com/cfenollosa/bashblog/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/cfenollosa/bashblog/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/cfenollosa/bashblog" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        </section>
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+        <h1>
+<a name="bashblog" class="anchor" href="#bashblog"><span class="octicon octicon-link"></span></a>bashblog</h1>
+
+<p>A single Bash script to create blogs. </p>
+
+<p>I created it because I wanted a very, very simple way to post entries to a blog by using a public folder on my server, without any special requirements and dependencies. Works on GNU/Linux, OSX and BSD.</p>
+
+<p>You can see it live here: <a href="https://web.archive.org/web/20130520204024/http://mmb.pcb.ub.es/%7Ecarlesfe/blog/creating-a-simple-blog-system-with-a-500-line-bash-script.html">read the initial blog post</a>. That page was 100% generated using bashblog, no additional tweaking.</p>
+
+<h2>
+<a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h2>
+
+<ul>
+<li>No installation required. Download <code>bb.sh</code> and start blogging.</li>
+<li>Ultra simple usage: Just type a post with your favorite editor and the script does the rest. No templating.</li>
+<li>All content is static. You only need shell access to a machine with a public web folder.
+<em>Tip: advanced users could mount a remote public folder via <code>ftpfs</code> and run this script locally</em>
+</li>
+<li>Allows drafts, includes a simple but clean stylesheet, generates the RSS file automatically.</li>
+<li>Support for tags/categories</li>
+<li>Support for Markdown, Disqus comments, Twitter, Feedburner, Google Analytics.</li>
+<li>GNU/Linux, BSD and OSX compatible out of the box (no need for GNU <code>coreutils</code> on a Mac)</li>
+<li>Everything stored in a single 700-line bash script, how cool is that?! ;) </li>
+</ul><h2>
+<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<p>Copy bb.sh into a public folder (for example, <code>$HOME/public_html/blog</code>) and run</p>
+
+<pre><code>./bb.sh
+</code></pre>
+
+<p>This will show the available commands. If the file is not executable, you can either <code>chmod +x bb.sh</code>
+or run it with <code>bash bb.sh</code></p>
+
+<p><strong>Before creating your first post, you may want to configure the blog settings (title, author, etc).
+Read the Configuration section below for more information</strong></p>
+
+<p>To create your first post, just run:</p>
+
+<pre><code>./bb.sh post
+</code></pre>
+
+<p>When you're done, access the public URL for that folder  (e.g. <code>http://server.com/~username/blog</code>) 
+and you should see the index file and a new page for that post!</p>
+
+<h2>
+<a name="configuration" class="anchor" href="#configuration"><span class="octicon octicon-link"></span></a>Configuration</h2>
+
+<p>Configuration is not required for a test drive, but if you plan on running your blog with bashblog, you will
+want to change the default titles, author names, etc, to match your own.</p>
+
+<p>There are two ways to configure the blog strings:</p>
+
+<ul>
+<li>Edit <code>bb.sh</code> and modify the variables in the <code>global_variables()</code> function</li>
+<li>Create a <code>.config</code> file with your configuration values (useful if you don't want to touch the script)</li>
+</ul><p>The software will load the values in the script first, then overwrite them with the values in the <code>.config</code> file.
+This means that you don't need to define all variables in the config file, only those which you need to override
+from the defaults.</p>
+
+<p>The format of the <code>.config</code> file is just one <code>variablename="value"</code> per line, just like in the <code>global_variables()</code>
+function. <strong>Please remember:</strong> quote the values, do not declare a variable with the dollar sign, do not use 
+spaces around the equal sign.</p>
+
+<p>bashblog uses the <code>$EDITOR</code> environment value to open the text editor.</p>
+
+<h2>
+<a name="detailed-features" class="anchor" href="#detailed-features"><span class="octicon octicon-link"></span></a>Detailed features</h2>
+
+<ul>
+<li>A simple but nice and readable design, with nothing but the blog posts</li>
+<li>
+<strong>NEW on 2.0</strong> Markdown support via a third-party library (e.g. 
+<a href="http://daringfireball.net/projects/markdown/">Markdown.pl</a>). Use
+it via <code>./bb.sh post -m</code>. The third party library must support an invokation
+like <code>markdown_bin in.html &gt; out.md</code> as the code calls it that way.</li>
+<li>Post preview</li>
+<li>Save posts as drafts and resume editing later</li>
+<li>HTML page for each post, using its title as the URL</li>
+<li>Configurable number of posts on the front page</li>
+<li>Automatic generation of an RSS file, feedburner support</li>
+<li>Additional page containing an index of all posts</li>
+<li>Automatically generates pages for each tag</li>
+<li>Rebuild all files while keeping the original data</li>
+<li>Comments delegated to Twitter, with additional Disqus support</li>
+<li>Google Analytics code support</li>
+<li>Contains its own CSS so that everything is reasonably styled by default</li>
+<li>Headers, footers, and in general everything that a well-structured html file needs</li>
+<li>Support to add extra content on top of every page (e.g. banners, images, etc)</li>
+<li>xhtml validation, CSS validation, RSS validation by the w3c</li>
+<li>Automatic backup of the site every time you post (stored as <code>.backup.tar.gz</code>)</li>
+</ul><p>Read the CHANGELOG section of the script header for more updates or <a href="http://cfenollosa.com/blog/tag_bashblog.html">check out the news on my blog</a></p>
+      </section>
+    </div>
+
+    
+  </body>
+</html>
