@@ -38,6 +38,34 @@
 <p>You can see it live here: <a href="https://web.archive.org/web/20130520204024/http://mmb.pcb.ub.es/%7Ecarlesfe/blog/creating-a-simple-blog-system-with-a-500-line-bash-script.html">read the initial blog post</a>. That page was 100% generated using bashblog, no additional tweaking.</p>
 
 <h2>
+<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<p>Download the code and copy bb.sh into a public folder (for example, <code>$HOME/public_html/blog</code>) and run</p>
+
+<pre><code>./bb.sh
+</code></pre>
+
+<p>This will show the available commands. If the file is not executable, type <code>chmod +x bb.sh</code> and retry.</p>
+
+<p><strong>Before creating your first post, you may want to configure the blog settings (title, author, etc).
+Read the Configuration section below for more information</strong></p>
+
+<p>To create your first post, just run:</p>
+
+<pre><code>./bb.sh post
+</code></pre>
+
+<p>Or, if you prefer Markdown over HTML:</p>
+
+<pre><code>./bb.sh post -m
+</code></pre>
+
+<p>The script will handle the rest.</p>
+
+<p>When you're done, access the public URL for that folder  (e.g. <code>http://server.com/~username/blog</code>) 
+and you should see the index file and a new page for that post!</p>
+
+<h2>
 <a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h2>
 
 <ul>
@@ -52,28 +80,6 @@
 <li>GNU/Linux, BSD and OSX compatible out of the box (no need for GNU <code>coreutils</code> on a Mac)</li>
 <li>Everything stored in a single 700-line bash script, how cool is that?! ;) </li>
 </ul><h2>
-<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h2>
-
-<p>Copy bb.sh into a public folder (for example, <code>$HOME/public_html/blog</code>) and run</p>
-
-<pre><code>./bb.sh
-</code></pre>
-
-<p>This will show the available commands. If the file is not executable, you can either <code>chmod +x bb.sh</code>
-or run it with <code>bash bb.sh</code></p>
-
-<p><strong>Before creating your first post, you may want to configure the blog settings (title, author, etc).
-Read the Configuration section below for more information</strong></p>
-
-<p>To create your first post, just run:</p>
-
-<pre><code>./bb.sh post
-</code></pre>
-
-<p>When you're done, access the public URL for that folder  (e.g. <code>http://server.com/~username/blog</code>) 
-and you should see the index file and a new page for that post!</p>
-
-<h2>
 <a name="configuration" class="anchor" href="#configuration"><span class="octicon octicon-link"></span></a>Configuration</h2>
 
 <p>Configuration is not required for a test drive, but if you plan on running your blog with bashblog, you will
