@@ -8,6 +8,32 @@ I created it because I wanted a very, very simple way to post entries to a blog 
 You can see it live here: [read the initial blog post](https://web.archive.org/web/20130520204024/http://mmb.pcb.ub.es/~carlesfe/blog/creating-a-simple-blog-system-with-a-500-line-bash-script.html). That page was 100% generated using bashblog, no additional tweaking.
 
 
+Usage
+-----
+
+Download the code and copy bb.sh into a public folder (for example, `$HOME/public_html/blog`) and run
+
+    ./bb.sh
+
+This will show the available commands. If the file is not executable, type `chmod +x bb.sh` and retry.
+
+**Before creating your first post, you may want to configure the blog settings (title, author, etc).
+Read the Configuration section below for more information**
+
+To create your first post, just run:
+
+    ./bb.sh post
+    
+Or, if you prefer Markdown over HTML:
+
+    ./bb.sh post -m
+    
+The script will handle the rest.
+
+When you're done, access the public URL for that folder  (e.g. `http://server.com/~username/blog`) 
+and you should see the index file and a new page for that post!
+
+
 Features
 --------
 
@@ -20,27 +46,6 @@ Features
 - Support for Markdown, Disqus comments, Twitter, Feedburner, Google Analytics.
 - GNU/Linux, BSD and OSX compatible out of the box (no need for GNU `coreutils` on a Mac)
 - Everything stored in a single 700-line bash script, how cool is that?! ;) 
-
-
-Usage
------
-
-Copy bb.sh into a public folder (for example, `$HOME/public_html/blog`) and run
-
-    ./bb.sh
-
-This will show the available commands. If the file is not executable, you can either `chmod +x bb.sh`
-or run it with `bash bb.sh`
-
-**Before creating your first post, you may want to configure the blog settings (title, author, etc).
-Read the Configuration section below for more information**
-
-To create your first post, just run:
-
-    ./bb.sh post
-
-When you're done, access the public URL for that folder  (e.g. `http://server.com/~username/blog`) 
-and you should see the index file and a new page for that post!
 
 
 Configuration
