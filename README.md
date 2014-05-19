@@ -7,6 +7,8 @@ I created it because I wanted a very, very simple way to post entries to a blog 
 
 You can see it live here: [read the initial blog post](https://web.archive.org/web/20130520204024/http://mmb.pcb.ub.es/~carlesfe/blog/creating-a-simple-blog-system-with-a-500-line-bash-script.html). That page was 100% generated using bashblog, no additional tweaking.
 
+[![demo](https://raw.githubusercontent.com/cfenollosa/bashblog/gh-pages/images/demo_thumb.png)](https://raw.githubusercontent.com/cfenollosa/bashblog/gh-pages/images/demo.png)
+
 
 Usage
 -----
