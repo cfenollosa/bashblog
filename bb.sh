@@ -217,7 +217,7 @@ global_variables() {
     date_locale="C"
 
     # Markdown location. Trying to autodetect by default.
-    # The invocation must support the signature 'markdown_bin in.html > out.md'
+    # The invocation must support the signature 'markdown_bin in.md > out.html'
     markdown_bin="$(which Markdown.pl)"
 }
 
@@ -415,7 +415,7 @@ twitter() {
 #
 # $1 the file
 #
-# Return 0 (bash return value 'true') if the input file is am index, feed, etc
+# Return 0 (bash return value 'true') if the input file is an index, feed, etc
 # or 1 (bash return value 'false') if it is a blogpost
 is_boilerplate_file() {
     name="`clean_filename $1`"
@@ -962,23 +962,23 @@ rebuild_all_entries() {
 }
 
 # Displays the help
-function usage() {
-echo "$global_software_name v$global_software_version"
-echo "Usage: $0 command [filename]"
-echo ""
-echo "Commands:"
-echo "    post [-m] [filename]    insert a new blog post, or the filename of a draft to continue editing it"
-echo "                            use '-m' to edit the post as Markdown text"
-echo "    edit [-n|-f] [filename] edit an already published .html or .md file. **NEVER** edit manually a published .html file,"
-echo "                            always use this function as it keeps internal data and rebuilds the blog"
-echo "                            use '-n' to give the file a new name, if title was changed"
-echo "                            use '-f' to edit full html file, instead of just text part (also preserves name)"
-echo "    delete [filename]       deletes the post and rebuilds the blog"
-echo "    rebuild                 regenerates all the pages and posts, preserving the content of the entries"
-echo "    reset                   deletes everything except this script. Use with a lot of caution and back up first!"
-echo "    list                    list all posts"
-echo ""
-echo "For more information please open $0 in a code editor and read the header and comments"
+usage() {
+    echo "$global_software_name v$global_software_version"
+    echo "Usage: $0 command [filename]"
+    echo ""
+    echo "Commands:"
+    echo "    post [-m] [filename]    insert a new blog post, or the filename of a draft to continue editing it"
+    echo "                            use '-m' to edit the post as Markdown text"
+    echo "    edit [-n|-f] [filename] edit an already published .html or .md file. **NEVER** edit manually a published .html file,"
+    echo "                            always use this function as it keeps internal data and rebuilds the blog"
+    echo "                            use '-n' to give the file a new name, if title was changed"
+    echo "                            use '-f' to edit full html file, instead of just text part (also preserves name)"
+    echo "    delete [filename]       deletes the post and rebuilds the blog"
+    echo "    rebuild                 regenerates all the pages and posts, preserving the content of the entries"
+    echo "    reset                   deletes everything except this script. Use with a lot of caution and back up first!"
+    echo "    list                    list all posts"
+    echo ""
+    echo "For more information please open $0 in a code editor and read the header and comments"
 }
 
 # Delete all generated content, leaving only this script
