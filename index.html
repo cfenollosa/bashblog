@@ -35,6 +35,8 @@
 
 <p>I created it because I wanted a very, very simple way to post entries to a blog by using a public folder on my server, without any special requirements and dependencies. Works on GNU/Linux, OSX and BSD.</p>
 
+<p><em>How simple? Just type <code>./bb.sh post</code> and start writing your blogpost.</em></p>
+
 <p>You can see it live here: <a href="https://web.archive.org/web/20130520204024/http://mmb.pcb.ub.es/%7Ecarlesfe/blog/creating-a-simple-blog-system-with-a-500-line-bash-script.html">read the initial blog post</a>. That page was 100% generated using bashblog, no additional tweaking.</p>
 
 <p><a href="https://raw.githubusercontent.com/cfenollosa/bashblog/gh-pages/images/demo.png"><img src="https://raw.githubusercontent.com/cfenollosa/bashblog/gh-pages/images/demo_thumb.png" alt="demo"></a></p>
@@ -80,6 +82,7 @@ and you should see the index file and a new page for that post!</p>
 <li>Support for tags/categories</li>
 <li>Support for Markdown, Disqus comments, Twitter, Feedburner, Google Analytics.</li>
 <li>GNU/Linux, BSD and OSX compatible out of the box (no need for GNU <code>coreutils</code> on a Mac)</li>
+<li>The project isn't abandoned as of 2014. New features and bugfixes added regularly.</li>
 <li>Everything stored in a single 700-line bash script, how cool is that?! ;) </li>
 </ul><h2>
 <a name="configuration" class="anchor" href="#configuration"><span class="octicon octicon-link"></span></a>Configuration</h2>
@@ -91,7 +94,7 @@ want to change the default titles, author names, etc, to match your own.</p>
 
 <ul>
 <li>Edit <code>bb.sh</code> and modify the variables in the <code>global_variables()</code> function</li>
-<li>Create a <code>.config</code> file with your configuration values (useful if you don't want to touch the script)</li>
+<li>Create a <code>.config</code> file with your configuration values -- useful if you don't want to touch the script and be able to update it regularly with git</li>
 </ul><p>The software will load the values in the script first, then overwrite them with the values in the <code>.config</code> file.
 This means that you don't need to define all variables in the config file, only those which you need to override
 from the defaults.</p>
