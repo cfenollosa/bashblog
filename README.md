@@ -5,6 +5,8 @@ A single Bash script to create blogs.
 
 I created it because I wanted a very, very simple way to post entries to a blog by using a public folder on my server, without any special requirements and dependencies. Works on GNU/Linux, OSX and BSD.
 
+*How simple? Just type `./bb.sh post` and start writing your blogpost.*
+
 You can see it live here: [read the initial blog post](https://web.archive.org/web/20130520204024/http://mmb.pcb.ub.es/~carlesfe/blog/creating-a-simple-blog-system-with-a-500-line-bash-script.html). That page was 100% generated using bashblog, no additional tweaking.
 
 [![demo](https://raw.githubusercontent.com/cfenollosa/bashblog/gh-pages/images/demo_thumb.png)](https://raw.githubusercontent.com/cfenollosa/bashblog/gh-pages/images/demo.png)
@@ -47,6 +49,7 @@ Features
 - Support for tags/categories
 - Support for Markdown, Disqus comments, Twitter, Feedburner, Google Analytics.
 - GNU/Linux, BSD and OSX compatible out of the box (no need for GNU `coreutils` on a Mac)
+- The project isn't abandoned as of 2014. New features and bugfixes added regularly.
 - Everything stored in a single 700-line bash script, how cool is that?! ;) 
 
 
@@ -59,7 +62,7 @@ want to change the default titles, author names, etc, to match your own.
 There are two ways to configure the blog strings:
 
 - Edit `bb.sh` and modify the variables in the `global_variables()` function
-- Create a `.config` file with your configuration values (useful if you don't want to touch the script)
+- Create a `.config` file with your configuration values -- useful if you don't want to touch the script and be able to update it regularly with git
 
 The software will load the values in the script first, then overwrite them with the values in the `.config` file.
 This means that you don't need to define all variables in the config file, only those which you need to override
