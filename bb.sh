@@ -703,7 +703,8 @@ all_tags() {
         echo -n "."
         nposts="$(grep -c "<\!-- text begin -->" $i)"
         tagname="$(echo $i | cut -c $((${#prefix_tags}+3))- | sed 's/\.html//g')"
-        echo "<li><a href="$i">$tagname</a> &mdash; $nposts $template_tags_posts</li>" >> "$contentfile"
+        i="`clean_filename $i`"
+        echo "<li><a href=\"$i\">$tagname</a> &mdash; $nposts $template_tags_posts</li>" >> "$contentfile"
     done
     echo ""
     echo "</ul>" >> "$contentfile"
