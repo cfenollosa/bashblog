@@ -361,6 +361,11 @@ edit() {
         filename="$1"
     else
         if [[ "${1##*.}" == "md" ]]; then
+            test_markdown
+            if [[ "$?" -ne 0 ]]; then
+                echo "Markdown is not working, please edit HTML file directly."
+                exit
+            fi
             # editing markdown file
             $EDITOR "$1"
             TMPFILE="$(markdown "$1")"
