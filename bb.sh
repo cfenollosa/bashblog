@@ -173,6 +173,14 @@ global_variables() {
     # prefix for tags/categories files
     # please make sure that no other html file starts with this prefix
     prefix_tags="tag_"
+    # force characters to lowercase - works with latin characters only
+    filename_lowercase="yes"
+    # when making filenames, replace spaces with this symbol
+    filename_spaces="-"
+    # Regexp explaining forbidden characters in filenames.
+    # Usually it's something like [^allowed-characters]
+    # Example for Cyrillic characters: [^A-z0-9А-я-]
+    filename_forbidden_characters=""
     # personalized header and footer (only if you know what you're doing)
     # DO NOT name them .header.html, .footer.html or they will be overwritten
     # leave blank to generate them, recommended
@@ -533,11 +541,14 @@ parse_file() {
             if [ "$3" ]; then
                 filename=$3
             else
-                filename="$(echo $title | tr [:upper:] [:lower:])"
-                filename="$(echo $filename | sed 's/\ /-/g')"
-                filename="$(echo $filename | sed 'y/йцукенгшщзхъфывапролджэячсмитьбю/jcukengsszh-fyvaproldzeahsmit-by/')"
-                filename="$(echo $filename | sed 'y/ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ/jcukengsszh-fyvaproldzeahsmit-by/')"
-                filename="$(echo $filename | tr -dc '[:alnum:]-')" # html likes alphanumeric
+                filename=$title
+                [[ "$filename_lowercase" == "yes" ]] && filename="$(echo $filename | tr [:upper:] [:lower:])"
+                filename="$(echo $filename | sed "s/\\s/$filename_spaces/g")"
+                if [ "$filename_forbidden_characters" ]; then
+                    filename="$(echo $filename | LC_ALL=C.UTF-8 sed "s/$filename_forbidden_characters//g")"
+                else
+                    filename="$(echo $filename | tr -dc '[:alnum:]-')" # html likes alphanumeric
+                fi
                 filename="$(echo $filename | sed 's/^-*//')" # unix utilities are unhappy if filename starts with -
                 [ "$filename" ] || filename=$RANDOM # if filename gets empty, put something in it
                 filename="$filename.html"
