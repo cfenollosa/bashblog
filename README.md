@@ -79,10 +79,9 @@ Detailed features
 -----------------
 
 - A simple but nice and readable design, with nothing but the blog posts
-- **NEW on 2.0** Markdown support via a third-party library (e.g. 
-  [Markdown.pl](http://daringfireball.net/projects/markdown/)). Use
-  it via `./bb.sh post -m`. The third party library must support an invokation
-  like `markdown_bin in.html > out.md` as the code calls it that way.
+- **NEW on 2.0** Markdown support via a third-party library.  
+  The easiest method is to download
+  Gruber's [Markdown.pl](http://daringfireball.net/projects/markdown/))
 - Post preview
 - Save posts as drafts and resume editing later
 - HTML page for each post, using its title as the URL
