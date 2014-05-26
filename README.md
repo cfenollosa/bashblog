@@ -81,7 +81,7 @@ Detailed features
 - A simple but nice and readable design, with nothing but the blog posts
 - **NEW on 2.0** Markdown support via a third-party library.  
   The easiest method is to download
-  Gruber's [Markdown.pl](http://daringfireball.net/projects/markdown/))
+  Gruber's [Markdown.pl](http://daringfireball.net/projects/markdown/)
 - Post preview
 - Save posts as drafts and resume editing later
 - HTML page for each post, using its title as the URL
