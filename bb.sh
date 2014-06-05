@@ -65,6 +65,7 @@
 #
 #########################################################################################
 #
+# 2.2      Flexible post title -> filename conversion
 # 2.1      Support for tags/categories
 #          'delete' command
 # 2.0.3    Support for other analytics code, via external file
@@ -113,7 +114,7 @@ global_config=".config"
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
-    global_software_version="2.1"
+    global_software_version="2.2"
 
     # Blog title
     global_title="My fancy blog"
@@ -173,14 +174,6 @@ global_variables() {
     # prefix for tags/categories files
     # please make sure that no other html file starts with this prefix
     prefix_tags="tag_"
-    # force characters to lowercase - works with latin characters only
-    filename_lowercase="yes"
-    # when making filenames, replace spaces with this symbol
-    filename_spaces="-"
-    # Regexp explaining forbidden characters in filenames.
-    # Usually it's something like [^allowed-characters]
-    # Example for Cyrillic characters: [^A-z0-9А-я-]
-    filename_forbidden_characters=""
     # personalized header and footer (only if you know what you're doing)
     # DO NOT name them .header.html, .footer.html or they will be overwritten
     # leave blank to generate them, recommended
@@ -223,6 +216,12 @@ global_variables() {
     # The locale to use for the dates displayed on screen (not for the timestamps)
     date_format="%B %d, %Y"
     date_locale="C"
+
+    # Perform the post title -> filename conversion
+    # Experts only. You may need to tune the locales too
+    # Leave empty for no conversion, which is not recommended
+    # This default filter respects backwards compatibility
+    convert_filename="iconv -f utf-8 -t cp1251//translit | iconv -f cp1251 -t utf-8 | sed 's/^-*//' | tr [:upper:] [:lower:] | tr ' ' '-' | tr -dc '[:alnum:]-'"
 
     # Markdown location. Trying to autodetect by default.
     # The invocation must support the signature 'markdown_bin in.md > out.html'
@@ -535,22 +534,17 @@ parse_file() {
     title=""
     while IFS='' read -r line; do
         if [[ "$title" == "" ]]; then
-            # set title and
             # remove extra <p> and </p> added by markdown
             title=$(echo "$line" | sed 's/<\/*p>//g')
             if [ "$3" ]; then
                 filename=$3
             else
                 filename=$title
-                [[ "$filename_lowercase" == "yes" ]] && filename="$(echo $filename | tr [:upper:] [:lower:])"
-                filename="$(echo $filename | sed "s/\\s/$filename_spaces/g")"
-                if [ "$filename_forbidden_characters" ]; then
-                    filename="$(echo $filename | LC_ALL=C.UTF-8 sed "s/$filename_forbidden_characters//g")"
-                else
-                    filename="$(echo $filename | tr -dc '[:alnum:]-')" # html likes alphanumeric
-                fi
-                filename="$(echo $filename | sed 's/^-*//')" # unix utilities are unhappy if filename starts with -
-                [ "$filename" ] || filename=$RANDOM # if filename gets empty, put something in it
+                [[ "$convert_filename" ]] &&
+                    filename="$(echo $title | eval $convert_filename)"
+                [[ "$filename" ]] || 
+                    filename=$RANDOM # don't allow empty filenames
+
                 filename="$filename.html"
 
                 # Check for duplicate file names
@@ -651,9 +645,9 @@ EOF
             chmod 700 "drafts/"
 
             title="$(head -n 1 $TMPFILE)"
-            title="$(echo $title | tr [:upper:] [:lower:])"
-            title="$(echo $title | sed 's/\ /-/g')"
-            title="$(echo $title | tr -dc '[:alnum:]-')"
+            [[ "$convert_filename" ]] && title="$(echo $title | eval $convert_filename)"
+            [[ "$title" ]] || title=$RANDOM
+
             draft="drafts/$title.$fmt"
             while [ -f "$draft" ]; do draft="drafts/$title-$RANDOM.$fmt"; done
 
