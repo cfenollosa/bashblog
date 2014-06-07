@@ -361,8 +361,8 @@ get_html_file_content() {
 #	leave empty for default behavior (edit only text part and change name)
 edit() {
     # Original post timestamp
-    edit_timestamp="$(LC_ALL=$date_locale date -r "${1%%.*}.html" +"%a, %d %b %Y %H:%M:%S %z" )"
-    touch_timestamp="$(LC_ALL=$date_locale date -r "${1%%.*}.html" +'%Y%m%d%H%M')"
+    edit_timestamp="$(LC_ALL=C date -r "${1%%.*}.html" +"%a, %d %b %Y %H:%M:%S %z" )"
+    touch_timestamp="$(LC_ALL=C date -r "${1%%.*}.html" +'%Y%m%d%H%M')"
     if [ "$2" = "full" ]; then
         $EDITOR "$1"
         filename="$1"
@@ -836,8 +836,8 @@ make_rss() {
     echo '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">' >> "$rssfile"
     echo '<channel><title>'$global_title'</title><link>'$global_url'</link>' >> "$rssfile"
     echo '<description>'$global_description'</description><language>en</language>' >> "$rssfile"
-    echo '<lastBuildDate>'$(LC_ALL=$date_locale date +"%a, %d %b %Y %H:%M:%S %z")'</lastBuildDate>' >> "$rssfile"
-    echo '<pubDate>'$(LC_ALL=$date_locale date +"%a, %d %b %Y %H:%M:%S %z")'</pubDate>' >> "$rssfile"
+    echo '<lastBuildDate>'$(LC_ALL=C date +"%a, %d %b %Y %H:%M:%S %z")'</lastBuildDate>' >> "$rssfile"
+    echo '<pubDate>'$(LC_ALL=C date +"%a, %d %b %Y %H:%M:%S %z")'</pubDate>' >> "$rssfile"
     echo '<atom:link href="'$global_url/$blog_feed'" rel="self" type="application/rss+xml" />' >> "$rssfile"
 
     n=0
@@ -852,7 +852,7 @@ make_rss() {
         echo "]]></description><link>$global_url/$i</link>" >> "$rssfile"
         echo "<guid>$global_url/$i</guid>" >> "$rssfile"
         echo "<dc:creator>$global_author</dc:creator>" >> "$rssfile"
-        echo '<pubDate>'$(LC_ALL=$date_locale date -r "$i" +"%a, %d %b %Y %H:%M:%S %z")'</pubDate></item>' >> "$rssfile"
+        echo '<pubDate>'$(LC_ALL=C date -r "$i" +"%a, %d %b %Y %H:%M:%S %z")'</pubDate></item>' >> "$rssfile"
 
         n=$(( $n + 1 ))
     done
@@ -959,11 +959,11 @@ rebuild_all_entries() {
         get_html_file_content 'text' 'text' <$i >> "$contentfile"
 
         # Original post timestamp
-        timestamp="$(LC_ALL=$date_locale date -r $i +"%a, %d %b %Y %H:%M:%S %z" )"
+        timestamp="$(LC_ALL=C date -r $i +"%a, %d %b %Y %H:%M:%S %z" )"
 
         create_html_page "$contentfile" "$i.rebuilt" no "$title" "$timestamp"
         # keep the original timestamp!
-        timestamp="$(LC_ALL=$date_locale date -r $i +'%Y%m%d%H%M')"
+        timestamp="$(LC_ALL=C date -r $i +'%Y%m%d%H%M')"
         mv "$i.rebuilt" "$i"
         chmod 644 "$i"
         touch -t $timestamp "$i"
