@@ -700,7 +700,7 @@ all_posts() {
     echo "</ul>" >> "$contentfile"
     echo '<div id="all_posts"><a href="'./'">'$template_archive_index_page'</a></div>' >> "$contentfile"
 
-    create_html_page "$contentfile" "$archive_index.tmp" yes "$global_title &mdash; All posts"
+    create_html_page "$contentfile" "$archive_index.tmp" yes "$global_title &mdash; $template_archive_title"
     mv "$archive_index.tmp" "$archive_index"
     chmod 644 "$archive_index"
     rm "$contentfile"
