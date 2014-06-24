@@ -769,14 +769,37 @@ rebuild_index() {
     chmod 644 "$index_file"
 }
 
-# Rebuilds all tag_*.html files
+# Rebuilds tag_*.html files
+# if no arguments given, rebuilds all of them
+# if arguments given, they should have this format:
+# "FILE1 [FILE2 [...]]" "TAG1 [TAG2 [...]]"
+# where FILEn are files with posts which should be used for rebuilding tags,
+# and TAGn are names of tags which should be rebuilt.
+# example:
+# rebuild_tags "one_post.html another_atricle.html" "example-tag another-tag"
+# mind the tags!
 rebuild_tags() {
+    if [ "$#" -lt 2 ]; then
+        # will process all files and tags
+        files="$(ls -t ./*.html)"
+        all_tags="yes"
+    else
+        # will process only given files and tags
+        files="$(ls -t $1)"
+        tags="$2"
+    fi
     echo -n "Rebuilding tag pages "
     n=0
-    rm ./$prefix_tags*.html &> /dev/null
+    if [ $all_tags ]; then
+        rm ./$prefix_tags*.html &> /dev/null
+    else
+        for i in $tags; do
+            rm ./$prefix_tags$i.html &> /dev/null
+        done
+    fi
     # First we will process all files and create temporal tag files
     # with just the content of the posts
-    for i in $(ls -t ./*.html); do
+    for i in $files; do
         is_boilerplate_file "$i" && continue;
         echo -n "."
         tmpfile="$(mktemp tmp.XXX)"
@@ -792,7 +815,9 @@ rebuild_tags() {
                     for dirty_tag in "${tags[@]}"; do # extract html around it
                         tag="$(expr "$dirty_tag" : ".*>\(.*\)</a" | tr " " "_")"
                         # Add the content of this post to the tag file
-                        cat "$tmpfile" >> "$prefix_tags$tag".tmp.html
+                        if [ "$all_tags" ] || [[ " $tags " == *" $tag "* ]]; then
+                            cat "$tmpfile" >> "$prefix_tags$tag".tmp.html
+                        fi
                     done
                 done
             fi
