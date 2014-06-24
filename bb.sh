@@ -369,6 +369,7 @@ edit() {
     # Original post timestamp
     edit_timestamp="$(LC_ALL=C date -r "${1%%.*}.html" +"%a, %d %b %Y %H:%M:%S %z" )"
     touch_timestamp="$(LC_ALL=C date -r "${1%%.*}.html" +'%Y%m%d%H%M')"
+    tags_before="$(tags_in_post "${1%%.*}.html")"
     if [ "$2" = "full" ]; then
         $EDITOR "$1"
         filename="$1"
@@ -405,6 +406,10 @@ edit() {
     touch -t "$touch_timestamp" "$filename"
     chmod 644 "$filename"
     echo "Posted $filename"
+    tags_after="$(tags_in_post $filename)"
+    relevant_tags="$(echo "$tags_before $tags_after" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
+    relevant_posts="$(posts_with_tags $relevant_tags) $filename"
+    rebuild_tags "$relevant_posts" "$relevant_tags"
 }
 
 # Adds the code needed by the twitter button
@@ -674,6 +679,9 @@ EOF
     fi
     chmod 644 "$filename"
     echo "Posted $filename"
+    relevant_tags="$(tags_in_post $filename)"
+    relevant_posts="$(posts_with_tags $relevant_tags) $filename"
+    rebuild_tags "$relevant_posts" "$relevant_tags"
 }
 
 # Create an index page with all the posts
@@ -800,7 +808,8 @@ rebuild_tags() {
         all_tags="yes"
     else
         # will process only given files and tags
-        files="$(ls -t $1)"
+        files="$(echo "$1" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
+        files="$(ls -t $files)"
         tags="$2"
     fi
     echo -n "Rebuilding tag pages "
@@ -1124,8 +1133,8 @@ do_main() {
     create_css
     create_includes
     [[ "$1" == "post" ]] && write_entry "$@"
-    [[ "$1" == "rebuild" ]] && rebuild_all_entries
-    [[ "$1" == "delete" ]] && rm "$2" &> /dev/null 
+    [[ "$1" == "rebuild" ]] && rebuild_all_entries && rebuild_tags
+    [[ "$1" == "delete" ]] && rm "$2" &> /dev/null && rebuild_tags
     if [[ "$1" == "edit" ]]; then
         if [[ "$2" == "-n" ]]; then
             edit "$3"
@@ -1137,7 +1146,6 @@ do_main() {
     fi
     rebuild_index
     all_posts
-    rebuild_tags
     all_tags
     make_rss
     delete_includes
