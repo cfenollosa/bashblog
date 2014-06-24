@@ -769,6 +769,13 @@ rebuild_index() {
     chmod 644 "$index_file"
 }
 
+# Finds all tags referenced in one post.
+# Accepts either filename as first argument, or post content at stdin
+# Prints one line with space-separated tags to stdout
+tags_in_post() {
+    sed -n "/^<p>$template_tags_line_header/{s/^<p>$template_tags_line_header//;s/<[^>]*>//g;s/[ ,]\+/ /g;p}" $1
+}
+
 # Rebuilds tag_*.html files
 # if no arguments given, rebuilds all of them
 # if arguments given, they should have this format:
@@ -808,20 +815,11 @@ rebuild_tags() {
         else
             get_html_file_content 'entry' 'entry' <$i >> "$tmpfile"
         fi
-        while IFS='' read line; do
-            if [[ "$line" = "<p>$template_tags_line_header"* ]]; then
-                # 'split' tags by commas
-                echo "$line" | cut -c 10- | while IFS="," read -a tags; do
-                    for dirty_tag in "${tags[@]}"; do # extract html around it
-                        tag="$(expr "$dirty_tag" : ".*>\(.*\)</a" | tr " " "_")"
-                        # Add the content of this post to the tag file
-                        if [ "$all_tags" ] || [[ " $tags " == *" $tag "* ]]; then
-                            cat "$tmpfile" >> "$prefix_tags$tag".tmp.html
-                        fi
-                    done
-                done
+        for tag in $(tags_in_post $i); do
+            if [ "$all_tags" ] || [[ " $tags " == *" $tag "* ]]; then
+                cat "$tmpfile" >> "$prefix_tags$tag".tmp.html
             fi
-        done < "$i"
+        done
         rm "$tmpfile"
     done
     # Now generate the tag files with headers, footers, etc
