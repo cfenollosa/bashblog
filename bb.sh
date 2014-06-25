@@ -223,6 +223,12 @@ global_variables() {
     # This default filter respects backwards compatibility
     convert_filename="iconv -f utf-8 -t ascii//translit | sed 's/^-*//' | tr [:upper:] [:lower:] | tr ' ' '-' | tr -dc '[:alnum:]-'"
 
+    # URL where you can view the post while it's being edited
+    # same as global_url by default
+    # You can change it to path on your computer, if you write posts locally
+    # before copying them to the server
+    preview_url=""
+
     # Markdown location. Trying to autodetect by default.
     # The invocation must support the signature 'markdown_bin in.md > out.html'
     markdown_bin="$(which Markdown.pl)"
@@ -635,7 +641,8 @@ EOF
         read p
         if [[ "$p" != "n" ]] && [[ "$p" != "N" ]]; then
             chmod 644 "$filename"
-            echo "Open $global_url/$filename in your browser"
+            [ $preview_url ] || preview_url="$global_url"
+            echo "Open $preview_url/$filename in your browser"
         fi
 
         echo -n "[P]ost this entry, [E]dit again, [D]raft for later? (p/E/d) "
@@ -693,7 +700,7 @@ all_posts() {
     echo "</ul>" >> "$contentfile"
     echo '<div id="all_posts"><a href="'./'">'$template_archive_index_page'</a></div>' >> "$contentfile"
 
-    create_html_page "$contentfile" "$archive_index.tmp" yes "$global_title &mdash; All posts"
+    create_html_page "$contentfile" "$archive_index.tmp" yes "$global_title &mdash; $template_archive_title"
     mv "$archive_index.tmp" "$archive_index"
     chmod 644 "$archive_index"
     rm "$contentfile"
@@ -849,7 +856,7 @@ make_rss() {
         echo "$(get_post_title "$i")" >> "$rssfile"
         echo '</title><description><![CDATA[' >> "$rssfile"
         echo "$(get_html_file_content 'text' 'entry' $cut_do <$i)" >> "$rssfile"
-        echo "]]></description><link>$global_url/$i</link>" >> "$rssfile"
+        echo "]]></description><link>$global_url/$(clean_filename $i)</link>" >> "$rssfile"
         echo "<guid>$global_url/$i</guid>" >> "$rssfile"
         echo "<dc:creator>$global_author</dc:creator>" >> "$rssfile"
         echo '<pubDate>'$(LC_ALL=C date -r "$i" +"%a, %d %b %Y %H:%M:%S %z")'</pubDate></item>' >> "$rssfile"
