@@ -583,16 +583,9 @@ parse_file() {
 # Manages the creation of the text file and the parsing to html file
 # also the drafts
 write_entry() {
-    fmt="html"; f="$2"
-    [[ "$2" == "-m" ]] && fmt="md" && f="$3"
-    if [[ "$fmt" == "md" ]]; then
-        test_markdown
-        if [[ "$?" -ne 0 ]]; then
-            echo "Markdown is not working, please use HTML. Press a key to continue..."
-            fmt="html" 
-            read 
-        fi
-    fi
+    test_markdown && fmt="md" || fmt="html"
+    f="$2"
+    [[ "$2" == "-html" ]] && fmt="html" && f="$3"
 
     if [[ "$f" != "" ]]; then
         TMPFILE="$f"
