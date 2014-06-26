@@ -408,7 +408,7 @@ edit() {
     echo "Posted $filename"
     tags_after="$(tags_in_post $filename)"
     relevant_tags="$(echo "$tags_before $tags_after" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
-    if [ "$relevant_tags" ]; then
+    if [ ! -z "$relevant_tags" ]; then
         relevant_posts="$(posts_with_tags $relevant_tags) $filename"
         rebuild_tags "$relevant_posts" "$relevant_tags"
     fi
@@ -682,7 +682,7 @@ EOF
     chmod 644 "$filename"
     echo "Posted $filename"
     relevant_tags="$(tags_in_post $filename)"
-    if [ "$relevant_tags" ]; then
+    if [ ! -z "$relevant_tags" ]; then
         relevant_posts="$(posts_with_tags $relevant_tags) $filename"
         rebuild_tags "$relevant_posts" "$relevant_tags"
     fi
