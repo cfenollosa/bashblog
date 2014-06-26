@@ -110,7 +110,7 @@
 # with merges in VCS
 global_config=".config"
 
-# This function will load all the variables defined here. They might be overriden
+# This function will load all the variables defined here. They might be overridden
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
@@ -803,8 +803,8 @@ posts_with_tags() {
 # where FILEn are files with posts which should be used for rebuilding tags,
 # and TAGn are names of tags which should be rebuilt.
 # example:
-# rebuild_tags "one_post.html another_atricle.html" "example-tag another-tag"
-# mind the tags!
+# rebuild_tags "one_post.html another_article.html" "example-tag another-tag"
+# mind the quotes!
 rebuild_tags() {
     if [ "$#" -lt 2 ]; then
         # will process all files and tags
