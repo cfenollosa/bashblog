@@ -635,15 +635,10 @@ EOF
         else
             parse_file "$TMPFILE" # this command sets $filename as the html processed file
         fi
-        chmod 600 "$filename"
 
-        echo -n "Preview? (Y/n) "
-        read p
-        if [[ "$p" != "n" ]] && [[ "$p" != "N" ]]; then
-            chmod 644 "$filename"
-            [ $preview_url ] || preview_url="$global_url"
-            echo "Open $preview_url/$filename in your browser"
-        fi
+        chmod 644 "$filename"
+        [ "$preview_url" ] || preview_url="$global_url"
+        echo "To preview the entry, open $preview_url/$filename in your browser"
 
         echo -n "[P]ost this entry, [E]dit again, [D]raft for later? (p/E/d) "
         read post_status
