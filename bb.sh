@@ -594,9 +594,11 @@ write_entry() {
             delete_includes
             exit
         fi
-        # check if TMPFILE is markdown even though the user didn't specify it
+        # guess format from TMPFILE
         extension="${TMPFILE##*.}"
-        [[ "$extension" == "md" ]] && fmt="md"
+        [[ "$extension" == "md" || "$extension" == "html" ]] && fmt="$extension"
+        # but let user override it (`bb.sh post -html file.md`)
+        [[ "$2" == "-html" ]] && fmt="html"
     else
         TMPFILE=".entry-$RANDOM.$fmt"
         echo -e "Title on this line\n" >> "$TMPFILE"
