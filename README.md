@@ -28,9 +28,9 @@ To create your first post, just run:
 
     ./bb.sh post
     
-Or, if you prefer Markdown over HTML:
+It will try to use Markdown, if installed. To force HTML:
 
-    ./bb.sh post -m
+    ./bb.sh post -html
     
 The script will handle the rest.
 
