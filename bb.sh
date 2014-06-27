@@ -590,16 +590,9 @@ parse_file() {
 # Manages the creation of the text file and the parsing to html file
 # also the drafts
 write_entry() {
-    fmt="html"; f="$2"
-    [[ "$2" == "-m" ]] && fmt="md" && f="$3"
-    if [[ "$fmt" == "md" ]]; then
-        test_markdown
-        if [[ "$?" -ne 0 ]]; then
-            echo "Markdown is not working, please use HTML. Press a key to continue..."
-            fmt="html" 
-            read 
-        fi
-    fi
+    test_markdown && fmt="md" || fmt="html"
+    f="$2"
+    [[ "$2" == "-html" ]] && fmt="html" && f="$3"
 
     if [[ "$f" != "" ]]; then
         TMPFILE="$f"
@@ -608,9 +601,11 @@ write_entry() {
             delete_includes
             exit
         fi
-        # check if TMPFILE is markdown even though the user didn't specify it
+        # guess format from TMPFILE
         extension="${TMPFILE##*.}"
-        [[ "$extension" == "md" ]] && fmt="md"
+        [[ "$extension" == "md" || "$extension" == "html" ]] && fmt="$extension"
+        # but let user override it (`bb.sh post -html file.md`)
+        [[ "$2" == "-html" ]] && fmt="html"
     else
         TMPFILE=".entry-$RANDOM.$fmt"
         echo -e "Title on this line\n" >> "$TMPFILE"
@@ -642,15 +637,10 @@ EOF
         else
             parse_file "$TMPFILE" # this command sets $filename as the html processed file
         fi
-        chmod 600 "$filename"
 
-        echo -n "Preview? (Y/n) "
-        read p
-        if [[ "$p" != "n" ]] && [[ "$p" != "N" ]]; then
-            chmod 644 "$filename"
-            [ $preview_url ] || preview_url="$global_url"
-            echo "Open $preview_url/$filename in your browser"
-        fi
+        chmod 644 "$filename"
+        [ "$preview_url" ] || preview_url="$global_url"
+        echo "To preview the entry, open $preview_url/$filename in your browser"
 
         echo -n "[P]ost this entry, [E]dit again, [D]raft for later? (p/E/d) "
         read post_status
@@ -1029,8 +1019,9 @@ usage() {
     echo "Usage: $0 command [filename]"
     echo ""
     echo "Commands:"
-    echo "    post [-m] [filename]    insert a new blog post, or the filename of a draft to continue editing it"
-    echo "                            use '-m' to edit the post as Markdown text"
+    echo "    post [-html] [filename] insert a new blog post, or the filename of a draft to continue editing it"
+    echo "                            it tries to use markdown by default, and falls back to HTML if it's not available."
+    echo "                            use '-html' to override it and edit the post as HTML even when markdown is available"
     echo "    edit [-n|-f] [filename] edit an already published .html or .md file. **NEVER** edit manually a published .html file,"
     echo "                            always use this function as it keeps internal data and rebuilds the blog"
     echo "                            use '-n' to give the file a new name, if title was changed"
