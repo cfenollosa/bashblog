@@ -110,7 +110,7 @@
 # with merges in VCS
 global_config=".config"
 
-# This function will load all the variables defined here. They might be overriden
+# This function will load all the variables defined here. They might be overridden
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
@@ -369,6 +369,7 @@ edit() {
     # Original post timestamp
     edit_timestamp="$(LC_ALL=C date -r "${1%%.*}.html" +"%a, %d %b %Y %H:%M:%S %z" )"
     touch_timestamp="$(LC_ALL=C date -r "${1%%.*}.html" +'%Y%m%d%H%M')"
+    tags_before="$(tags_in_post "${1%%.*}.html")"
     if [ "$2" = "full" ]; then
         $EDITOR "$1"
         filename="$1"
@@ -405,6 +406,12 @@ edit() {
     touch -t "$touch_timestamp" "$filename"
     chmod 644 "$filename"
     echo "Posted $filename"
+    tags_after="$(tags_in_post $filename)"
+    relevant_tags="$(echo "$tags_before $tags_after" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
+    if [ ! -z "$relevant_tags" ]; then
+        relevant_posts="$(posts_with_tags $relevant_tags) $filename"
+        rebuild_tags "$relevant_posts" "$relevant_tags"
+    fi
 }
 
 # Adds the code needed by the twitter button
@@ -674,6 +681,11 @@ EOF
     fi
     chmod 644 "$filename"
     echo "Posted $filename"
+    relevant_tags="$(tags_in_post $filename)"
+    if [ ! -z "$relevant_tags" ]; then
+        relevant_posts="$(posts_with_tags $relevant_tags) $filename"
+        rebuild_tags "$relevant_posts" "$relevant_tags"
+    fi
 }
 
 # Create an index page with all the posts
@@ -769,14 +781,53 @@ rebuild_index() {
     chmod 644 "$index_file"
 }
 
-# Rebuilds all tag_*.html files
+# Finds all tags referenced in one post.
+# Accepts either filename as first argument, or post content at stdin
+# Prints one line with space-separated tags to stdout
+tags_in_post() {
+    sed -n "/^<p>$template_tags_line_header/{s/^<p>$template_tags_line_header//;s/<[^>]*>//g;s/[ ,]\+/ /g;p}" $1
+}
+
+# Finds all posts referenced in a number of tags.
+# Arguments are tags
+# Prints one line with space-separated tags to stdout
+posts_with_tags() {
+    tag_files="$(echo "$@" | sed "s/\S\+/tag_&.html/g")"
+    sed -n '/^<h3><a class="ablack" href="[^"]*">/{s/.*href="\([^"]*\)">.*/\1/;p}' $tag_files
+}
+
+# Rebuilds tag_*.html files
+# if no arguments given, rebuilds all of them
+# if arguments given, they should have this format:
+# "FILE1 [FILE2 [...]]" "TAG1 [TAG2 [...]]"
+# where FILEn are files with posts which should be used for rebuilding tags,
+# and TAGn are names of tags which should be rebuilt.
+# example:
+# rebuild_tags "one_post.html another_article.html" "example-tag another-tag"
+# mind the quotes!
 rebuild_tags() {
+    if [ "$#" -lt 2 ]; then
+        # will process all files and tags
+        files="$(ls -t ./*.html)"
+        all_tags="yes"
+    else
+        # will process only given files and tags
+        files="$(echo "$1" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
+        files="$(ls -t $files)"
+        tags="$2"
+    fi
     echo -n "Rebuilding tag pages "
     n=0
-    rm ./$prefix_tags*.html &> /dev/null
+    if [ $all_tags ]; then
+        rm ./$prefix_tags*.html &> /dev/null
+    else
+        for i in $tags; do
+            rm ./$prefix_tags$i.html &> /dev/null
+        done
+    fi
     # First we will process all files and create temporal tag files
     # with just the content of the posts
-    for i in $(ls -t ./*.html); do
+    for i in $files; do
         is_boilerplate_file "$i" && continue;
         echo -n "."
         tmpfile="$(mktemp tmp.XXX)"
@@ -785,18 +836,11 @@ rebuild_tags() {
         else
             get_html_file_content 'entry' 'entry' <$i >> "$tmpfile"
         fi
-        while IFS='' read line; do
-            if [[ "$line" = "<p>$template_tags_line_header"* ]]; then
-                # 'split' tags by commas
-                echo "$line" | cut -c 10- | while IFS="," read -a tags; do
-                    for dirty_tag in "${tags[@]}"; do # extract html around it
-                        tag="$(expr "$dirty_tag" : ".*>\(.*\)</a" | tr " " "_")"
-                        # Add the content of this post to the tag file
-                        cat "$tmpfile" >> "$prefix_tags$tag".tmp.html
-                    done
-                done
+        for tag in $(tags_in_post $i); do
+            if [ "$all_tags" ] || [[ " $tags " == *" $tag "* ]]; then
+                cat "$tmpfile" >> "$prefix_tags$tag".tmp.html
             fi
-        done < "$i"
+        done
         rm "$tmpfile"
     done
     # Now generate the tag files with headers, footers, etc
@@ -1093,8 +1137,8 @@ do_main() {
     create_css
     create_includes
     [[ "$1" == "post" ]] && write_entry "$@"
-    [[ "$1" == "rebuild" ]] && rebuild_all_entries
-    [[ "$1" == "delete" ]] && rm "$2" &> /dev/null 
+    [[ "$1" == "rebuild" ]] && rebuild_all_entries && rebuild_tags
+    [[ "$1" == "delete" ]] && rm "$2" &> /dev/null && rebuild_tags
     if [[ "$1" == "edit" ]]; then
         if [[ "$2" == "-n" ]]; then
             edit "$3"
@@ -1106,7 +1150,6 @@ do_main() {
     fi
     rebuild_index
     all_posts
-    rebuild_tags
     all_tags
     make_rss
     delete_includes
