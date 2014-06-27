@@ -2,8 +2,9 @@
 
 # BashBlog, a simple blog system written in a single bash script
 # Copyright: Carlos Fenollosa <carlos.fenollosa@gmail.com>, 2011-2014
-# With contributions from many others: 
+# With contributions from many others
 # https://github.com/carlesfe/bashblog/contributors
+# A special recognition to Lex-2008, djura-san and carlosbm for their discussion and code
 
 #########################################################################################
 #
@@ -65,6 +66,7 @@
 #
 #########################################################################################
 #
+# 2.3      Intelligent tag rebuilding and Markdown by default
 # 2.2      Flexible post title -> filename conversion
 # 2.1      Support for tags/categories
 #          'delete' command
@@ -114,7 +116,7 @@ global_config=".config"
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
-    global_software_version="2.2"
+    global_software_version="2.3"
 
     # Blog title
     global_title="My fancy blog"
