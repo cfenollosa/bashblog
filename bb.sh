@@ -785,10 +785,8 @@ tags_in_post() {
 # Prints one line with space-separated tags to stdout
 posts_with_tags() {
     [ $# -lt 1 ] && return
-    set -x
     tag_files="$(for i in $@; do echo -n $prefix_tags""$i.html" "; done)"
     sed -n '/^<h3><a class="ablack" href="[^"]*">/{s/.*href="\([^"]*\)">.*/\1/;p;}' $tag_files
-    set +x
 }
 
 # Rebuilds tag_*.html files
