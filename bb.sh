@@ -777,7 +777,7 @@ rebuild_index() {
 # Accepts either filename as first argument, or post content at stdin
 # Prints one line with space-separated tags to stdout
 tags_in_post() {
-    sed -n "/^<p>$template_tags_line_header/{s/^<p>$template_tags_line_header//;s/<[^>]*>//g;s/[ ,]\+/ /g;p}" $1
+    sed -n "/^<p>$template_tags_line_header/{s/^<p>$template_tags_line_header//;s/<[^>]*>//g;s/[ ,]\+/ /g;p;}" $1
 }
 
 # Finds all posts referenced in a number of tags.
