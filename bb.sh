@@ -784,7 +784,7 @@ tags_in_post() {
 # Arguments are tags
 # Prints one line with space-separated tags to stdout
 posts_with_tags() {
-    tag_files="$(echo "$@" | sed "s/\S\+/$prefix_tags&.html/g")"
+    tag_files="$(echo "$@" | sed "s/\S\+/tag_&.html/g")"
     sed -n '/^<h3><a class="ablack" href="[^"]*">/{s/.*href="\([^"]*\)">.*/\1/;p}' $tag_files
 }
 
