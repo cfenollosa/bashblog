@@ -786,7 +786,7 @@ tags_in_post() {
 posts_with_tags() {
     [ $# -lt 1 ] && return
     tag_files="$(echo "$@" | sed "s/\S\+/$prefix_tags&.html/g")"
-    sed -n '/^<h3><a class="ablack" href="[^"]*">/{s/.*href="\([^"]*\)">.*/\1/;p}' $tag_files
+    sed -n '/^<h3><a class="ablack" href="[^"]*">/{s/.*href="\([^"]*\)">.*/\1/;p;}' $tag_files
 }
 
 # Rebuilds tag_*.html files
