@@ -720,7 +720,7 @@ all_tags() {
 
     echo "<h3>$template_tags_title</h3>" >> "$contentfile"
     echo "<ul>" >> "$contentfile"
-    for i in ./$prefix_tags*.html; do
+    for i in $(ls ./$prefix_tags*.html 2>/dev/null || echo ''); do
         echo -n "."
         nposts="$(grep -c "<\!-- text begin -->" $i)"
         tagname="$(echo $i | cut -c $((${#prefix_tags}+3))- | sed 's/\.html//g')"
@@ -784,6 +784,7 @@ tags_in_post() {
 # Arguments are tags
 # Prints one line with space-separated tags to stdout
 posts_with_tags() {
+    [ $# -lt 1 ] && return
     tag_files="$(echo "$@" | sed "s/\S\+/tag_&.html/g")"
     sed -n '/^<h3><a class="ablack" href="[^"]*">/{s/.*href="\([^"]*\)">.*/\1/;p}' $tag_files
 }
@@ -836,7 +837,7 @@ rebuild_tags() {
         rm "$tmpfile"
     done
     # Now generate the tag files with headers, footers, etc
-    for i in $(ls -t ./$prefix_tags*.tmp.html); do
+    for i in $(ls -t ./$prefix_tags*.tmp.html 2>/dev/null || echo ''); do
         tagname="$(echo $i | cut -c $((${#prefix_tags}+3))- | sed 's/\.tmp\.html//g')"
         create_html_page "$i" "$prefix_tags$tagname.html" yes "$global_title &mdash; $template_tag_title \"$tagname\""
         rm "$i"
