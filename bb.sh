@@ -409,7 +409,7 @@ edit() {
     chmod 644 "$filename"
     echo "Posted $filename"
     tags_after="$(tags_in_post $filename)"
-    relevant_tags="$(echo "$tags_before $tags_after" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
+    relevant_tags="$(echo "$tags_before $tags_after" | tr ',' ' ' | tr ' ' '\n' | sort -u | tr '\n' ' ')"
     if [ ! -z "$relevant_tags" ]; then
         relevant_posts="$(posts_with_tags $relevant_tags) $filename"
         rebuild_tags "$relevant_posts" "$relevant_tags"
@@ -777,7 +777,7 @@ rebuild_index() {
 # Accepts either filename as first argument, or post content at stdin
 # Prints one line with space-separated tags to stdout
 tags_in_post() {
-    sed -n "/^<p>$template_tags_line_header/{s/^<p>$template_tags_line_header//;s/<[^>]*>//g;s/[ ,]\+/ /g;p;}" $1
+    sed -n "/^<p>$template_tags_line_header/{s/^<p>$template_tags_line_header//;s/<[^>]*>//g;s/[ ,]\+/ /g;p;}" $1 | tr ', ' ' '
 }
 
 # Finds all posts referenced in a number of tags.
@@ -786,7 +786,9 @@ tags_in_post() {
 posts_with_tags() {
     [ $# -lt 1 ] && return
     tag_files="$(echo "$@" | sed "s/\S\+/$prefix_tags&.html/g")"
+    set -x
     sed -n '/^<h3><a class="ablack" href="[^"]*">/{s/.*href="\([^"]*\)">.*/\1/;p;}' $tag_files
+    set +x
 }
 
 # Rebuilds tag_*.html files
