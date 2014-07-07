@@ -59,9 +59,9 @@ Read the Configuration section below for more information</strong></p>
 <pre><code>./bb.sh post
 </code></pre>
 
-<p>Or, if you prefer Markdown over HTML:</p>
+<p>It will try to use Markdown, if installed. To force HTML:</p>
 
-<pre><code>./bb.sh post -m
+<pre><code>./bb.sh post -html
 </code></pre>
 
 <p>The script will handle the rest.</p>
@@ -124,6 +124,9 @@ Gruber's <a href="http://daringfireball.net/projects/markdown/">Markdown.pl</a>
 <li>Automatically generates pages for each tag</li>
 <li>Rebuild all files while keeping the original data</li>
 <li>Comments delegated to Twitter, with additional Disqus support</li>
+<li>An option for cookieless Twitter sharing, to comply with the 
+<a href="https://github.com/cfenollosa/eu-cookie-law">EU cookie law</a>
+</li>
 <li>Google Analytics code support</li>
 <li>Contains its own CSS so that everything is reasonably styled by default</li>
 <li>Headers, footers, and in general everything that a well-structured html file needs</li>
