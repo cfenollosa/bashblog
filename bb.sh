@@ -66,6 +66,7 @@
 #
 #########################################################################################
 #
+# 2.3.1    Cookieless Twitter option
 # 2.3      Intelligent tag rebuilding and Markdown by default
 # 2.2      Flexible post title -> filename conversion
 # 2.1      Support for tags/categories
@@ -116,7 +117,7 @@ global_config=".config"
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
-    global_software_version="2.3"
+    global_software_version="2.3.1"
 
     # Blog title
     global_title="My fancy blog"
@@ -148,6 +149,9 @@ global_variables() {
 
     # Change this to your username if you want to use twitter for comments
     global_twitter_username=""
+    # Set this to false for a Twitter button with share count. The cookieless version
+    # is just a link.
+    global_twitter_cookieless="true"
 
     # Change this to your disqus username to use disqus for comments
     global_disqus_username=""
@@ -423,15 +427,22 @@ twitter() {
     [[ -z "$global_twitter_username" ]] && return
 
     if [[ -z "$global_disqus_username" ]]; then
-        echo "<p id='twitter'>$template_comments&nbsp;"
+        if [[ "$global_twitter_cookieless" == "true" ]]; then 
+            id=$RANDOM
+            echo "<p id='twitter'><a href='http://twitter.com/intent/tweet?url=$1&text=$template_twitter_comment&via=$global_twitter_username'>$template_comments $template_twitter_button <span id='count-$id'></span></a>&nbsp;</p>"
+            # Get current tweet count
+            echo '<script type="text/javascript">$.ajax({type: "GET", url: "http://urls.api.twitter.com/1/urls/count.json?url='$1'",
+            dataType: "jsonp", success: function(data){ $("#count-'$id'").html("(" + data.count + ")"); }}); </script>'
+            return;
+        else 
+            echo "<p id='twitter'>$template_comments&nbsp;"; 
+        fi
     else
         echo "<p id='twitter'><a href=\"$1#disqus_thread\">$template_comments</a> &nbsp;"
     fi  
 
     echo "<a href=\"https://twitter.com/share\" class=\"twitter-share-button\" data-text=\"$template_twitter_comment\" data-url=\"$1\""
-
     echo " data-via=\"$global_twitter_username\""
-
     echo ">$template_twitter_button</a>	<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=\"//platform.twitter.com/widgets.js\";fjs.parentNode.insertBefore(js,fjs);}}(document,\"script\",\"twitter-wjs\");</script>"
     echo "</p>"
 }
