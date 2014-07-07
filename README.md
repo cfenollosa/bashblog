@@ -91,6 +91,8 @@ Detailed features
 - Automatically generates pages for each tag
 - Rebuild all files while keeping the original data
 - Comments delegated to Twitter, with additional Disqus support
+- An option for cookieless Twitter sharing, to comply with the 
+[EU cookie law](https://github.com/cfenollosa/eu-cookie-law)
 - Google Analytics code support
 - Contains its own CSS so that everything is reasonably styled by default
 - Headers, footers, and in general everything that a well-structured html file needs
