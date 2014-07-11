@@ -537,9 +537,8 @@ create_html_page() {
     echo '</div>' >> "$filename" # content
 
     # Add disqus commments except for index and all_posts pages
-    if [[ ${filename%.*.*} != "index" && ${filename%.*.*} != "all_posts" ]]; then
-    	disqus_body >> "$filename"
-    fi
+    [[ "$index" == "no" ]] && disqus_body >> "$filename"
+
     # page footer
     cat .footer.html >> "$filename"
     # close divs
