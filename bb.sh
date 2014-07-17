@@ -66,6 +66,7 @@
 #
 #########################################################################################
 #
+# 2.3.2    Option to use topsy instead of twitter for references
 # 2.3.1    Cookieless Twitter option
 # 2.3      Intelligent tag rebuilding and Markdown by default
 # 2.2      Flexible post title -> filename conversion
@@ -152,6 +153,9 @@ global_variables() {
     # Set this to false for a Twitter button with share count. The cookieless version
     # is just a link.
     global_twitter_cookieless="true"
+    # Set to "topsy" which can search tweets way early in time, or "twitter" 
+    # for the default search page, where tweets more than a week old are hidden
+    global_twitter_search="topsy"
 
     # Change this to your disqus username to use disqus for comments
     global_disqus_username=""
@@ -429,8 +433,12 @@ twitter() {
     if [[ -z "$global_disqus_username" ]]; then
         if [[ "$global_twitter_cookieless" == "true" ]]; then 
             id=$RANDOM
+
+            search_engine="https://twitter.com/search?q="
+            [[ "$global_twitter_search" == "topsy" ]] && search_engine="http://topsy.com/trackback?url="
+            
             echo "<p id='twitter'><a href='http://twitter.com/intent/tweet?url=$1&text=$template_twitter_comment&via=$global_twitter_username'>$template_comments $template_twitter_button</a> "
-            echo "<a href='https://twitter.com/search?q=$1'><span id='count-$id'></span></a>&nbsp;</p>"
+            echo "<a href='$search_engine""$1'><span id='count-$id'></span></a>&nbsp;</p>"
             # Get current tweet count
             echo '<script type="text/javascript">$.ajax({type: "GET", url: "http://urls.api.twitter.com/1/urls/count.json?url='$1'",
             dataType: "jsonp", success: function(data){ $("#count-'$id'").html("(" + data.count + ")"); }}); </script>'
