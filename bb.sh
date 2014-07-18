@@ -440,7 +440,7 @@ twitter() {
             echo "<p id='twitter'><a href='http://twitter.com/intent/tweet?url=$1&text=$template_twitter_comment&via=$global_twitter_username'>$template_comments $template_twitter_button</a> "
             echo "<a href='$search_engine""$1'><span id='count-$id'></span></a>&nbsp;</p>"
             # Get current tweet count
-            echo '<script type="text/javascript">$.ajax({type: "GET", url: "http://urls.api.twitter.com/1/urls/count.json?url='$1'",
+            echo '<script type="text/javascript">$.ajax({type: "GET", url: "https://cdn.api.twitter.com/1/urls/count.json?url='$1'",
             dataType: "jsonp", success: function(data){ $("#count-'$id'").html("(" + data.count + ")"); }}); </script>'
             return;
         else 
