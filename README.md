@@ -101,3 +101,21 @@ Detailed features
 - Automatic backup of the site every time you post (stored as `.backup.tar.gz`)
 
 Read the CHANGELOG section of the script header for more updates or [check out the news on my blog](http://cfenollosa.com/blog/tag_bashblog.html)
+
+
+Contributing
+------------
+
+Bashblog started at 500 SLOC and it now has hit the 1000 SLOC barrier. 
+If we want to keep the code minimal and understandable, we need to make the difficult effort to restrain ourselves 
+from adding too many features.
+
+All bugfixes are welcome, but brand new features need to be strongly justified to get into the main tree. 
+Every new request will be honestly and civilly discussed on the comments. 
+As a guideline, pull requests should:
+
+- Fix a use case for some people (e.g. internationalization)
+- Add a use case which is arguably very common (e.g. disqus integration for comments)
+- Be very small when possible (a couple lines of code)
+- Don't require a significant rewrite of the code (`create_html_file`, `write_entry`, etc)
+- **Always** keep backwards compatibility when using the default configuration
