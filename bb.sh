@@ -596,8 +596,7 @@ parse_file() {
             echo -n "<p>$template_tags_line_header " >> "$content"
             (for item in "${array[@]}"; do
                 echo -n "<a href='$prefix_tags$item.html'>$item</a>, "
-            done ) | sed 's/, $//g' >> "$content"
-            echo -e "</p>" >> "$content"
+            done ) | sed 's/, $/<\/p>/g' >> "$content"
         else
             echo "$line" >> "$content"
         fi
