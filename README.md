@@ -125,18 +125,20 @@ As a guideline, pull requests should:
 Changelog
 ---------
 
-- 2.3.3    Removed big comment header
+- 2.3.3    Removed big comment header.
+           Added option to display tags for cut articles on index pages (#61)
+           Cleaned up "all posts" page (#57)
 - 2.3.2    Option to use topsy instead of twitter for references
 - 2.3.1    Cookieless Twitter option
 - 2.3      Intelligent tag rebuilding and Markdown by default
 - 2.2      Flexible post title -> filename conversion
-- 2.1      Support for tags/categories
+- 2.1      Support for tags/categories.
            'delete' command
 - 2.0.3    Support for other analytics code, via external file
-- 2.0.2    Fixed bug when $body_begin_file was empty
+- 2.0.2    Fixed bug when $body_begin_file was empty.
            Added extra line in the footer linking to the github project
 - 2.0.1    Allow personalized header/footer files
-- 2.0      Added Markdown support
+- 2.0      Added Markdown support.
            Fully support BSD date
 - 1.6.4    Fixed bug in localized dates
 - 1.6.3    Now supporting BSD date

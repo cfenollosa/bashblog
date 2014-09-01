@@ -1,110 +1,9 @@
 #!/usr/bin/env bash
 
 # BashBlog, a simple blog system written in a single bash script
-# Copyright: Carlos Fenollosa <carlos.fenollosa@gmail.com>, 2011-2014
-# With contributions from many others
+# (C) Carlos Fenollosa <carlos.fenollosa@gmail.com>, 2011-2014 and contributors
 # https://github.com/carlesfe/bashblog/contributors
-# A special recognition to Lex-2008, djura-san and carlosbm for their discussion and code
-
-#########################################################################################
-#
-# README
-#
-#########################################################################################
-#
-# This is a very basic blog system
-#
-# Basically it asks the user to create a text file, then converts it into a .html file
-# and then rebuilds the index.html and feed.rss.
-#
-# Comments are supported via external service (Disqus).
-# Markdown syntax is supported via third party library (e.g. Gruber's Markdown.pl)
-#
-# This script is standalone, it doesn't require any other file to run
-#
-# Files that this script generates:
-#	- main.css (inherited from my web page) and blog.css (blog-specific stylesheet)
-#	- one .html for each post
-#   - one tag_*.html file for each tag
-#	- index.html (regenerated each run)
-# 	- feed.rss (idem)
-#	- all_posts.html (idem)
-#   - all_tags.html (idem)
-# 	- it also generates temporal files, which are removed afterwards
-#
-# It generates valid html and rss files, so keep care to use valid xhtml when editing a post
-#
-# There are many loops which iterate on '*.html' so make sure not to manually put other
-# html files on this folder.
-#
-# Read more: https://github.com/cfenollosa/bashblog
-
-
-#########################################################################################
-#
-# LICENSE
-#
-#########################################################################################
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
-#########################################################################################
-#
-# CHANGELOG
-#
-#########################################################################################
-#
-# 2.3.2    Option to use topsy instead of twitter for references
-# 2.3.1    Cookieless Twitter option
-# 2.3      Intelligent tag rebuilding and Markdown by default
-# 2.2      Flexible post title -> filename conversion
-# 2.1      Support for tags/categories
-#          'delete' command
-# 2.0.3    Support for other analytics code, via external file
-# 2.0.2    Fixed bug when $body_begin_file was empty
-#          Added extra line in the footer linking to the github project
-# 2.0.1    Allow personalized header/footer files
-# 2.0      Added Markdown support
-#          Fully support BSD date
-# 1.6.4    Fixed bug in localized dates
-# 1.6.3    Now supporting BSD date
-# 1.6.2    Simplified some functions and variables to avoid duplicated information
-# 1.6.1    'date' fix when hours are 1 digit.
-# 1.6.0    Disqus comments. External configuration file. Check of 'date' command version.
-# 1.5.1    Misc bugfixes and parameter checks
-# 1.5      Đurađ Radojičić (djura-san) refactored some code and added flexibility and i18n
-# 1.4.2    Now issues are handled at Github
-# 1.4.1    Some code refactoring
-# 1.4      Using twitter for comments, improved 'rebuild' command
-# 1.3      'edit' command
-# 1.2.2    Feedburner support
-# 1.2.1    Fixed the timestamps bug
-# 1.2      'list' command
-# 1.1      Draft and preview support
-# 1.0      Read http://is.gd/Bkdoru
-
-
-#########################################################################################
-#
-# CODE
-#
-#########################################################################################
-#
-# As usual with bash scripts, scroll all the way to the bottom for the main routine
-# All other functions are declared above main.
-
+# Check out README.md for more details
 
 # Global variables
 # It is recommended to perform a 'rebuild' after changing any of this in the code
@@ -118,7 +17,7 @@ global_config=".config"
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
-    global_software_version="2.3.1"
+    global_software_version="2.3.3"
 
     # Blog title
     global_title="My fancy blog"
@@ -171,15 +70,15 @@ global_variables() {
     # feed file (rss in this case)
     blog_feed="feed.rss"
     number_of_feed_articles="10"
-    # "cut" blog entry when putting it to index page
-    # i.e. include only up to first <hr> (---- in markdown)
-    # possible values: "cut", ""
+    # "cut" blog entry when putting it to index page. Leave blank for full articles in front page
+    # i.e. include only up to first '<hr>', or '----' in markdown
     cut_do="cut"
+    # When cutting, cut also tags? If blank, tags will appear in index page for cut articles
+    cut_tags="yes"
     # Regexp matching the HTML line where to do the cut
     # note that slash is regexp separator so you need to prepend it with backslash
     cut_line='<hr ?\/?>'
-    # save markdown file when posting with "bb post -m"
-    # possible values: "yes", ""
+    # save markdown file when posting with "bb post -m". Leave blank to discard it.
     save_markdown="yes"
     # prefix for tags/categories files
     # please make sure that no other html file starts with this prefix
@@ -225,6 +124,7 @@ global_variables() {
     
     # The locale to use for the dates displayed on screen (not for the timestamps)
     date_format="%B %d, %Y"
+    date_allposts_header="%B %Y"
     date_locale="C"
 
     # Perform the post title -> filename conversion
@@ -358,7 +258,9 @@ get_html_file_content() {
         if (!/<!-- '$1' begin -->/ && !/<!-- '$2' end -->/) print
         if ("'$3'" == "cut" && /'"$cut_line"'/){
             if ("'$2'" == "text") exit # no need to read further
-            while (getline > 0 && !/<!-- text end -->/) {}
+            while (getline > 0 && !/<!-- text end -->/) {
+                if ("'$cut_tags'" == "no" && /^'"<p>$template_tags_line_header"'/ ) print 
+            }
         }
     }'
 }
@@ -707,10 +609,18 @@ all_posts() {
     done
 
     echo "<h3>$template_archive_title</h3>" >> "$contentfile"
-    echo "<ul>" >> "$contentfile"
+    prev_month=""
     for i in $(ls -t *.html); do
         is_boilerplate_file "$i" && continue
         echo -n "."
+        # Month headers
+        month="$(LC_ALL=$date_locale date -r "$i" +"$date_allposts_header")"
+        if [[ "$month" != "$prev_month" ]]; then
+            [[ "$prev_month" ]] && echo "</ul>" >> "$contentfile" # Don't close ul before first header
+            echo "<h4 class='allposts_header'>$month</h4>" >> "$contentfile" 
+            echo "<ul>" >> "$contentfile"
+            prev_month="$month"
+        fi
         # Title
         title="$(get_post_title "$i")"
         echo -n '<li><a href="'$i'">'$title'</a> &mdash;' >> "$contentfile"
@@ -1123,7 +1033,7 @@ do_main() {
 
     if [[ "$1" == "edit" ]]; then
         if [[ $# -lt 2 ]] || [[ ! -f "${!#}" ]]; then
-            echo "Please enter a valid html file to edit"
+            echo "Please enter a valid .md or .html file to edit"
             exit
         fi
     fi
