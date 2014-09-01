@@ -100,7 +100,7 @@ Detailed features
 - xhtml validation, CSS validation, RSS validation by the w3c
 - Automatic backup of the site every time you post (stored as `.backup.tar.gz`)
 
-Read the CHANGELOG section of the script header for more updates or [check out the news on my blog](http://cfenollosa.com/blog/tag_bashblog.html)
+Read the Changelog section for more updates or [check out the news on my blog](http://cfenollosa.com/blog/tag_bashblog.html)
 
 
 Contributing
@@ -120,3 +120,54 @@ As a guideline, pull requests should:
 - Don't require a significant rewrite of the code (`create_html_file`, `write_entry`, etc)
 - It must work on Linux, BSD and Mac. Beware of using GNU coreutils with non-POSIX flags (i.e. `date` or `grep`)
 - **Always** keep backwards compatibility when using the default configuration
+
+
+Changelog
+---------
+
+- 2.3.3    Removed big comment header
+- 2.3.2    Option to use topsy instead of twitter for references
+- 2.3.1    Cookieless Twitter option
+- 2.3      Intelligent tag rebuilding and Markdown by default
+- 2.2      Flexible post title -> filename conversion
+- 2.1      Support for tags/categories
+           'delete' command
+- 2.0.3    Support for other analytics code, via external file
+- 2.0.2    Fixed bug when $body_begin_file was empty
+           Added extra line in the footer linking to the github project
+- 2.0.1    Allow personalized header/footer files
+- 2.0      Added Markdown support
+           Fully support BSD date
+- 1.6.4    Fixed bug in localized dates
+- 1.6.3    Now supporting BSD date
+- 1.6.2    Simplified some functions and variables to avoid duplicated information
+- 1.6.1    'date' fix when hours are 1 digit.
+- 1.6.0    Disqus comments. External configuration file. Check of 'date' command version.
+- 1.5.1    Misc bugfixes and parameter checks
+- 1.5      Đurađ Radojičić (djura-san) refactored some code and added flexibility and i18n
+- 1.4.2    Now issues are handled at Github
+- 1.4.1    Some code refactoring
+- 1.4      Using twitter for comments, improved 'rebuild' command
+- 1.3      'edit' command
+- 1.2.2    Feedburner support
+- 1.2.1    Fixed the timestamps bug
+- 1.2      'list' command
+- 1.1      Draft and preview support
+- 1.0      Read http://is.gd/Bkdoru
+
+
+License
+-------
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
