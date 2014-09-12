@@ -997,10 +997,10 @@ date_version_detect() {
                     stat -f "%Sm" -t "$format" "$2"
                 elif [[ $(echo $@ | grep '\-\-date') ]]; then
                     # convert between dates using BSD date syntax
-                    /bin/date -j -f "%a, %d %b %Y %H:%M:%S %z" "$(echo $2 | sed 's/\-\-date\=//g')" "$1" 
+                    command date -j -f "%a, %d %b %Y %H:%M:%S %z" "$(echo $2 | sed 's/\-\-date\=//g')" "$1" 
                 else
                     # acceptable format for BSD date
-                    /bin/date -j "$@"
+                    command date -j "$@"
                 fi
             }
         fi
