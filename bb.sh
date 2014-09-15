@@ -336,8 +336,8 @@ twitter_card() {
     echo "<meta name='twitter:card' content='summary' />"
     echo "<meta name='twitter:site' content='@$global_twitter_username' />"
     echo "<meta name='twitter:title' content='$2' />" # Twitter truncates at 70 char
-    description=$(grep -v "^<p>$template_tags_line_header" $1 | sed -e 's/<[^>]*>//g' | head -c 250 | tr '\n' ' ') 
-    echo "<meta name='twitter:description' content='$description' />"
+    description=$(grep -v "^<p>$template_tags_line_header" $1 | sed -e 's/<[^>]*>//g' | head -c 250 | tr '\n' ' ' | sed "s/\"/'/g") 
+    echo "<meta name='twitter:description' content=\"$description\" />"
     image=$(sed -n 's/.*<img.*src="\([^"]*\)".*/\1/p' $1 | head -n 1) # First image is fine
     [[ -z "$image" ]] && return
     [[ $image =~ ^https?:\/\/ ]] || image="$global_url/$image" # Check that URL is absolute
