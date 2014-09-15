@@ -125,6 +125,7 @@ As a guideline, pull requests should:
 Changelog
 ---------
 
+- 2.4      Added Twitter summaries metadata for posts (#36)
 - 2.3.3    Removed big comment header.
            Added option to display tags for cut articles on index pages (#61)
            Cleaned up "all posts" page (#57)

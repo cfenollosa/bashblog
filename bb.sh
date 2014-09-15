@@ -17,7 +17,7 @@ global_config=".config"
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
-    global_software_version="2.3.3"
+    global_software_version="2.4"
 
     # Blog title
     global_title="My fancy blog"
@@ -73,7 +73,7 @@ global_variables() {
     # "cut" blog entry when putting it to index page. Leave blank for full articles in front page
     # i.e. include only up to first '<hr>', or '----' in markdown
     cut_do="cut"
-    # When cutting, cut also tags? If blank, tags will appear in index page for cut articles
+    # When cutting, cut also tags? If "no", tags will appear in index page for cut articles
     cut_tags="yes"
     # Regexp matching the HTML line where to do the cut
     # note that slash is regexp separator so you need to prepend it with backslash
@@ -326,6 +326,24 @@ edit() {
     fi
 }
 
+# Create a Twitter summary (twitter "card") for the post
+#
+# $1 the post file
+# $2 the title
+twitter_card() {
+    [[ -z "$global_twitter_username" ]] && return
+    
+    echo "<meta name='twitter:card' content='summary' />"
+    echo "<meta name='twitter:site' content='@$global_twitter_username' />"
+    echo "<meta name='twitter:title' content='$2' />" # Twitter truncates at 70 char
+    description=$(grep -v "^<p>$template_tags_line_header" $1 | sed -e 's/<[^>]*>//g' | head -c 250 | tr '\n' ' ') 
+    echo "<meta name='twitter:description' content='$description' />"
+    image=$(sed -n 's/.*<img.*src="\([^"]*\)".*/\1/p' $1 | head -n 1) # First image is fine
+    [[ -z "$image" ]] && return
+    [[ $image =~ ^https?:\/\/ ]] || image="$global_url/$image" # Check that URL is absolute
+    echo "<meta name='twitter:image' content='$image' />"
+}
+
 # Adds the code needed by the twitter button
 #
 # $1 the post URL
@@ -406,6 +424,7 @@ create_html_page() {
     cat ".header.html" > "$filename"
     echo "<title>$title</title>" >> "$filename"
     google_analytics >> "$filename"
+    twitter_card "$content" "$title" >> "$filename"
     echo "</head><body>" >> "$filename"
     # stuff to add before the actual body content
     [[ -n "$body_begin_file" ]] && cat "$body_begin_file" >> "$filename"
