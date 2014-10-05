@@ -547,6 +547,14 @@ write_entry() {
         [[ "$extension" == "md" || "$extension" == "html" ]] && fmt="$extension"
         # but let user override it (`bb.sh post -html file.md`)
         [[ "$2" == "-html" ]] && fmt="html"
+        # Test if Markdown is working before re-posting a .md file
+        if [[ "$extension" == "md" ]]; then
+            test_markdown
+            if [[ "$?" -ne 0 ]]; then
+                echo "Markdown is not working, please edit HTML file directly."
+                exit
+            fi
+        fi
     else
         TMPFILE=".entry-$RANDOM.$fmt"
         echo -e "Title on this line\n" >> "$TMPFILE"
