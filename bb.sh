@@ -88,6 +88,11 @@ global_variables() {
     # leave blank to generate them, recommended
     header_file=""
     footer_file=""
+    # personalized header and footer generators
+    # should be bash scripts that write header to .header.html and footer to .footer.html
+    # for usable env vars look at create_includes()
+    header_file_source=""
+    footer_file_source=""
     # extra content to add just after we open the <body> tag
     # and before the actual blog content
     body_begin_file=""
@@ -869,6 +874,7 @@ create_includes() {
     echo '<div id="description">'$global_description'</div>' >> ".title.html"
 
     if [[ -f "$header_file" ]]; then cp "$header_file" .header.html
+    elif [[ -f "$header_file_source" ]]; then source "$header_file_source"
     else
         echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">' > ".header.html"
         echo '<html xmlns="http://www.w3.org/1999/xhtml"><head>' >> ".header.html"
@@ -884,6 +890,7 @@ create_includes() {
     fi
 
     if [[ -f "$footer_file" ]]; then cp "$footer_file" .footer.html
+    elif [[ -f "$footer_file_source" ]]; then source "$footer_file_source"
     else 
         protected_mail="$(echo "$global_email" | sed 's/@/\&#64;/g' | sed 's/\./\&#46;/g')"
         echo '<div id="footer">'$global_license '<a href="'$global_author_url'">'$global_author'</a> &mdash; <a href="mailto:'$protected_mail'">'$protected_mail'</a><br/>' >> ".footer.html"
