@@ -100,6 +100,9 @@ global_variables() {
     # leave empty to use generated
     css_include=()
 
+    # Post HTML files to exclude from index, f.ex. post_exclude=('imprint.html 'aboutme.html')
+    post_exclude=()
+
     # Localization and i18n
     # "Comments?" (used in twitter link after every post)
     template_comments="Comments?"
@@ -394,6 +397,24 @@ is_boilerplate_file() {
     if [[ "$name" == "$index_file" ]] || [[ "$name" == "$archive_index" ]] || [[ "$name" == "$tags_index" ]] || [[ "$name" == "$footer_file" ]] || [[ "$name" == "$header_file" ]] || [[ "$name" == "$global_analytics_file" ]] || [[ "$name" = "$prefix_tags"* ]] ; then return 0
     else return 1
     fi
+}
+
+# Check if the file should be excluded from index
+# The return values are designed to be used like this inside a loop:
+# is_excluded_post <file> && continue
+#
+# $1 the file
+#
+# Return 0 (bash return value 'true') if the input file should be excluded
+# or 1 (bash return value 'false') if it should be included
+is_excluded_post() {
+    name="`clean_filename $1`"
+    for excl_file in ${post_exclude[*]}; do
+        if [[ "$name" == "$excl_file" ]]
+            then return 0
+        fi
+    done
+    return 1
 }
 
 # Filenames sometimes have leading './' or other oddities which need to be cleaned
@@ -711,6 +732,7 @@ rebuild_index() {
     n=0
     for i in $(ls -t ./*.html); do # sort by date, newest first
         is_boilerplate_file "$i" && continue;
+        is_excluded_post "$i" && continue;
         if [[ "$n" -ge "$number_of_index_articles" ]]; then break; fi
         if [ "$cut_do" ]; then
             get_html_file_content 'entry' 'entry' 'cut' <$i | awk '/'"$cut_line"'/ { print "<p class=\"readmore\"><a href=\"'$i'\">'"$template_read_more"'</a></p>" ; next } 1' >> "$contentfile"
