@@ -88,6 +88,11 @@ global_variables() {
     # leave blank to generate them, recommended
     header_file=""
     footer_file=""
+    # personalized header and footer generators
+    # should be bash scripts that write header to .header.html and footer to .footer.html
+    # for usable env vars look at create_includes()
+    header_file_source=""
+    footer_file_source=""
     # extra content to add just after we open the <body> tag
     # and before the actual blog content
     body_begin_file=""
@@ -96,6 +101,9 @@ global_variables() {
     css_include=()
     # HTML files to exclude from index, f.ex. post_exclude=('imprint.html 'aboutme.html')
     html_exclude=()
+
+    # Post HTML files to exclude from index, f.ex. post_exclude=('imprint.html 'aboutme.html')
+    post_exclude=()
 
     # Localization and i18n
     # "Comments?" (used in twitter link after every post)
@@ -395,6 +403,24 @@ is_boilerplate_file() {
         done
         return 1
     fi
+}
+
+# Check if the file should be excluded from index
+# The return values are designed to be used like this inside a loop:
+# is_excluded_post <file> && continue
+#
+# $1 the file
+#
+# Return 0 (bash return value 'true') if the input file should be excluded
+# or 1 (bash return value 'false') if it should be included
+is_excluded_post() {
+    name="`clean_filename $1`"
+    for excl_file in ${post_exclude[*]}; do
+        if [[ "$name" == "$excl_file" ]]
+            then return 0
+        fi
+    done
+    return 1
 }
 
 # Filenames sometimes have leading './' or other oddities which need to be cleaned
@@ -712,6 +738,7 @@ rebuild_index() {
     n=0
     for i in $(ls -t ./*.html); do # sort by date, newest first
         is_boilerplate_file "$i" && continue;
+        is_excluded_post "$i" && continue;
         if [[ "$n" -ge "$number_of_index_articles" ]]; then break; fi
         if [ "$cut_do" ]; then
             get_html_file_content 'entry' 'entry' 'cut' <$i | awk '/'"$cut_line"'/ { print "<p class=\"readmore\"><a href=\"'$i'\">'"$template_read_more"'</a></p>" ; next } 1' >> "$contentfile"
@@ -875,6 +902,7 @@ create_includes() {
     echo '<div id="description">'$global_description'</div>' >> ".title.html"
 
     if [[ -f "$header_file" ]]; then cp "$header_file" .header.html
+    elif [[ -f "$header_file_source" ]]; then source "$header_file_source"
     else
         echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">' > ".header.html"
         echo '<html xmlns="http://www.w3.org/1999/xhtml"><head>' >> ".header.html"
@@ -890,6 +918,7 @@ create_includes() {
     fi
 
     if [[ -f "$footer_file" ]]; then cp "$footer_file" .footer.html
+    elif [[ -f "$footer_file_source" ]]; then source "$footer_file_source"
     else 
         protected_mail="$(echo "$global_email" | sed 's/@/\&#64;/g' | sed 's/\./\&#46;/g')"
         echo '<div id="footer">'$global_license '<a href="'$global_author_url'">'$global_author'</a> &mdash; <a href="mailto:'$protected_mail'">'$protected_mail'</a><br/>' >> ".footer.html"
