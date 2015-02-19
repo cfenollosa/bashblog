@@ -94,6 +94,8 @@ global_variables() {
     # CSS files to include on every page, f.ex. css_include=('main.css' 'blog.css')
     # leave empty to use generated
     css_include=()
+    # HTML files to exclude from index, f.ex. post_exclude=('imprint.html 'aboutme.html')
+    html_exclude=()
 
     # Localization and i18n
     # "Comments?" (used in twitter link after every post)
@@ -387,7 +389,11 @@ twitter() {
 is_boilerplate_file() {
     name="`clean_filename $1`"
     if [[ "$name" == "$index_file" ]] || [[ "$name" == "$archive_index" ]] || [[ "$name" == "$tags_index" ]] || [[ "$name" == "$footer_file" ]] || [[ "$name" == "$header_file" ]] || [[ "$name" == "$global_analytics_file" ]] || [[ "$name" = "$prefix_tags"* ]] ; then return 0
-    else return 1
+    else # Check for exclded
+        for excl in ${html_exclude[*]}; do
+            [[ "$name" == "$excl" ]] && return 0
+        done
+        return 1
     fi
 }
 
