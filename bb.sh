@@ -32,7 +32,7 @@ global_variables() {
     global_author_url="http://twitter.com/example" 
     # Your email
     global_email="john@smith.com"
-		timezone="UTC" # Your timezone. look in /usr/share/zoneinfo/. use "UTC" for privacy. Leave empty "" for system default
+    timezone="UTC" # Your timezone. look in /usr/share/zoneinfo/. use "UTC" for privacy. Leave empty "" for system default
 
     # CC by-nc-nd is a good starting point, you can change this to "&copy;" for Copyright
     global_license="CC by-nc-nd"
@@ -1054,7 +1054,7 @@ do_main() {
     [[ -f "$global_config" ]] && source "$global_config" &> /dev/null 
     global_variables_check
 
-		[[ -z "$timezone" ]] || { export TZ="$timezone" ; echo "Configured timezone=$timezone so time now: " ; date ; }
+    [[ -z "$timezone" ]] || { export TZ="$timezone" ; echo "Configured timezone=$timezone so time now: " ; date ; }
 
     # Check for $EDITOR
     [[ -z "$EDITOR" ]] && 
