@@ -144,6 +144,9 @@ global_variables() {
     # Markdown location. Trying to autodetect by default.
     # The invocation must support the signature 'markdown_bin in.md > out.html'
     markdown_bin="$(which Markdown.pl)"
+
+		# look for markdown under name "markdown", e.g. that is on Debian:
+		[[ -z "$markdown_bin" ]] && markdown_bin="$(which markdown)"
 }
 
 # Check for the validity of some variables
