@@ -143,7 +143,7 @@ global_variables() {
 
     # Markdown location. Trying to autodetect by default.
     # The invocation must support the signature 'markdown_bin in.md > out.html'
-    markdown_bin="$(which Markdown.pl)"
+    markdown_bin="$(which Markdown.pl || which markdown)"
 }
 
 # Check for the validity of some variables
