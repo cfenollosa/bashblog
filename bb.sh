@@ -462,7 +462,7 @@ create_html_page() {
     fi
     cat "$content" >> "$filename" # Actual content
     if [[ "$index" == "no" ]]; then
-        echo '<!-- text end -->' >> "$filename"
+        echo -e '\n<!-- text end -->' >> "$filename"
 
         twitter "$global_url/$file_url" >> "$filename"
 
