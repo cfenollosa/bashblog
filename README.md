@@ -49,8 +49,8 @@ Features
 - Support for tags/categories
 - Support for Markdown, Disqus comments, Twitter, Feedburner, Google Analytics.
 - GNU/Linux, BSD and OSX compatible out of the box (no need for GNU `coreutils` on a Mac)
-- The project isn't abandoned as of 2015. New features and bugfixes added regularly.
-- Everything stored in a single 700-line bash script, how cool is that?! ;) 
+- The project is still maintained as of 2015. Bugs are fixed, and new features are considered (see "Contributing")
+- Everything stored in a single <1k lines bash script, how cool is that?! ;) 
 
 
 Configuration
