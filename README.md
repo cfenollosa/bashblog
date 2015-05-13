@@ -117,7 +117,7 @@ As a guideline, pull requests should:
 - Fix a use case for some people (e.g. internationalization)
 - Add a use case which is arguably very common (e.g. disqus integration for comments)
 - Be very small when possible (a couple lines of code)
-- Don't require a significant rewrite of the code (`create_html_file`, `write_entry`, etc)
+- Don't require a significant rewrite of the code (Don't break `create_html_file()` or `write_entry()`, etc)
 - It must work on Linux, BSD and Mac. Beware of using GNU coreutils with non-POSIX flags (i.e. `date` or `grep`)
 - **Always** keep backwards compatibility when using the default configuration
 
