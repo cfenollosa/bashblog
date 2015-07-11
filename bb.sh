@@ -608,8 +608,6 @@ EOF
             [[ "$title" ]] || title=$RANDOM
 
             draft="drafts/$title.$fmt"
-            while [ -f "$draft" ]; do draft="drafts/$title-$RANDOM.$fmt"; done
-
             mv "$TMPFILE" "$draft"
             chmod 600 "$draft"
             rm "$filename"
