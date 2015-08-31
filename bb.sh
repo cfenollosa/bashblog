@@ -203,19 +203,19 @@ test_markdown() {
     [[ -z "$markdown_bin" ]] && return 1
     [[ -z "$(which diff)" ]] && return 1
 
-    in="/tmp/md-in-$(echo $RANDOM).md"
-    out="/tmp/md-out-$(echo $RANDOM).html"
-    good="/tmp/md-good-$(echo $RANDOM).html"
-    echo -e "line 1\n\nline 2" > $in
-    echo -e "<p>line 1</p>\n\n<p>line 2</p>" > $good
+    in="/tmp/md-in-${RANDOM}.md"
+    out="/tmp/md-out-${RANDOM}.html"
+    good="/tmp/md-good-${RANDOM}.html"
+    echo -e "line 1\n\nline 2" > "$in"
+    echo -e "<p>line 1</p>\n\n<p>line 2</p>" > "$good"
     $markdown_bin $in > $out 2> /dev/null
     diff $good $out &> /dev/null # output is irrelevant, we'll check $?
     if [[ $? -ne 0 ]]; then
-        rm -f $in $good $out
+        rm -f $in "$good" "$out"
         return 1
     fi
     
-    rm -f $in $good $out
+    rm -f "$in" "$good" "$out"
     return 0
 }
 
@@ -224,8 +224,8 @@ test_markdown() {
 markdown() {
     out="$(echo $1 | sed 's/md$/html/g')"
     while [ -f "$out" ]; do out="$(echo $out | sed 's/\.html$/\.'$RANDOM'\.html')"; done
-    $markdown_bin $1 > $out
-    echo $out
+    $markdown_bin "$1" > "$out"
+    echo "$out"
 }
 
 
@@ -236,7 +236,7 @@ google_analytics() {
     echo "<script type=\"text/javascript\">
 
     var _gaq = _gaq || [];
-    _gaq.push(['_setAccount', '"$global_analytics"']);
+    _gaq.push(['_setAccount', '${global_analytics}']);
     _gaq.push(['_trackPageview']);
 
     (function() {
@@ -296,7 +296,7 @@ disqus_footer() {
 edit() {
     timestamp="$(date -r $1 +'%Y%m%d%H%M')"
     $EDITOR "$1"
-    touch -t $timestamp "$1"
+    touch -t "$timestamp" "$1"
 }
 
 # Adds the code needed by the twitter button
@@ -397,7 +397,7 @@ create_html_page() {
 parse_file() {
     # Read for the title and check that the filename is ok
     title=""
-    while read line; do
+    while read -r line; do
         if [[ "$title" == "" ]]; then
             title="$line"
             # remove extra <p> and </p> added by markdown
@@ -432,7 +432,7 @@ write_entry() {
         if [[ "$?" -ne 0 ]]; then
             echo "Markdown is not working, please use HTML. Press a key to continue..."
             fmt="html" 
-            read 
+            read -r
         fi
     fi
 
@@ -472,14 +472,14 @@ write_entry() {
         chmod 600 "$filename"
 
         echo -n "Preview? (Y/n) "
-        read p
+        read -r p
         if [[ "$p" != "n" ]] && [[ "$p" != "N" ]]; then
             chmod 644 "$filename"
             echo "Open $global_url/$filename in your browser"
         fi
 
         echo -n "[P]ost this entry, [E]dit again, [D]raft for later? (p/E/d) "
-        read post_status
+        read -r post_status
         if [[ "$post_status" == "d" ]] || [[ "$post_status" == "D" ]]; then
             mkdir -p "drafts/"
             chmod 700 "drafts/"
@@ -518,7 +518,7 @@ all_posts() {
 
     echo "<h3>All posts</h3>" >> "$contentfile"
     echo "<ul>" >> "$contentfile"
-    for i in $(ls -t *.html); do
+    for i in $(ls -t ./*.html); do
         if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
         echo -n "."
         # Title
@@ -550,12 +550,12 @@ rebuild_index() {
 
     # Create the content file
     n=0
-    for i in $(ls -t *.html); do # sort by date, newest first
+    for i in $(ls -t ./*.html); do # sort by date, newest first
         if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
         if [[ "$n" -ge "$number_of_index_articles" ]]; then break; fi
         awk '/<!-- entry begin -->/, /<!-- entry end -->/' "$i" >> "$contentfile"
         echo -n "."
-        n=$(( $n + 1 ))
+        n=$(( n + 1 ))
     done
 
     if [[ "$global_feedburner" == "" ]]; then
@@ -574,16 +574,16 @@ rebuild_index() {
 
 # Displays a list of the posts
 list_posts() {
-    ls *.html &> /dev/null
+    ls ./*.html &> /dev/null
     [[ $? -ne 0 ]] && echo "No posts yet. Use 'bb.sh post' to create one" && return
 
     lines=""
     n=1
-    for i in $(ls -t *.html); do
+    for i in $(ls -t ./*.html); do
         if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
         line="$n # $(awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' $i) # $(LC_ALL=$date_locale date -r $i +"date_format")"
         lines="${lines}""$line""\n" # Weird stuff needed for the newlines
-        n=$(( $n + 1 ))
+        n=$(( n + 1 ))
     done 
 
     echo -e "$lines" | column -t -s "#"
@@ -605,7 +605,7 @@ make_rss() {
     echo '<atom:link href="'$global_url/$blog_feed'" rel="self" type="application/rss+xml" />' >> "$rssfile"
 
     n=0
-    for i in $(ls -t *.html); do
+    for i in $(ls -t ./*.html); do
         if [[ "$i" == "$index_file" ]] || [[ "$i" == "$archive_index" ]]; then continue; fi
         [[ "$n" -ge "$number_of_feed_articles" ]] && break # max 10 items
         echo -n "."
@@ -619,7 +619,7 @@ make_rss() {
         echo "<dc:creator>$global_author</dc:creator>" >> "$rssfile"
         echo '<pubDate>'$(date -r "$i" +"%a, %d %b %Y %H:%M:%S %z")'</pubDate></item>' >> "$rssfile"
 
-        n=$(( $n + 1 ))
+        n=$(( n + 1 ))
     done
 
     echo '</channel></rss>' >> "$rssfile"
@@ -729,7 +729,7 @@ rebuild_all_entries() {
         timestamp="$(LC_ALL=$date_locale date -r $i +'%Y%m%d%H%M')"
         mv "$i.rebuilt" "$i"
         chmod 644 "$i"
-        touch -t $timestamp "$i"
+        touch -t "$timestamp" "$i"
         rm "$contentfile"
     done
     echo ""
@@ -756,9 +756,9 @@ echo "For more information please open $0 in a code editor and read the header a
 # Delete all generated content, leaving only this script
 reset() {
     echo "Are you sure you want to delete all blog entries? Please write \"Yes, I am!\" "
-    read line
+    read -r line
     if [[ "$line" == "Yes, I am!" ]]; then
-        rm .*.html *.html *.css *.rss &> /dev/null
+        rm .*.html ./*.html ./*.css ./*.rss &> /dev/null
         echo
         echo "Deleted all posts, stylesheets and feeds."
         echo "Kept your old '.backup.tar.gz' just in case, please delete it manually if needed."
@@ -783,7 +783,7 @@ date_version_detect() {
                     # Fall back to using stat for 'date -r'
                     format=$(echo $3 | sed 's/\+//g')
                     stat -f "%Sm" -t "$format" "$2"
-                elif [[ $(echo $@ | grep '\-\-date') ]]; then
+                elif [[ $(echo "$@" | grep '\-\-date') ]]; then
                     # convert between dates using BSD date syntax
                     echo 3="$3" 2="$2"
                     /bin/date -j -f "%a, %d %b %Y %H:%M:%S %z" "$(echo $2 | sed 's/\-\-date\=//g')" "$1" 
@@ -828,12 +828,12 @@ do_main() {
     fi
 
     # Test for existing html files
-    ls *.html &> /dev/null
+    ls ./*.html &> /dev/null
     [[ $? -ne 0 ]] && [[ "$1" == "rebuild" ]] &&
         echo "Can't find any html files, nothing to rebuild" && exit
 
     # We're going to back up just in case
-    ls *.html &> /dev/null
+    ls ./*.html &> /dev/null
     [[ $? -eq 0 ]] &&
         tar cfz ".backup.tar.gz" *.html &&
         chmod 600 ".backup.tar.gz"
@@ -857,4 +857,4 @@ do_main() {
 # MAIN
 # Do not change anything here. If you want to modify the code, edit do_main()
 #
-do_main $*
+do_main "$@"
