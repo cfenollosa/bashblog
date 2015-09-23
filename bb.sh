@@ -877,6 +877,7 @@ create_includes() {
         echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">' > ".header.html"
         echo '<html xmlns="http://www.w3.org/1999/xhtml"><head>' >> ".header.html"
         echo '<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />' >> ".header.html"
+        echo '<meta name="viewport" content="width=device-width, initial-scale=1.0">' >> ".header.html"
         for css_file in ${css_include[*]}; do
             echo '<link rel="stylesheet" href="'$css_file'" type="text/css" />' >> ".header.html"
         done
@@ -928,11 +929,11 @@ create_css() {
         ln -s "../style.css" "main.css" 
     elif [[ ! -f "main.css" ]]; then
         echo 'body{font-family:Georgia,"Times New Roman",Times,serif;margin:0;padding:0;background-color:#F3F3F3;}
-        #divbodyholder{padding:5px;background-color:#DDD;width:874px;margin:24px auto;}
-        #divbody{width:776px;border:solid 1px #ccc;background-color:#fff;padding:0px 48px 24px 48px;top:0;}
+        #divbodyholder{padding:5px;background-color:#DDD;width:100%;max-width:874px;margin:24px auto;}
+        #divbody{border:solid 1px #ccc;background-color:#fff;padding:0px 48px 24px 48px;top:0;}
         .headerholder{background-color:#f9f9f9;border-top:solid 1px #ccc;border-left:solid 1px #ccc;border-right:solid 1px #ccc;}
-        .header{width:800px;margin:0px auto;padding-top:24px;padding-bottom:8px;}
-        .content{margin-bottom:45px;}
+        .header{width:100%;max-width:800px;margin:0px auto;padding-top:24px;padding-bottom:8px;}
+        .content{margin-bottom:5%;}
         .nomargin{margin:0;}
         .description{margin-top:10px;border-top:solid 1px #666;padding:10px 0;}
         h3{font-size:20pt;width:100%;font-weight:bold;margin-top:32px;margin-bottom:0;}
