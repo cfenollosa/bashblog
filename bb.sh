@@ -163,19 +163,19 @@ test_markdown() {
     [[ -z "$markdown_bin" ]] && return 1
     [[ -z "$(which diff)" ]] && return 1
 
-    in="/tmp/md-in-$(echo $RANDOM).md"
-    out="/tmp/md-out-$(echo $RANDOM).html"
-    good="/tmp/md-good-$(echo $RANDOM).html"
-    echo -e "line 1\n\nline 2" > $in
-    echo -e "<p>line 1</p>\n\n<p>line 2</p>" > $good
+    in="/tmp/md-in-${RANDOM}.md"
+    out="/tmp/md-out-${RANDOM}.html"
+    good="/tmp/md-good-${RANDOM}.html"
+    echo -e "line 1\n\nline 2" > "$in"
+    echo -e "<p>line 1</p>\n\n<p>line 2</p>" > "$good"
     $markdown_bin $in > $out 2> /dev/null
     diff $good $out &> /dev/null # output is irrelevant, we'll check $?
     if [[ $? -ne 0 ]]; then
-        rm -f $in $good $out
+        rm -f "$in" "$good" "$out"
         return 1
     fi
     
-    rm -f $in $good $out
+    rm -f "$in" "$good" "$out"
     return 0
 }
 
@@ -184,8 +184,8 @@ test_markdown() {
 markdown() {
     out="$(echo $1 | sed 's/md$/html/g')"
     while [ -f "$out" ]; do out="$(echo $out | sed 's/\.html$/\.'$RANDOM'\.html/')"; done
-    $markdown_bin $1 > $out
-    echo $out
+    $markdown_bin "$1" > "$out"
+    echo "$out"
 }
 
 
@@ -197,7 +197,7 @@ google_analytics() {
         echo "<script type=\"text/javascript\">
 
         var _gaq = _gaq || [];
-        _gaq.push(['_setAccount', '"$global_analytics"']);
+        _gaq.push(['_setAccount', '${global_analytics}']);
         _gaq.push(['_trackPageview']);
 
         (function() {
@@ -641,7 +641,7 @@ all_posts() {
 
     echo "<h3>$template_archive_title</h3>" >> "$contentfile"
     prev_month=""
-    for i in $(ls -t *.html); do
+    for i in $(ls -t ./*.html); do
         is_boilerplate_file "$i" && continue
         echo -n "."
         # Month headers
@@ -717,7 +717,7 @@ rebuild_index() {
             get_html_file_content 'entry' 'entry' <$i >> "$contentfile"
         fi
         echo -n "."
-        n=$(( $n + 1 ))
+        n=$(( n + 1 ))
     done
 
     feed="$blog_feed"
@@ -813,7 +813,7 @@ get_post_title() {
 
 # Displays a list of the posts
 list_posts() {
-    ls *.html &> /dev/null
+    ls ./*.html &> /dev/null
     [[ $? -ne 0 ]] && echo "No posts yet. Use 'bb.sh post' to create one" && return
 
     lines=""
@@ -822,7 +822,7 @@ list_posts() {
         is_boilerplate_file "$i" && continue
         line="$n # $(get_post_title "$i") # $(LC_ALL=$date_locale date -r $i +"$date_format")"
         lines="${lines}""$line""\n" # Weird stuff needed for the newlines
-        n=$(( $n + 1 ))
+        n=$(( n + 1 ))
     done 
 
     echo -e "$lines" | column -t -s "#"
@@ -857,7 +857,7 @@ make_rss() {
         echo "<dc:creator>$global_author</dc:creator>" >> "$rssfile"
         echo '<pubDate>'$(LC_ALL=C date -r "$i" +"%a, %d %b %Y %H:%M:%S %z")'</pubDate></item>' >> "$rssfile"
 
-        n=$(( $n + 1 ))
+        n=$(( n + 1 ))
     done
 
     echo '</channel></rss>' >> "$rssfile"
@@ -970,7 +970,7 @@ rebuild_all_entries() {
         timestamp="$(LC_ALL=C date -r $i +'%Y%m%d%H%M')"
         mv "$i.rebuilt" "$i"
         chmod 644 "$i"
-        touch -t $timestamp "$i"
+        touch -t "$timestamp" "$i"
         rm "$contentfile"
     done
     echo ""
@@ -1000,9 +1000,9 @@ usage() {
 # Delete all generated content, leaving only this script
 reset() {
     echo "Are you sure you want to delete all blog entries? Please write \"Yes, I am!\" "
-    read line
+    read -r line
     if [[ "$line" == "Yes, I am!" ]]; then
-        rm .*.html *.html *.css *.rss &> /dev/null
+        rm .*.html ./*.html ./*.css ./*.rss &> /dev/null
         echo
         echo "Deleted all posts, stylesheets and feeds."
         echo "Kept your old '.backup.tar.gz' just in case, please delete it manually if needed."
@@ -1027,7 +1027,7 @@ date_version_detect() {
                     # Fall back to using stat for 'date -r'
                     format=$(echo $3 | sed 's/\+//g')
                     stat -f "%Sm" -t "$format" "$2"
-                elif [[ $(echo $@ | grep '\-\-date') ]]; then
+                elif [[ $(echo "$@" | grep '\-\-date') ]]; then
                     # convert between dates using BSD date syntax
                     command date -j -f "%a, %d %b %Y %H:%M:%S %z" "$(echo $2 | sed 's/\-\-date\=//g')" "$1" 
                 else
@@ -1071,12 +1071,12 @@ do_main() {
     fi
 
     # Test for existing html files
-    ls *.html &> /dev/null
+    ls ./*.html &> /dev/null
     [[ $? -ne 0 ]] && [[ "$1" == "rebuild" ]] &&
         echo "Can't find any html files, nothing to rebuild" && exit
 
     # We're going to back up just in case
-    ls *.html &> /dev/null
+    ls ./*.html &> /dev/null
     [[ $? -eq 0 ]] &&
         tar cfz ".backup.tar.gz" *.html &&
         chmod 600 ".backup.tar.gz"
@@ -1114,6 +1114,6 @@ do_main() {
 # MAIN
 # Do not change anything here. If you want to modify the code, edit do_main()
 #
-do_main $*
+do_main "$@"
 
 # vim: set shiftwidth=4 tabstop=4 expandtab:
