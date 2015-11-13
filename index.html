@@ -4,9 +4,9 @@
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
 
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-dark.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
 
     <title>Bashblog by cfenollosa</title>
   </head>
@@ -29,7 +29,7 @@
     <div class="container">
       <section id="main_content">
         <h1>
-<a name="bashblog" class="anchor" href="#bashblog"><span class="octicon octicon-link"></span></a>bashblog</h1>
+<a id="bashblog" class="anchor" href="#bashblog" aria-hidden="true"><span class="octicon octicon-link"></span></a>bashblog</h1>
 
 <p>A single Bash script to create blogs. </p>
 
@@ -42,7 +42,7 @@
 <p><a href="https://raw.githubusercontent.com/cfenollosa/bashblog/gh-pages/images/demo.png"><img src="https://raw.githubusercontent.com/cfenollosa/bashblog/gh-pages/images/demo_thumb.png" alt="demo"></a></p>
 
 <h2>
-<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h2>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage</h2>
 
 <p>Download the code and copy bb.sh into a public folder (for example, <code>$HOME/public_html/blog</code>) and run</p>
 
@@ -70,7 +70,7 @@ Read the Configuration section below for more information</strong></p>
 and you should see the index file and a new page for that post!</p>
 
 <h2>
-<a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h2>
+<a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features</h2>
 
 <ul>
 <li>No installation required. Download <code>bb.sh</code> and start blogging.</li>
@@ -82,10 +82,12 @@ and you should see the index file and a new page for that post!</p>
 <li>Support for tags/categories</li>
 <li>Support for Markdown, Disqus comments, Twitter, Feedburner, Google Analytics.</li>
 <li>GNU/Linux, BSD and OSX compatible out of the box (no need for GNU <code>coreutils</code> on a Mac)</li>
-<li>The project isn't abandoned as of 2014. New features and bugfixes added regularly.</li>
-<li>Everything stored in a single 700-line bash script, how cool is that?! ;) </li>
-</ul><h2>
-<a name="configuration" class="anchor" href="#configuration"><span class="octicon octicon-link"></span></a>Configuration</h2>
+<li>The project is still maintained as of 2015. Bugs are fixed, and new features are considered (see "Contributing")</li>
+<li>Everything stored in a single &lt;1k lines bash script, how cool is that?! ;) </li>
+</ul>
+
+<h2>
+<a id="configuration" class="anchor" href="#configuration" aria-hidden="true"><span class="octicon octicon-link"></span></a>Configuration</h2>
 
 <p>Configuration is not required for a test drive, but if you plan on running your blog with bashblog, you will
 want to change the default titles, author names, etc, to match your own.</p>
@@ -95,7 +97,9 @@ want to change the default titles, author names, etc, to match your own.</p>
 <ul>
 <li>Edit <code>bb.sh</code> and modify the variables in the <code>global_variables()</code> function</li>
 <li>Create a <code>.config</code> file with your configuration values -- useful if you don't want to touch the script and be able to update it regularly with git</li>
-</ul><p>The software will load the values in the script first, then overwrite them with the values in the <code>.config</code> file.
+</ul>
+
+<p>The software will load the values in the script first, then overwrite them with the values in the <code>.config</code> file.
 This means that you don't need to define all variables in the config file, only those which you need to override
 from the defaults.</p>
 
@@ -106,7 +110,7 @@ spaces around the equal sign.</p>
 <p>bashblog uses the <code>$EDITOR</code> environment value to open the text editor.</p>
 
 <h2>
-<a name="detailed-features" class="anchor" href="#detailed-features"><span class="octicon octicon-link"></span></a>Detailed features</h2>
+<a id="detailed-features" class="anchor" href="#detailed-features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Detailed features</h2>
 
 <ul>
 <li>A simple but nice and readable design, with nothing but the blog posts</li>
@@ -133,7 +137,86 @@ Gruber's <a href="http://daringfireball.net/projects/markdown/">Markdown.pl</a>
 <li>Support to add extra content on top of every page (e.g. banners, images, etc)</li>
 <li>xhtml validation, CSS validation, RSS validation by the w3c</li>
 <li>Automatic backup of the site every time you post (stored as <code>.backup.tar.gz</code>)</li>
-</ul><p>Read the CHANGELOG section of the script header for more updates or <a href="http://cfenollosa.com/blog/tag_bashblog.html">check out the news on my blog</a></p>
+</ul>
+
+<p>Read the Changelog section for more updates or <a href="http://cfenollosa.com/blog/tag_bashblog.html">check out the news on my blog</a></p>
+
+<h2>
+<a id="contributing" class="anchor" href="#contributing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contributing</h2>
+
+<p>Bashblog started at 500 SLOC and it now has hit the 1000 SLOC barrier. 
+If we want to keep the code minimal and understandable, we need to make the difficult effort to restrain ourselves 
+from adding too many features.</p>
+
+<p>All bugfixes are welcome, but brand new features need to be strongly justified to get into the main tree. 
+Every new request will be honestly and civilly discussed on the comments. 
+As a guideline, pull requests should:</p>
+
+<ul>
+<li>Fix a use case for some people (e.g. internationalization)</li>
+<li>Add a use case which is arguably very common (e.g. disqus integration for comments)</li>
+<li>Be very small when possible (a couple lines of code)</li>
+<li>Don't require a significant rewrite of the code (Don't break <code>create_html_file()</code> or <code>write_entry()</code>, etc)</li>
+<li>It must work on Linux, BSD and Mac. Beware of using GNU coreutils with non-POSIX flags (i.e. <code>date</code> or <code>grep</code>)</li>
+<li>Follow the UNIX philosophy: do one thing and do it well, rely on third party software for external features, etc</li>
+<li>
+<strong>Always</strong> keep backwards compatibility when using the default configuration</li>
+</ul>
+
+<h2>
+<a id="changelog" class="anchor" href="#changelog" aria-hidden="true"><span class="octicon octicon-link"></span></a>Changelog</h2>
+
+<ul>
+<li>2.4      Added Twitter summaries metadata for posts (#36)</li>
+<li>2.3.3    Removed big comment header.
+       Added option to display tags for cut articles on index pages (#61)
+       Cleaned up "all posts" page (#57)</li>
+<li>2.3.2    Option to use topsy instead of twitter for references</li>
+<li>2.3.1    Cookieless Twitter option</li>
+<li>2.3      Intelligent tag rebuilding and Markdown by default</li>
+<li>2.2      Flexible post title -&gt; filename conversion</li>
+<li>2.1      Support for tags/categories.
+       'delete' command</li>
+<li>2.0.3    Support for other analytics code, via external file</li>
+<li>2.0.2    Fixed bug when $body_begin_file was empty.
+       Added extra line in the footer linking to the github project</li>
+<li>2.0.1    Allow personalized header/footer files</li>
+<li>2.0      Added Markdown support.
+       Fully support BSD date</li>
+<li>1.6.4    Fixed bug in localized dates</li>
+<li>1.6.3    Now supporting BSD date</li>
+<li>1.6.2    Simplified some functions and variables to avoid duplicated information</li>
+<li>1.6.1    'date' fix when hours are 1 digit.</li>
+<li>1.6.0    Disqus comments. External configuration file. Check of 'date' command version.</li>
+<li>1.5.1    Misc bugfixes and parameter checks</li>
+<li>1.5      Đurađ Radojičić (djura-san) refactored some code and added flexibility and i18n</li>
+<li>1.4.2    Now issues are handled at Github</li>
+<li>1.4.1    Some code refactoring</li>
+<li>1.4      Using twitter for comments, improved 'rebuild' command</li>
+<li>1.3      'edit' command</li>
+<li>1.2.2    Feedburner support</li>
+<li>1.2.1    Fixed the timestamps bug</li>
+<li>1.2      'list' command</li>
+<li>1.1      Draft and preview support</li>
+<li>1.0      Read <a href="http://is.gd/Bkdoru">http://is.gd/Bkdoru</a>
+</li>
+</ul>
+
+<h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
+
+<p>This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.</p>
+
+<p>This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.</p>
+
+<p>You should have received a copy of the GNU General Public License
+along with this program.  If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>.</p>
       </section>
     </div>
 
