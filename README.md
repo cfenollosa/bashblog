@@ -119,6 +119,7 @@ As a guideline, pull requests should:
 - Be very small when possible (a couple lines of code)
 - Don't require a significant rewrite of the code (Don't break `create_html_file()` or `write_entry()`, etc)
 - It must work on Linux, BSD and Mac. Beware of using GNU coreutils with non-POSIX flags (i.e. `date` or `grep`)
+- Follow the UNIX philosophy: do one thing and do it well, rely on third party software for external features, etc
 - **Always** keep backwards compatibility when using the default configuration
 
 
