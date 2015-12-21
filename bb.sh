@@ -54,7 +54,7 @@ global_variables() {
     global_twitter_cookieless="true"
     # Set to "topsy" which can search tweets way early in time, or "twitter" 
     # for the default search page, where tweets more than a week old are hidden
-    global_twitter_search="topsy"
+    global_twitter_search="twitter"
 
     # Change this to your disqus username to use disqus for comments
     global_disqus_username=""
