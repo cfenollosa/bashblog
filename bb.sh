@@ -143,7 +143,7 @@ global_variables() {
 
     # Markdown location. Trying to autodetect by default.
     # The invocation must support the signature 'markdown_bin in.md > out.html'
-    markdown_bin="$(which Markdown.pl || which markdown)"
+    markdown_bin=$(which Markdown.pl || which markdown)
 }
 
 # Check for the validity of some variables
@@ -182,8 +182,8 @@ test_markdown() {
 
 # Parse a Markdown file into HTML and return the generated file
 markdown() {
-    out="$(echo $1 | sed 's/md$/html/g')"
-    while [ -f "$out" ]; do out="$(echo $out | sed 's/\.html$/\.'$RANDOM'\.html/')"; done
+    out=$(echo $1 | sed 's/md$/html/g')
+    while [ -f "$out" ]; do out=$(echo $out | sed 's/\.html$/\.'$RANDOM'\.html/'); done
     $markdown_bin "$1" > "$out"
     echo "$out"
 }
@@ -281,12 +281,12 @@ get_html_file_content() {
 #	leave empty for default behavior (edit only text part and change name)
 edit() {
     # Original post timestamp
-    edit_timestamp="$(LC_ALL=C date -r "${1%%.*}.html" +"%a, %d %b %Y %H:%M:%S %z" )"
-    touch_timestamp="$(LC_ALL=C date -r "${1%%.*}.html" +'%Y%m%d%H%M')"
-    tags_before="$(tags_in_post "${1%%.*}.html")"
+    edit_timestamp=$(LC_ALL=C date -r "${1%%.*}.html" +"%a, %d %b %Y %H:%M:%S %z" )
+    touch_timestamp=$(LC_ALL=C date -r "${1%%.*}.html" +'%Y%m%d%H%M')
+    tags_before=$(tags_in_post "${1%%.*}.html")
     if [ "$2" = "full" ]; then
         $EDITOR "$1"
-        filename="$1"
+        filename=$1
     else
         if [[ "${1##*.}" == "md" ]]; then
             test_markdown
@@ -296,17 +296,17 @@ edit() {
             fi
             # editing markdown file
             $EDITOR "$1"
-            TMPFILE="$(markdown "$1")"
-            filename="${1%%.*}.html"
+            TMPFILE=$(markdown "$1")
+            filename=${1%%.*}.html
         else
             # Create the content file
-            TMPFILE="$(basename $1).$RANDOM.html"
+            TMPFILE=$(basename $1).$RANDOM.html
             # Title
             echo "$(get_post_title $1)" > "$TMPFILE"
             # Post text with plaintext tags
             get_html_file_content 'text' 'text' <$1 | sed "/^<p>$template_tags_line_header/s|<a href='$prefix_tags\([^']*\).html'>\\1</a>|\\1|g" >> "$TMPFILE"
             $EDITOR "$TMPFILE"
-            filename="$1"
+            filename=$1
         fi
         rm "$filename"
         if [ "$2" = "keep" ]; then
@@ -320,8 +320,8 @@ edit() {
     touch -t "$touch_timestamp" "$filename"
     chmod 644 "$filename"
     echo "Posted $filename"
-    tags_after="$(tags_in_post $filename)"
-    relevant_tags="$(echo "$tags_before $tags_after" | tr ',' ' ' | tr ' ' '\n' | sort -u | tr '\n' ' ')"
+    tags_after=$(tags_in_post $filename)
+    relevant_tags=$(echo "$tags_before $tags_after" | tr ',' ' ' | tr ' ' '\n' | sort -u | tr '\n' ' ')
     if [ ! -z "$relevant_tags" ]; then
         relevant_posts="$(posts_with_tags $relevant_tags) $filename"
         rebuild_tags "$relevant_posts" "$relevant_tags"
@@ -342,7 +342,7 @@ twitter_card() {
     echo "<meta name='twitter:description' content=\"$description\" />"
     image=$(sed -n 's/.*<img.*src="\([^"]*\)".*/\1/p' $1 | head -n 1) # First image is fine
     [[ -z "$image" ]] && return
-    [[ $image =~ ^https?:\/\/ ]] || image="$global_url/$image" # Check that URL is absolute
+    [[ $image =~ ^https?:\/\/ ]] || image=$global_url/$image # Check that URL is absolute
     echo "<meta name='twitter:image' content='$image' />"
 }
 
@@ -387,7 +387,7 @@ twitter() {
 # Return 0 (bash return value 'true') if the input file is an index, feed, etc
 # or 1 (bash return value 'false') if it is a blogpost
 is_boilerplate_file() {
-    name="`clean_filename $1`"
+    name=$(clean_filename $1)
     if [[ "$name" == "$index_file" ]] || [[ "$name" == "$archive_index" ]] || [[ "$name" == "$tags_index" ]] || [[ "$name" == "$footer_file" ]] || [[ "$name" == "$header_file" ]] || [[ "$name" == "$global_analytics_file" ]] || [[ "$name" = "$prefix_tags"* ]] ; then return 0
     else # Check for exclded
         for excl in ${html_exclude[*]}; do
@@ -402,7 +402,7 @@ is_boilerplate_file() {
 # $1 the file name
 # returns the clean file name
 clean_filename() {
-    name="$1"
+    name=$1
     [[ "${name:0:2}" == "./" ]] && name=${name:2} # Delete leading './'
     echo $name
 }
@@ -419,11 +419,11 @@ clean_filename() {
 # $4     title for the html header
 # $5     original blog timestamp
 create_html_page() {
-    content="$1"
-    filename="$2"
-    index="$3"
-    title="$4"
-    timestamp="$5"
+    content=$1
+    filename=$2
+    index=$3
+    title=$4
+    timestamp=$5
 
     # Create the actual blog post
     # html, head
@@ -443,8 +443,8 @@ create_html_page() {
     echo '</div></div></div>' >> "$filename" # title, header, headerholder
     echo '<div id="divbody"><div class="content">' >> "$filename"
 
-    file_url="`clean_filename $filename`"
-    file_url="$(sed 's/.rebuilt//g' <<< $file_url)" # Get the correct URL when rebuilding
+    file_url=$(clean_filename $filename)
+    file_url=$(sed 's/.rebuilt//g' <<< $file_url) # Get the correct URL when rebuilding
     # one blog entry
     if [[ "$index" == "no" ]]; then
         echo '<!-- entry begin -->' >> "$filename" # marks the beginning of the whole post
@@ -502,22 +502,22 @@ parse_file() {
             else
                 filename=$title
                 [[ "$convert_filename" ]] &&
-                    filename="$(echo $title | eval $convert_filename)"
+                    filename=$(echo $title | eval $convert_filename)
                 [[ "$filename" ]] || 
                     filename=$RANDOM # don't allow empty filenames
 
-                filename="$filename.html"
+                filename=$filename.html
 
                 # Check for duplicate file names
                 while [ -f "$filename" ]; do
-                    suffix="$RANDOM"
-                    filename="$(echo $filename | sed 's/\.html/'$suffix'\.html/g')"
+                    suffix=$RANDOM
+                    filename=$(echo $filename | sed 's/\.html/'$suffix'\.html/g')
                 done
             fi
-            content="$filename.tmp"
+            content=$filename.tmp
         # Parse possible tags
         elif [[ "$line" = "<p>$template_tags_line_header"* ]]; then
-            tags="$(echo "$line" | cut -d ":" -f 2- | sed -e 's/<\/p>//g' -e 's/^ *//' -e 's/ *$//' -e 's/, /,/g')"
+            tags=$(echo "$line" | cut -d ":" -f 2- | sed -e 's/<\/p>//g' -e 's/^ *//' -e 's/ *$//' -e 's/, /,/g')
             IFS=, read -r -a array <<< "$tags"
 
             echo -n "<p>$template_tags_line_header " >> "$content"
@@ -538,19 +538,19 @@ parse_file() {
 # also the drafts
 write_entry() {
     test_markdown && fmt="md" || fmt="html"
-    f="$2"
-    [[ "$2" == "-html" ]] && fmt="html" && f="$3"
+    f=$2
+    [[ "$2" == "-html" ]] && fmt="html" && f=$3
 
     if [[ "$f" != "" ]]; then
-        TMPFILE="$f"
+        TMPFILE=$f
         if [[ ! -f "$TMPFILE" ]]; then
             echo "The file doesn't exist"
             delete_includes
             exit
         fi
         # guess format from TMPFILE
-        extension="${TMPFILE##*.}"
-        [[ "$extension" == "md" || "$extension" == "html" ]] && fmt="$extension"
+        extension=${TMPFILE##*.}
+        [[ "$extension" == "md" || "$extension" == "html" ]] && fmt=$extension
         # but let user override it (`bb.sh post -html file.md`)
         [[ "$2" == "-html" ]] && fmt="html"
         # Test if Markdown is working before re-posting a .md file
@@ -586,7 +586,7 @@ EOF
         [ "$filename" ] && rm "$filename" # Delete the generated html file, if any
         $EDITOR "$TMPFILE"
         if [[ "$fmt" == "md" ]]; then
-            html_from_md="$(markdown "$TMPFILE")"
+            html_from_md=$(markdown "$TMPFILE")
             parse_file "$html_from_md"
             rm "$html_from_md"
         else
@@ -594,7 +594,7 @@ EOF
         fi
 
         chmod 644 "$filename"
-        [ "$preview_url" ] || preview_url="$global_url"
+        [ "$preview_url" ] || preview_url=$global_url
         echo "To preview the entry, open $preview_url/$filename in your browser"
 
         echo -n "[P]ost this entry, [E]dit again, [D]raft for later? (p/E/d) "
@@ -603,8 +603,8 @@ EOF
             mkdir -p "drafts/"
             chmod 700 "drafts/"
 
-            title="$(head -n 1 $TMPFILE)"
-            [[ "$convert_filename" ]] && title="$(echo $title | eval $convert_filename)"
+            title=$(head -n 1 $TMPFILE)
+            [[ "$convert_filename" ]] && title=$(echo $title | eval $convert_filename)
             [[ "$title" ]] || title=$RANDOM
 
             draft="drafts/$title.$fmt"
@@ -624,7 +624,7 @@ EOF
     fi
     chmod 644 "$filename"
     echo "Posted $filename"
-    relevant_tags="$(tags_in_post $filename)"
+    relevant_tags=$(tags_in_post $filename)
     if [ ! -z "$relevant_tags" ]; then
         relevant_posts="$(posts_with_tags $relevant_tags) $filename"
         rebuild_tags "$relevant_posts" "$relevant_tags"
@@ -634,9 +634,9 @@ EOF
 # Create an index page with all the posts
 all_posts() {
     echo -n "Creating an index page with all the posts "
-    contentfile="$archive_index.$RANDOM"
+    contentfile=$archive_index.$RANDOM
     while [ -f "$contentfile" ]; do
-        contentfile="$archive_index.$RANDOM"
+        contentfile=$archive_index.$RANDOM
     done
 
     echo "<h3>$template_archive_title</h3>" >> "$contentfile"
@@ -645,18 +645,18 @@ all_posts() {
         is_boilerplate_file "$i" && continue
         echo -n "."
         # Month headers
-        month="$(LC_ALL=$date_locale date -r "$i" +"$date_allposts_header")"
+        month=$(LC_ALL=$date_locale date -r "$i" +"$date_allposts_header")
         if [[ "$month" != "$prev_month" ]]; then
             [[ "$prev_month" ]] && echo "</ul>" >> "$contentfile" # Don't close ul before first header
             echo "<h4 class='allposts_header'>$month</h4>" >> "$contentfile" 
             echo "<ul>" >> "$contentfile"
-            prev_month="$month"
+            prev_month=$month
         fi
         # Title
-        title="$(get_post_title "$i")"
+        title=$(get_post_title "$i")
         echo -n '<li><a href="'$i'">'$title'</a> &mdash;' >> "$contentfile"
         # Date
-        date="$(LC_ALL=$date_locale date -r "$i" +"$date_format")"
+        date=$(LC_ALL=$date_locale date -r "$i" +"$date_format")
         echo " $date</li>" >> "$contentfile"
     done
     echo ""
@@ -672,18 +672,18 @@ all_posts() {
 # Create an index page with all the tags
 all_tags() {
     echo -n "Creating an index page with all the tags "
-    contentfile="$tags_index.$RANDOM"
+    contentfile=$tags_index.$RANDOM
     while [ -f "$contentfile" ]; do
-        contentfile="$tags_index.$RANDOM"
+        contentfile=$tags_index.$RANDOM
     done
 
     echo "<h3>$template_tags_title</h3>" >> "$contentfile"
     echo "<ul>" >> "$contentfile"
     for i in $(ls ./$prefix_tags*.html 2>/dev/null || echo ''); do
         echo -n "."
-        nposts="$(grep -c "<\!-- text begin -->" $i)"
-        tagname="$(echo $i | cut -c $((${#prefix_tags}+3))- | sed 's/\.html//g')"
-        i="`clean_filename $i`"
+        nposts=$(grep -c "<\!-- text begin -->" $i)
+        tagname=$(echo $i | cut -c $((${#prefix_tags}+3))- | sed 's/\.html//g')
+        i=$(clean_filename $i)
         echo "<li><a href=\"$i\">$tagname</a> &mdash; $nposts $template_tags_posts</li>" >> "$contentfile"
     done
     echo ""
@@ -699,11 +699,11 @@ all_tags() {
 # Generate the index.html with the content of the latest posts
 rebuild_index() {
     echo -n "Rebuilding the index "
-    newindexfile="$index_file.$RANDOM"
-    contentfile="$newindexfile.content"
+    newindexfile=$index_file.$RANDOM
+    contentfile=$newindexfile.content
     while [ -f "$newindexfile" ]; do 
-        newindexfile="$index_file.$RANDOM"
-        contentfile="$newindexfile.content"
+        newindexfile=$index_file.$RANDOM
+        contentfile=$newindexfile.content
     done
 
     # Create the content file
@@ -720,8 +720,8 @@ rebuild_index() {
         n=$(( n + 1 ))
     done
 
-    feed="$blog_feed"
-    if [[ "$global_feedburner" != "" ]]; then feed="$global_feedburner"; fi
+    feed=$blog_feed
+    if [[ "$global_feedburner" != "" ]]; then feed=$global_feedburner; fi
     echo '<div id="all_posts"><a href="'$archive_index'">'$template_archive'</a> &mdash; <a href="'$tags_index'">'$template_tags_title'</a> &mdash; <a href="'$feed'">'$template_subscribe'</a></div>' >> "$contentfile"
 
     echo ""
@@ -744,7 +744,7 @@ tags_in_post() {
 # Prints one line with space-separated tags to stdout
 posts_with_tags() {
     [ $# -lt 1 ] && return
-    tag_files="$(for i in $@; do echo -n $prefix_tags""$i.html" "; done)"
+    tag_files=$(for i in "$@"; do echo -n $prefix_tags""$i.html" "; done)
     sed -n '/^<h3><a class="ablack" href="[^"]*">/{s/.*href="\([^"]*\)">.*/\1/;p;}' $tag_files 2> /dev/null
 }
 
@@ -760,13 +760,13 @@ posts_with_tags() {
 rebuild_tags() {
     if [ "$#" -lt 2 ]; then
         # will process all files and tags
-        files="$(ls -t ./*.html)"
+        files=$(ls -t ./*.html)
         all_tags="yes"
     else
         # will process only given files and tags
-        files="$(echo "$1" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
-        files="$(ls -t $files)"
-        tags="$2"
+        files=$(echo "$1" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+        files=$(ls -t $files)
+        tags=$2
     fi
     echo -n "Rebuilding tag pages "
     n=0
@@ -782,7 +782,7 @@ rebuild_tags() {
     for i in $files; do
         is_boilerplate_file "$i" && continue;
         echo -n "."
-        tmpfile="$(mktemp tmp.XXX)"
+        tmpfile=$(mktemp tmp.XXX)
         if [ "$cut_do" ]; then
             get_html_file_content 'entry' 'entry' 'cut' <$i | awk '/'"$cut_line"'/ { print "<p class=\"readmore\"><a href=\"'$i'\">'"$template_read_more"'</a></p>" ; next } 1' >> "$tmpfile"
         else
@@ -797,7 +797,7 @@ rebuild_tags() {
     done
     # Now generate the tag files with headers, footers, etc
     for i in $(ls -t ./$prefix_tags*.tmp.html 2>/dev/null || echo ''); do
-        tagname="$(echo $i | cut -c $((${#prefix_tags}+3))- | sed 's/\.tmp\.html//g')"
+        tagname=$(echo $i | cut -c $((${#prefix_tags}+3))- | sed 's/\.tmp\.html//g')
         create_html_page "$i" "$prefix_tags$tagname.html" yes "$global_title &mdash; $template_tag_title \"$tagname\""
         rm "$i"
     done
@@ -821,7 +821,7 @@ list_posts() {
     for i in $(ls -t ./*.html); do
         is_boilerplate_file "$i" && continue
         line="$n # $(get_post_title "$i") # $(LC_ALL=$date_locale date -r $i +"$date_format")"
-        lines="${lines}""$line""\n" # Weird stuff needed for the newlines
+        lines+=$line\\n
         n=$(( n + 1 ))
     done 
 
@@ -832,8 +832,8 @@ list_posts() {
 make_rss() {
     echo -n "Making RSS "
 
-    rssfile="$blog_feed.$RANDOM"
-    while [ -f "$rssfile" ]; do rssfile="$blog_feed.$RANDOM"; done
+    rssfile=$blog_feed.$RANDOM
+    while [ -f "$rssfile" ]; do rssfile=$blog_feed.$RANDOM; done
 
     echo '<?xml version="1.0" encoding="UTF-8" ?>' >> "$rssfile"
     echo '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">' >> "$rssfile"
@@ -890,7 +890,7 @@ create_includes() {
 
     if [[ -f "$footer_file" ]]; then cp "$footer_file" .footer.html
     else 
-        protected_mail="$(echo "$global_email" | sed 's/@/\&#64;/g' | sed 's/\./\&#46;/g')"
+        protected_mail=$(echo "$global_email" | sed 's/@/\&#64;/g' | sed 's/\./\&#46;/g')
         echo '<div id="footer">'$global_license '<a href="'$global_author_url'">'$global_author'</a> &mdash; <a href="mailto:'$protected_mail'">'$protected_mail'</a><br/>' >> ".footer.html"
         echo 'Generated with <a href="https://github.com/cfenollosa/bashblog">bashblog</a>, a single bash script to easily create blogs like this one</div>' >> ".footer.html"
     fi
@@ -959,15 +959,15 @@ rebuild_all_entries() {
 
         echo -n "."
         # Get the title and entry, and rebuild the html structure from scratch (divs, title, description...)
-        title="$(get_post_title "$i")"
+        title=$(get_post_title "$i")
         get_html_file_content 'text' 'text' <$i >> "$contentfile"
 
         # Original post timestamp
-        timestamp="$(LC_ALL=C date -r $i +"%a, %d %b %Y %H:%M:%S %z" )"
+        timestamp=$(LC_ALL=C date -r $i +"%a, %d %b %Y %H:%M:%S %z" )
 
         create_html_page "$contentfile" "$i.rebuilt" no "$title" "$timestamp"
         # keep the original timestamp!
-        timestamp="$(LC_ALL=C date -r $i +'%Y%m%d%H%M')"
+        timestamp=$(LC_ALL=C date -r $i +'%Y%m%d%H%M')
         mv "$i.rebuilt" "$i"
         chmod 644 "$i"
         touch -t "$timestamp" "$i"
