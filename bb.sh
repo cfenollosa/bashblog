@@ -392,7 +392,7 @@ is_boilerplate_file() {
     ( "$index_file" | "$archive_index" | "$tags_index" | "$footer_file" | "$header_file" | "$global_analytics_file" | "$prefix_tags"* )
         return 0 ;;
     ( * ) # Check for excluded
-        for excl in ${html_exclude[*]}; do
+        for excl in "${html_exclude[@]}"; do
             [[ $name == "$excl" ]] && return 0
         done
         return 1 ;;
@@ -523,9 +523,9 @@ parse_file() {
             IFS=, read -r -a array <<< "$tags"
 
             echo -n "<p>$template_tags_line_header " >> "$content"
-            (for item in "${array[@]}"; do
+            for item in "${array[@]}"; do
                 echo -n "<a href='$prefix_tags$item.html'>$item</a>, "
-            done ) | sed 's/, $/<\/p>/g' >> "$content"
+            done | sed 's/, $/<\/p>/g' >> "$content"
         else
             echo "$line" >> "$content"
         fi
@@ -738,7 +738,7 @@ rebuild_index() {
 # Accepts either filename as first argument, or post content at stdin
 # Prints one line with space-separated tags to stdout
 tags_in_post() {
-    sed -n "/^<p>$template_tags_line_header/{s/^<p>$template_tags_line_header//;s/<[^>]*>//g;s/[ ,]\+/ /g;p;}" $1 | tr ', ' ' '
+    sed -n "/^<p>$template_tags_line_header/{s/^<p>$template_tags_line_header//;s/<[^>]*>//g;s/[ ,]\+/ /g;p;}" "$1" | tr ', ' ' '
 }
 
 # Finds all posts referenced in a number of tags.
@@ -746,8 +746,9 @@ tags_in_post() {
 # Prints one line with space-separated tags to stdout
 posts_with_tags() {
     (($# < 1)) && return
-    tag_files=$(for i in "$@"; do echo -n $prefix_tags""$i.html" "; done)
-    sed -n '/^<h3><a class="ablack" href="[^"]*">/{s/.*href="\([^"]*\)">.*/\1/;p;}' $tag_files 2> /dev/null
+    set -- "${@/#/$prefix_tags}"
+    set -- "${@/%/.html}"
+    sed -n '/^<h3><a class="ablack" href="[^"]*">/{s/.*href="\([^"]*\)">.*/\1/;p;}' "$@" 2> /dev/null
 }
 
 # Rebuilds tag_*.html files
@@ -880,9 +881,7 @@ create_includes() {
         echo '<html xmlns="http://www.w3.org/1999/xhtml"><head>' >> ".header.html"
         echo '<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />' >> ".header.html"
         echo '<meta name="viewport" content="width=device-width, initial-scale=1.0">' >> ".header.html"
-        for css_file in ${css_include[*]}; do
-            echo '<link rel="stylesheet" href="'$css_file'" type="text/css" />' >> ".header.html"
-        done
+        printf '<link rel="stylesheet" href="%s" type="text/css" />\n' "${css_include[@]}" >> ".header.html"
         if [[ -z $global_feedburner ]]; then
             echo '<link rel="alternate" type="application/rss+xml" title="'$template_subscribe_browser_button'" href="'$blog_feed'" />' >> ".header.html"
         else 
