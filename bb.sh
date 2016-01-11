@@ -323,7 +323,7 @@ edit() {
     tags_after=$(tags_in_post "$filename")
     relevant_tags=$(echo "$tags_before $tags_after" | tr ',' ' ' | tr ' ' '\n' | sort -u | tr '\n' ' ')
     if [[ ! -z $relevant_tags ]]; then
-        relevant_posts="$(posts_with_tags "$relevant_tags") $filename"
+        relevant_posts="$(posts_with_tags $relevant_tags) $filename"
         rebuild_tags "$relevant_posts" "$relevant_tags"
     fi
 }
