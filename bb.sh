@@ -168,7 +168,7 @@ test_markdown() {
     good=/tmp/md-good-${RANDOM}.html
     echo -e "line 1\n\nline 2" > "$in"
     echo -e "<p>line 1</p>\n\n<p>line 2</p>" > "$good"
-    $markdown_bin $in > $out 2> /dev/null
+    "$markdown_bin" "$in" > "$out" 2> /dev/null
     diff $good $out &> /dev/null # output is irrelevant, we'll check $?
     if (($? != 0)); then
         rm -f "$in" "$good" "$out"
@@ -182,8 +182,8 @@ test_markdown() {
 
 # Parse a Markdown file into HTML and return the generated file
 markdown() {
-    out=$(echo $1 | sed 's/md$/html/g')
-    while [[ -f $out ]]; do out=$(echo $out | sed 's/\.html$/\.'$RANDOM'\.html/'); done
+    out=${1%.md}.html
+    while [[ -f $out ]]; do out=${out%.html}.$RANDOM.html; done
     $markdown_bin "$1" > "$out"
     echo "$out"
 }
@@ -256,15 +256,15 @@ disqus_footer() {
 #       note that this does not remove <hr /> line itself,
 #       so you can see if text was cut or not
 get_html_file_content() {
-    awk '/<!-- '$1' begin -->/, /<!-- '$2' end -->/{
-        if (!/<!-- '$1' begin -->/ && !/<!-- '$2' end -->/) print
-        if ("'$3'" == "cut" && /'"$cut_line"'/){
-            if ("'$2'" == "text") exit # no need to read further
+    awk "/<!-- $1 begin -->/, /<!-- $2 end -->/{
+        if (!/<!-- $1 begin -->/ && !/<!-- $2 end -->/) print
+        if (\"$3\" == \"cut\" && /$cut_line/){
+            if (\"$2\" == \"text\") exit # no need to read further
             while (getline > 0 && !/<!-- text end -->/) {
-                if ("'$cut_tags'" == "no" && /^'"<p>$template_tags_line_header"'/ ) print 
+                if (\"$cut_tags\" == \"no\" && /^<p>$template_tags_line_header/ ) print 
             }
         }
-    }'
+    }"
 }
 
 # Edit an existing, published .html file while keeping its original timestamp
@@ -300,11 +300,11 @@ edit() {
             filename=${1%%.*}.html
         else
             # Create the content file
-            TMPFILE=$(basename $1).$RANDOM.html
+            TMPFILE=$(basename "$1").$RANDOM.html
             # Title
-            echo "$(get_post_title $1)" > "$TMPFILE"
+            get_post_title "$1" > "$TMPFILE"
             # Post text with plaintext tags
-            get_html_file_content 'text' 'text' <$1 | sed "/^<p>$template_tags_line_header/s|<a href='$prefix_tags\([^']*\).html'>\\1</a>|\\1|g" >> "$TMPFILE"
+            get_html_file_content 'text' 'text' <"$1" | sed "/^<p>$template_tags_line_header/s|<a href='$prefix_tags\([^']*\).html'>\\1</a>|\\1|g" >> "$TMPFILE"
             $EDITOR "$TMPFILE"
             filename=$1
         fi
@@ -320,10 +320,10 @@ edit() {
     touch -t "$touch_timestamp" "$filename"
     chmod 644 "$filename"
     echo "Posted $filename"
-    tags_after=$(tags_in_post $filename)
+    tags_after=$(tags_in_post "$filename")
     relevant_tags=$(echo "$tags_before $tags_after" | tr ',' ' ' | tr ' ' '\n' | sort -u | tr '\n' ' ')
     if [[ ! -z $relevant_tags ]]; then
-        relevant_posts="$(posts_with_tags $relevant_tags) $filename"
+        relevant_posts="$(posts_with_tags "$relevant_tags") $filename"
         rebuild_tags "$relevant_posts" "$relevant_tags"
     fi
 }
@@ -338,11 +338,11 @@ twitter_card() {
     echo "<meta name='twitter:card' content='summary' />"
     echo "<meta name='twitter:site' content='@$global_twitter_username' />"
     echo "<meta name='twitter:title' content='$2' />" # Twitter truncates at 70 char
-    description=$(grep -v "^<p>$template_tags_line_header" $1 | sed -e 's/<[^>]*>//g' | head -c 250 | tr '\n' ' ' | sed "s/\"/'/g") 
+    description=$(grep -v "^<p>$template_tags_line_header" "$1" | sed -e 's/<[^>]*>//g' | head -c 250 | tr '\n' ' ' | sed "s/\"/'/g") 
     echo "<meta name='twitter:description' content=\"$description\" />"
-    image=$(sed -n 's/.*<img.*src="\([^"]*\)".*/\1/p' $1 | head -n 1) # First image is fine
+    image=$(sed -n 's/.*<img.*src="\([^"]*\)".*/\1/p' "$1" | head -n 1) # First image is fine
     [[ -z $image ]] && return
-    [[ $image =~ ^https?:\/\/ ]] || image=$global_url/$image # Check that URL is absolute
+    [[ $image =~ ^https?:// ]] || image=$global_url/$image # Check that URL is absolute
     echo "<meta name='twitter:image' content='$image' />"
 }
 
@@ -362,8 +362,8 @@ twitter() {
             echo "<p id='twitter'><a href='http://twitter.com/intent/tweet?url=$1&text=$template_twitter_comment&via=$global_twitter_username'>$template_comments $template_twitter_button</a> "
             echo "<a href='$search_engine""$1'><span id='count-$id'></span></a>&nbsp;</p>"
             # Get current tweet count
-            echo '<script type="text/javascript">$.ajax({type: "GET", url: "https://cdn.api.twitter.com/1/urls/count.json?url='$1'",
-            dataType: "jsonp", success: function(data){ $("#count-'$id'").html("(" + data.count + ")"); }}); </script>'
+            echo "<script type=\"text/javascript\">\$.ajax({type: \"GET\", url: \"https://cdn.api.twitter.com/1/urls/count.json?url=$1\",
+            dataType: \"jsonp\", success: function(data){ \$(\"#count-$id\").html(\"(\" + data.count + \")\"); }}); </script>"
             return;
         else 
             echo "<p id='twitter'>$template_comments&nbsp;"; 
@@ -387,7 +387,7 @@ twitter() {
 # Return 0 (bash return value 'true') if the input file is an index, feed, etc
 # or 1 (bash return value 'false') if it is a blogpost
 is_boilerplate_file() {
-    name=$(clean_filename $1)
+    name=$(clean_filename "$1")
     case $name in
     ( "$index_file" | "$archive_index" | "$tags_index" | "$footer_file" | "$header_file" | "$global_analytics_file" | "$prefix_tags"* )
         return 0 ;;
@@ -404,9 +404,7 @@ is_boilerplate_file() {
 # $1 the file name
 # returns the clean file name
 clean_filename() {
-    name=$1
-    [[ ${name:0:2} == ./ ]] && name=${name:2} # Delete leading './'
-    echo $name
+    echo "${1#./}" # Delete leading './'
 }
 
 # Adds all the bells and whistles to format the html page
@@ -429,59 +427,61 @@ create_html_page() {
 
     # Create the actual blog post
     # html, head
-    cat ".header.html" > "$filename"
-    echo "<title>$title</title>" >> "$filename"
-    google_analytics >> "$filename"
-    twitter_card "$content" "$title" >> "$filename"
-    echo "</head><body>" >> "$filename"
-    # stuff to add before the actual body content
-    [[ -n $body_begin_file ]] && cat "$body_begin_file" >> "$filename"
-    # body divs
-    echo '<div id="divbodyholder">' >> "$filename"
-    echo '<div class="headerholder"><div class="header">' >> "$filename"
-    # blog title
-    echo '<div id="title">' >> "$filename"
-    cat .title.html >> "$filename"
-    echo '</div></div></div>' >> "$filename" # title, header, headerholder
-    echo '<div id="divbody"><div class="content">' >> "$filename"
+    {
+        cat ".header.html"
+        echo "<title>$title</title>"
+        google_analytics
+        twitter_card "$content" "$title"
+        echo "</head><body>"
+        # stuff to add before the actual body content
+        [[ -n $body_begin_file ]] && cat "$body_begin_file"
+        # body divs
+        echo '<div id="divbodyholder">'
+        echo '<div class="headerholder"><div class="header">'
+        # blog title
+        echo '<div id="title">'
+        cat .title.html
+        echo '</div></div></div>' # title, header, headerholder
+        echo '<div id="divbody"><div class="content">'
 
-    file_url=$(clean_filename $filename)
-    file_url=$(sed 's/.rebuilt//g' <<< $file_url) # Get the correct URL when rebuilding
-    # one blog entry
-    if [[ $index == no ]]; then
-        echo '<!-- entry begin -->' >> "$filename" # marks the beginning of the whole post
-        echo '<h3><a class="ablack" href="'$file_url'">' >> "$filename"
-        # remove possible <p>'s on the title because of markdown conversion
-        echo "$(echo "$title" | sed 's/<\/*p>//g')" >> "$filename"
-        echo '</a></h3>' >> "$filename"
-        if [[ -z $timestamp ]]; then
-            echo '<div class="subtitle">'$(LC_ALL=$date_locale date +"$date_format")' &mdash; ' >> "$filename"
-        else
-            echo '<div class="subtitle">'$(LC_ALL=$date_locale date +"$date_format" --date="$timestamp") ' &mdash; ' >> "$filename"
+        file_url=$(clean_filename "$filename")
+        file_url=$(sed 's/.rebuilt//g' <<< "$file_url") # Get the correct URL when rebuilding
+        # one blog entry
+        if [[ $index == no ]]; then
+            echo '<!-- entry begin -->' # marks the beginning of the whole post
+            echo "<h3><a class=\"ablack\" href=\"$file_url\">"
+            # remove possible <p>'s on the title because of markdown conversion
+            echo "$title" | sed 's/<\/*p>//g'
+            echo '</a></h3>'
+            if [[ -z $timestamp ]]; then
+                echo "<div class=\"subtitle\">$(LC_ALL=$date_locale date +"$date_format") &mdash; "
+            else
+                echo "<div class=\"subtitle\">$(LC_ALL=$date_locale date +"$date_format" --date="$timestamp") &mdash; "
+            fi
+            echo "$global_author</div>"
+            echo '<!-- text begin -->' # This marks the text body, after the title, date...
         fi
-        echo "$global_author</div>" >> "$filename"
-        echo '<!-- text begin -->' >> "$filename" # This marks the text body, after the title, date...
-    fi
-    cat "$content" >> "$filename" # Actual content
-    if [[ $index == no ]]; then
-        echo -e '\n<!-- text end -->' >> "$filename"
+        cat "$content" # Actual content
+        if [[ $index == no ]]; then
+            echo -e '\n<!-- text end -->'
 
-        twitter "$global_url/$file_url" >> "$filename"
+            twitter "$global_url/$file_url"
 
-        echo '<!-- entry end -->' >> "$filename" # absolute end of the post
-    fi
+            echo '<!-- entry end -->' # absolute end of the post
+        fi
 
-    echo '</div>' >> "$filename" # content
+        echo '</div>' # content
 
-    # Add disqus commments except for index and all_posts pages
-    [[ $index == no ]] && disqus_body >> "$filename"
+        # Add disqus commments except for index and all_posts pages
+        [[ $index == no ]] && disqus_body
 
-    # page footer
-    cat .footer.html >> "$filename"
-    # close divs
-    echo '</div></div>' >> "$filename" # divbody and divbodyholder 
-    disqus_footer >> "$filename"
-    echo '</body></html>' >> "$filename"
+        # page footer
+        cat .footer.html
+        # close divs
+        echo '</div></div>' # divbody and divbodyholder 
+        disqus_footer
+        echo '</body></html>'
+    } > "$filename"
 }
 
 # Parse the plain text file into an html file
@@ -504,7 +504,7 @@ parse_file() {
             else
                 filename=$title
                 [[ -n $convert_filename ]] &&
-                    filename=$(echo $title | eval $convert_filename)
+                    filename=$(echo "$title" | eval "$convert_filename")
                 [[ -n $filename ]] || 
                     filename=$RANDOM # don't allow empty filenames
 
@@ -512,8 +512,7 @@ parse_file() {
 
                 # Check for duplicate file names
                 while [[ -f $filename ]]; do
-                    suffix=$RANDOM
-                    filename=$(echo $filename | sed 's/\.html/'$suffix'\.html/g')
+                    filename=${filename%.html}$RANDOM.html
                 done
             fi
             content=$filename.tmp
@@ -600,13 +599,13 @@ EOF
         echo "To preview the entry, open $preview_url/$filename in your browser"
 
         echo -n "[P]ost this entry, [E]dit again, [D]raft for later? (p/E/d) "
-        read post_status
+        read -r post_status
         if [[ $post_status == d || $post_status == D ]]; then
             mkdir -p "drafts/"
             chmod 700 "drafts/"
 
             title=$(head -n 1 $TMPFILE)
-            [[ -n $convert_filename ]] && title=$(echo $title | eval $convert_filename)
+            [[ -n $convert_filename ]] && title=$(echo "$title" | eval "$convert_filename")
             [[ -n $title ]] || title=$RANDOM
 
             draft=drafts/$title.$fmt
@@ -641,29 +640,31 @@ all_posts() {
         contentfile=$archive_index.$RANDOM
     done
 
-    echo "<h3>$template_archive_title</h3>" >> "$contentfile"
-    prev_month=""
-    for i in $(ls -t ./*.html); do
-        is_boilerplate_file "$i" && continue
-        echo -n "."
-        # Month headers
-        month=$(LC_ALL=$date_locale date -r "$i" +"$date_allposts_header")
-        if [[ $month != "$prev_month" ]]; then
-            [[ -n $prev_month ]] && echo "</ul>" >> "$contentfile" # Don't close ul before first header
-            echo "<h4 class='allposts_header'>$month</h4>" >> "$contentfile" 
-            echo "<ul>" >> "$contentfile"
-            prev_month=$month
-        fi
-        # Title
-        title=$(get_post_title "$i")
-        echo -n '<li><a href="'$i'">'$title'</a> &mdash;' >> "$contentfile"
-        # Date
-        date=$(LC_ALL=$date_locale date -r "$i" +"$date_format")
-        echo " $date</li>" >> "$contentfile"
-    done
-    echo ""
-    echo "</ul>" >> "$contentfile"
-    echo '<div id="all_posts"><a href="'./'">'$template_archive_index_page'</a></div>' >> "$contentfile"
+    {
+        echo "<h3>$template_archive_title</h3>"
+        prev_month=""
+        for i in $(ls -t ./*.html); do
+            is_boilerplate_file "$i" && continue
+            echo -n "." 1>&3
+            # Month headers
+            month=$(LC_ALL=$date_locale date -r "$i" +"$date_allposts_header")
+            if [[ $month != "$prev_month" ]]; then
+                [[ -n $prev_month ]] && echo "</ul>"  # Don't close ul before first header
+                echo "<h4 class='allposts_header'>$month</h4>"
+                echo "<ul>"
+                prev_month=$month
+            fi
+            # Title
+            title=$(get_post_title "$i")
+            echo -n "<li><a href=\"$i\">$title</a> &mdash;"
+            # Date
+            date=$(LC_ALL=$date_locale date -r "$i" +"$date_format")
+            echo " $date</li>"
+        done
+        echo "" 1>&3
+        echo "</ul>"
+        echo "<div id=\"all_posts\"><a href=\"./\">$template_archive_index_page</a></div>"
+    } 3>&1 >"$contentfile"
 
     create_html_page "$contentfile" "$archive_index.tmp" yes "$global_title &mdash; $template_archive_title"
     mv "$archive_index.tmp" "$archive_index"
@@ -679,18 +680,21 @@ all_tags() {
         contentfile=$tags_index.$RANDOM
     done
 
-    echo "<h3>$template_tags_title</h3>" >> "$contentfile"
-    echo "<ul>" >> "$contentfile"
-    for i in $(ls ./$prefix_tags*.html 2>/dev/null || echo ''); do
-        echo -n "."
-        nposts=$(grep -c "<\!-- text begin -->" $i)
-        tagname=$(echo $i | cut -c $((${#prefix_tags}+3))- | sed 's/\.html//g')
-        i=$(clean_filename $i)
-        echo "<li><a href=\"$i\">$tagname</a> &mdash; $nposts $template_tags_posts</li>" >> "$contentfile"
-    done
-    echo ""
-    echo "</ul>" >> "$contentfile"
-    echo '<div id="all_posts"><a href="'./'">'$template_archive_index_page'</a></div>' >> "$contentfile"
+    {
+        echo "<h3>$template_tags_title</h3>"
+        echo "<ul>"
+        for i in ./$prefix_tags*.html; do
+            [[ -f "$i" ]] || break
+            echo -n "." 1>&3
+            nposts=$(grep -c "<\!-- text begin -->" "$i")
+            tagname=$(echo "$i" | cut -c "$((${#prefix_tags}+3))-" | sed 's/\.html//g')
+            i=$(clean_filename "$i")
+            echo "<li><a href=\"$i\">$tagname</a> &mdash; $nposts $template_tags_posts</li>"
+        done
+        echo "" 1>&3
+        echo "</ul>"
+        echo "<div id=\"all_posts\"><a href=\"./\">$template_archive_index_page</a></div>"
+    } 3>&1 > "$contentfile"
 
     create_html_page "$contentfile" "$tags_index.tmp" yes "$global_title &mdash; $template_tags_title"
     mv "$tags_index.tmp" "$tags_index"
@@ -709,22 +713,24 @@ rebuild_index() {
     done
 
     # Create the content file
-    n=0
-    for i in $(ls -t ./*.html); do # sort by date, newest first
-        is_boilerplate_file "$i" && continue;
-        if ((n >= number_of_index_articles)); then break; fi
-        if [[ -n $cut_do ]]; then
-            get_html_file_content 'entry' 'entry' 'cut' <$i | awk '/'"$cut_line"'/ { print "<p class=\"readmore\"><a href=\"'$i'\">'"$template_read_more"'</a></p>" ; next } 1' >> "$contentfile"
-        else
-            get_html_file_content 'entry' 'entry' <$i >> "$contentfile"
-        fi
-        echo -n "."
-        n=$(( n + 1 ))
-    done
+    {
+        n=0
+        for i in $(ls -t ./*.html); do # sort by date, newest first
+            is_boilerplate_file "$i" && continue;
+            if ((n >= number_of_index_articles)); then break; fi
+            if [[ -n $cut_do ]]; then
+                get_html_file_content 'entry' 'entry' 'cut' <"$i" | awk "/$cut_line/ { print \"<p class=\\\"readmore\\\"><a href=\\\"$i\\\">$template_read_more</a></p>\" ; next } 1"
+            else
+                get_html_file_content 'entry' 'entry' <"$i"
+            fi
+            echo -n "." 1>&3
+            n=$(( n + 1 ))
+        done
 
-    feed=$blog_feed
-    if [[ -n $global_feedburner ]]; then feed=$global_feedburner; fi
-    echo '<div id="all_posts"><a href="'$archive_index'">'$template_archive'</a> &mdash; <a href="'$tags_index'">'$template_tags_title'</a> &mdash; <a href="'$feed'">'$template_subscribe'</a></div>' >> "$contentfile"
+        feed=$blog_feed
+        if [[ -n $global_feedburner ]]; then feed=$global_feedburner; fi
+        echo "<div id=\"all_posts\"><a href=\"$archive_index\">$template_archive</a> &mdash; <a href=\"$tags_index\">$template_tags_title</a> &mdash; <a href=\"$feed\">$template_subscribe</a></div>"
+    } 3>&1 >"$contentfile"
 
     echo ""
 
@@ -774,10 +780,10 @@ rebuild_tags() {
     echo -n "Rebuilding tag pages "
     n=0
     if [[ -n $all_tags ]]; then
-        rm ./$prefix_tags*.html &> /dev/null
+        rm ./"$prefix_tags"*.html &> /dev/null
     else
         for i in $tags; do
-            rm ./$prefix_tags$i.html &> /dev/null
+            rm "./$prefix_tags$i.html" &> /dev/null
         done
     fi
     # First we will process all files and create temporal tag files
@@ -787,11 +793,11 @@ rebuild_tags() {
         echo -n "."
         tmpfile=$(mktemp tmp.XXX)
         if [[ -n $cut_do ]]; then
-            get_html_file_content 'entry' 'entry' 'cut' <$i | awk '/'"$cut_line"'/ { print "<p class=\"readmore\"><a href=\"'$i'\">'"$template_read_more"'</a></p>" ; next } 1' >> "$tmpfile"
+            get_html_file_content 'entry' 'entry' 'cut' <"$i" | awk "/$cut_line/ { print \"<p class=\\\"readmore\\\"><a href=\\\"$i\\\">$template_read_more</a></p>\" ; next } 1"
         else
-            get_html_file_content 'entry' 'entry' <$i >> "$tmpfile"
-        fi
-        for tag in $(tags_in_post $i); do
+            get_html_file_content 'entry' 'entry' <"$i"
+        fi >"$tmpfile"
+        for tag in $(tags_in_post "$i"); do
             if [[ -n $all_tags || " $tags " == *" $tag "* ]]; then
                 cat "$tmpfile" >> "$prefix_tags$tag".tmp.html
             fi
@@ -800,7 +806,7 @@ rebuild_tags() {
     done
     # Now generate the tag files with headers, footers, etc
     for i in $(ls -t ./$prefix_tags*.tmp.html 2>/dev/null || echo ''); do
-        tagname=$(echo $i | cut -c $((${#prefix_tags}+3))- | sed 's/\.tmp\.html//g')
+        tagname=$(echo "$i" | cut -c "$((${#prefix_tags}+3))-" | sed 's/\.tmp\.html//g')
         create_html_page "$i" "$prefix_tags$tagname.html" yes "$global_title &mdash; $template_tag_title \"$tagname\""
         rm "$i"
     done
@@ -823,7 +829,7 @@ list_posts() {
     n=1
     for i in $(ls -t ./*.html); do
         is_boilerplate_file "$i" && continue
-        line="$n # $(get_post_title "$i") # $(LC_ALL=$date_locale date -r $i +"$date_format")"
+        line="$n # $(get_post_title "$i") # $(LC_ALL=$date_locale date -r "$i" +"$date_format")"
         lines+=$line\\n
         n=$(( n + 1 ))
     done 
@@ -838,32 +844,35 @@ make_rss() {
     rssfile=$blog_feed.$RANDOM
     while [[ -f $rssfile ]]; do rssfile=$blog_feed.$RANDOM; done
 
-    echo '<?xml version="1.0" encoding="UTF-8" ?>' >> "$rssfile"
-    echo '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">' >> "$rssfile"
-    echo '<channel><title>'$global_title'</title><link>'$global_url'</link>' >> "$rssfile"
-    echo '<description>'$global_description'</description><language>en</language>' >> "$rssfile"
-    echo '<lastBuildDate>'$(LC_ALL=C date +"%a, %d %b %Y %H:%M:%S %z")'</lastBuildDate>' >> "$rssfile"
-    echo '<pubDate>'$(LC_ALL=C date +"%a, %d %b %Y %H:%M:%S %z")'</pubDate>' >> "$rssfile"
-    echo '<atom:link href="'$global_url/$blog_feed'" rel="self" type="application/rss+xml" />' >> "$rssfile"
-
-    n=0
-    for i in $(ls -t ./*.html); do
-        is_boilerplate_file "$i" && continue
-        ((n >= number_of_feed_articles)) && break # max 10 items
-        echo -n "."
-        echo '<item><title>' >> "$rssfile"
-        echo "$(get_post_title "$i")" >> "$rssfile"
-        echo '</title><description><![CDATA[' >> "$rssfile"
-        echo "$(get_html_file_content 'text' 'entry' $cut_do <$i)" >> "$rssfile"
-        echo "]]></description><link>$global_url/$(clean_filename $i)</link>" >> "$rssfile"
-        echo "<guid>$global_url/$i</guid>" >> "$rssfile"
-        echo "<dc:creator>$global_author</dc:creator>" >> "$rssfile"
-        echo '<pubDate>'$(LC_ALL=C date -r "$i" +"%a, %d %b %Y %H:%M:%S %z")'</pubDate></item>' >> "$rssfile"
-
-        n=$(( n + 1 ))
-    done
-
-    echo '</channel></rss>' >> "$rssfile"
+    {
+        pubdate=$(LC_ALL=C date +"%a, %d %b %Y %H:%M:%S %z")
+        echo '<?xml version="1.0" encoding="UTF-8" ?>' 
+        echo '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">' 
+        echo "<channel><title>$global_title</title><link>$global_url</link>"
+        echo "<description>$global_description</description><language>en</language>"
+        echo "<lastBuildDate>$pubdate</lastBuildDate>"
+        echo "<pubDate>$pubdate</pubDate>"
+        echo "<atom:link href=\"$global_url/$blog_feed\" rel=\"self\" type=\"application/rss+xml\" />"
+    
+        n=0
+        for i in $(ls -t ./*.html); do
+            is_boilerplate_file "$i" && continue
+            ((n >= number_of_feed_articles)) && break # max 10 items
+            echo -n "." 1>&3
+            echo '<item><title>' 
+            get_post_title "$i"
+            echo '</title><description><![CDATA[' 
+            get_html_file_content 'text' 'entry' $cut_do <"$i"
+            echo "]]></description><link>$global_url/$(clean_filename "$i")</link>" 
+            echo "<guid>$global_url/$i</guid>" 
+            echo "<dc:creator>$global_author</dc:creator>" 
+            echo "<pubDate>$(LC_ALL=C date -r "$i" +"%a, %d %b %Y %H:%M:%S %z")</pubDate></item>"
+    
+            n=$(( n + 1 ))
+        done
+    
+        echo '</channel></rss>'
+    } 3>&1 >"$rssfile"
     echo ""
 
     mv "$rssfile" "$blog_feed"
@@ -872,28 +881,33 @@ make_rss() {
 
 # generate headers, footers, etc
 create_includes() {
-    echo '<h1 class="nomargin"><a class="ablack" href="'$global_url'">'$global_title'</a></h1>' > ".title.html"
-    echo '<div id="description">'$global_description'</div>' >> ".title.html"
+    {
+        echo "<h1 class=\"nomargin\"><a class=\"ablack\" href=\"$global_url\">$global_title</a></h1>" 
+        echo "<div id=\"description\">$global_description</div>"
+    } > ".title.html"
 
     if [[ -f $header_file ]]; then cp "$header_file" .header.html
-    else
-        echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">' > ".header.html"
-        echo '<html xmlns="http://www.w3.org/1999/xhtml"><head>' >> ".header.html"
-        echo '<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />' >> ".header.html"
-        echo '<meta name="viewport" content="width=device-width, initial-scale=1.0">' >> ".header.html"
-        printf '<link rel="stylesheet" href="%s" type="text/css" />\n' "${css_include[@]}" >> ".header.html"
+    else {
+        echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">'
+        echo '<html xmlns="http://www.w3.org/1999/xhtml"><head>'
+        echo '<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />'
+        echo '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
+        printf '<link rel="stylesheet" href="%s" type="text/css" />\n' "${css_include[@]}"
         if [[ -z $global_feedburner ]]; then
-            echo '<link rel="alternate" type="application/rss+xml" title="'$template_subscribe_browser_button'" href="'$blog_feed'" />' >> ".header.html"
+            echo "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"$template_subscribe_browser_button\" href=\"$blog_feed\" />"
         else 
-            echo '<link rel="alternate" type="application/rss+xml" title="'$template_subscribe_browser_button'" href="'$global_feedburner'" />' >> ".header.html"
+            echo "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"$template_subscribe_browser_button\" href=\"$global_feedburner\" />"
         fi
+        } > ".header.html"
     fi
 
     if [[ -f $footer_file ]]; then cp "$footer_file" .footer.html
-    else 
-        protected_mail=$(echo "$global_email" | sed 's/@/\&#64;/g' | sed 's/\./\&#46;/g')
-        echo '<div id="footer">'$global_license '<a href="'$global_author_url'">'$global_author'</a> &mdash; <a href="mailto:'$protected_mail'">'$protected_mail'</a><br/>' >> ".footer.html"
-        echo 'Generated with <a href="https://github.com/cfenollosa/bashblog">bashblog</a>, a single bash script to easily create blogs like this one</div>' >> ".footer.html"
+    else {
+        protected_mail=${global_email//@/&#64;}
+        protected_mail=${protected_mail//./&#46;}
+        echo "<div id=\"footer\">$global_license <a href=\"$global_author_url\">$global_author</a> &mdash; <a href=\"mailto:$protected_mail\">$protected_mail</a><br/>"
+        echo 'Generated with <a href="https://github.com/cfenollosa/bashblog">bashblog</a>, a single bash script to easily create blogs like this one</div>'
+        } >> ".footer.html"
     fi
 }
 
@@ -961,14 +975,14 @@ rebuild_all_entries() {
         echo -n "."
         # Get the title and entry, and rebuild the html structure from scratch (divs, title, description...)
         title=$(get_post_title "$i")
-        get_html_file_content 'text' 'text' <$i >> "$contentfile"
+        get_html_file_content 'text' 'text' <"$i" >> "$contentfile"
 
         # Original post timestamp
-        timestamp=$(LC_ALL=C date -r $i +"%a, %d %b %Y %H:%M:%S %z" )
+        timestamp=$(LC_ALL=C date -r "$i" +"%a, %d %b %Y %H:%M:%S %z" )
 
         create_html_page "$contentfile" "$i.rebuilt" no "$title" "$timestamp"
         # keep the original timestamp!
-        timestamp=$(LC_ALL=C date -r $i +'%Y%m%d%H%M')
+        timestamp=$(LC_ALL=C date -r "$i" +'%Y%m%d%H%M')
         mv "$i.rebuilt" "$i"
         chmod 644 "$i"
         touch -t "$timestamp" "$i"
@@ -1026,11 +1040,11 @@ date_version_detect() {
             date() {
                 if [[ $1 == -r ]]; then
                     # Fall back to using stat for 'date -r'
-                    format=$(echo $3 | sed 's/\+//g')
+                    format=${3//+/}
                     stat -f "%Sm" -t "$format" "$2"
-                elif [[ $* == *--date* ]]; then
+                elif [[ $2 == --date* ]]; then
                     # convert between dates using BSD date syntax
-                    command date -j -f "%a, %d %b %Y %H:%M:%S %z" "$(echo $2 | sed 's/\-\-date\=//g')" "$1" 
+                    command date -j -f "%a, %d %b %Y %H:%M:%S %z" "${2#--date=}" "$1" 
                 else
                     # acceptable format for BSD date
                     command date -j "$@"
