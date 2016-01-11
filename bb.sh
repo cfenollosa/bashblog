@@ -643,7 +643,7 @@ all_posts() {
     {
         echo "<h3>$template_archive_title</h3>"
         prev_month=""
-        for i in $(ls -t ./*.html); do
+        while IFS='' read -r i; do
             is_boilerplate_file "$i" && continue
             echo -n "." 1>&3
             # Month headers
@@ -660,7 +660,7 @@ all_posts() {
             # Date
             date=$(LC_ALL=$date_locale date -r "$i" +"$date_format")
             echo " $date</li>"
-        done
+        done < <(ls -t ./*.html)
         echo "" 1>&3
         echo "</ul>"
         echo "<div id=\"all_posts\"><a href=\"./\">$template_archive_index_page</a></div>"
@@ -715,7 +715,7 @@ rebuild_index() {
     # Create the content file
     {
         n=0
-        for i in $(ls -t ./*.html); do # sort by date, newest first
+        while IFS='' read -r i; do
             is_boilerplate_file "$i" && continue;
             if ((n >= number_of_index_articles)); then break; fi
             if [[ -n $cut_do ]]; then
@@ -725,7 +725,7 @@ rebuild_index() {
             fi
             echo -n "." 1>&3
             n=$(( n + 1 ))
-        done
+        done < <(ls -t ./*.html) # sort by date, newest first
 
         feed=$blog_feed
         if [[ -n $global_feedburner ]]; then feed=$global_feedburner; fi
@@ -773,7 +773,7 @@ rebuild_tags() {
         all_tags=yes
     else
         # will process only given files and tags
-        files=$(echo "$1" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+        files=$(printf '%s\n' $1 | sort -u)
         files=$(ls -t $files)
         tags=$2
     fi
@@ -788,10 +788,11 @@ rebuild_tags() {
     fi
     # First we will process all files and create temporal tag files
     # with just the content of the posts
-    for i in $files; do
+    tmpfile=tmp.$RANDOM
+    while [[ -f $tmpfile ]]; do tmpfile=tmp.$RANDOM; done
+    while IFS='' read -r i; do
         is_boilerplate_file "$i" && continue;
         echo -n "."
-        tmpfile=$(mktemp tmp.XXX)
         if [[ -n $cut_do ]]; then
             get_html_file_content 'entry' 'entry' 'cut' <"$i" | awk "/$cut_line/ { print \"<p class=\\\"readmore\\\"><a href=\\\"$i\\\">$template_read_more</a></p>\" ; next } 1"
         else
@@ -802,14 +803,14 @@ rebuild_tags() {
                 cat "$tmpfile" >> "$prefix_tags$tag".tmp.html
             fi
         done
-        rm "$tmpfile"
-    done
+    done <<< "$files"
+    rm "$tmpfile"
     # Now generate the tag files with headers, footers, etc
-    for i in $(ls -t ./$prefix_tags*.tmp.html 2>/dev/null || echo ''); do
+    while IFS='' read -r i; do
         tagname=$(echo "$i" | cut -c "$((${#prefix_tags}+3))-" | sed 's/\.tmp\.html//g')
         create_html_page "$i" "$prefix_tags$tagname.html" yes "$global_title &mdash; $template_tag_title \"$tagname\""
         rm "$i"
-    done
+    done < <(ls -t ./"$prefix_tags"*.tmp.html 2>/dev/null)
     echo
 }
 
@@ -827,12 +828,12 @@ list_posts() {
 
     lines=""
     n=1
-    for i in $(ls -t ./*.html); do
+    while IFS='' read -r i; do
         is_boilerplate_file "$i" && continue
         line="$n # $(get_post_title "$i") # $(LC_ALL=$date_locale date -r "$i" +"$date_format")"
         lines+=$line\\n
         n=$(( n + 1 ))
-    done 
+    done < <(ls -t ./*.html)
 
     echo -e "$lines" | column -t -s "#"
 }
@@ -855,7 +856,7 @@ make_rss() {
         echo "<atom:link href=\"$global_url/$blog_feed\" rel=\"self\" type=\"application/rss+xml\" />"
     
         n=0
-        for i in $(ls -t ./*.html); do
+        while IFS='' read -r i; do
             is_boilerplate_file "$i" && continue
             ((n >= number_of_feed_articles)) && break # max 10 items
             echo -n "." 1>&3
@@ -869,7 +870,7 @@ make_rss() {
             echo "<pubDate>$(LC_ALL=C date -r "$i" +"%a, %d %b %Y %H:%M:%S %z")</pubDate></item>"
     
             n=$(( n + 1 ))
-        done
+        done < <(ls -t ./*.html)
     
         echo '</channel></rss>'
     } 3>&1 >"$rssfile"
@@ -1086,18 +1087,17 @@ do_main() {
     fi
 
     # Test for existing html files
-    ls ./*.html &> /dev/null
-    (($? != 0)) && [[ $1 == rebuild ]] &&
-        echo "Can't find any html files, nothing to rebuild" && exit
-
-    # We're going to back up just in case
-    ls ./*.html &> /dev/null
-    (($? == 0)) &&
+    if ls ./*.html &> /dev/null; then
+        # We're going to back up just in case
         tar cfz ".backup.tar.gz" *.html &&
-        chmod 600 ".backup.tar.gz"
+            chmod 600 ".backup.tar.gz"
+    elif [[ $1 == rebuild ]]; then
+        echo "Can't find any html files, nothing to rebuild"
+        exit
+    fi
 
     # Keep first backup of this day containing yesterday's version of the blog
-    [[ ! -f .yesterday.tar.gz || $(LC_ALL=$date_locale date -r .yesterday.tar.gz +'%d') != "$(LC_ALL=$date_locale date +'%d')" ]] &&
+    [[ ! -f .yesterday.tar.gz || $(date -r .yesterday.tar.gz +'%d') != "$(date +'%d')" ]] &&
         cp .backup.tar.gz .yesterday.tar.gz &> /dev/null
 
     [[ $1 == reset ]] &&
