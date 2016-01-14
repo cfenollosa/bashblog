@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # BashBlog, a simple blog system written in a single bash script
-# (C) Carlos Fenollosa <carlos.fenollosa@gmail.com>, 2011-2014 and contributors
+# (C) Carlos Fenollosa <carlos.fenollosa@gmail.com>, 2011-2016 and contributors
 # https://github.com/carlesfe/bashblog/contributors
 # Check out README.md for more details
 
@@ -17,7 +17,7 @@ global_config=".config"
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
-    global_software_version="2.4"
+    global_software_version="2.5"
 
     # Blog title
     global_title="My fancy blog"
