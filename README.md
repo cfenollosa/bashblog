@@ -127,7 +127,8 @@ Changelog
 ---------
 
 - 2.5      Massive code cleanup by Martijn Dekker<br/>
-           'tags' command
+           'tags' command<br/>
+           The word 'posts' in the tag list (both website and command) now has a singular form, check out `template_tags_posts_singular`
 - 2.4      Added Twitter summaries metadata for posts (#36)
 - 2.3.3    Removed big comment header.<br/>
            Added option to display tags for cut articles on index pages (#61)<br/>
