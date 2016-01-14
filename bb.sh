@@ -821,6 +821,32 @@ get_post_title() {
     awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' "$1"
 }
 
+# Displays a list of the tags
+#
+# $2 if "-n", tags will be sorted by number of posts
+list_tags() {
+    if [[ $2 ]] && [[ $2 == -n ]]; then do_sort=1; else do_sort=0; fi
+
+    ls ./$prefix_tags*.html &> /dev/null
+    (($? != 0)) && echo "No posts yet. Use 'bb.sh post' to create one" && return
+
+    lines=""
+    for i in ./$prefix_tags*.html; do
+        [[ -f "$i" ]] || break
+        nposts=$(grep -c "<\!-- text begin -->" "$i")
+        tagname=$(echo "$i" | cut -c "$((${#prefix_tags}+3))-" | sed 's/\.html//g')
+        i=$(clean_filename "$i")
+        line="$tagname # $nposts # $template_tags_posts"
+        lines+=$line\\n
+    done
+
+    if (( $do_sort == 1 )); then
+        echo -e "$lines" | column -t -s "#" | sort -nrk 2
+    else
+        echo -e "$lines" | column -t -s "#" 
+    fi
+}
+
 # Displays a list of the posts
 list_posts() {
     ls ./*.html &> /dev/null
@@ -1009,6 +1035,8 @@ usage() {
     echo "    rebuild                 regenerates all the pages and posts, preserving the content of the entries"
     echo "    reset                   deletes everything except this script. Use with a lot of caution and back up first!"
     echo "    list                    list all posts"
+    echo "    tags [-n]               list all tags in alphabetical order"
+    echo "                            use '-n' to sort list by number of posts"
     echo ""
     echo "For more information please open $0 in a code editor and read the header and comments"
 }
@@ -1073,11 +1101,14 @@ do_main() {
         echo "Please set your \$EDITOR environment variable" && exit
 
     # Check for validity of argument
-    [[ $1 != "reset" && $1 != "post" && $1 != "rebuild" && $1 != "list" && $1 != "edit" && $1 != "delete" ]] && 
+    [[ $1 != "reset" && $1 != "post" && $1 != "rebuild" && $1 != "list" && $1 != "edit" && $1 != "delete" && $1 != "tags" ]] && 
         usage && exit
 
     [[ $1 == list ]] &&
         list_posts && exit
+
+    [[ $1 == tags ]] &&
+        list_tags "$@" && exit
 
     if [[ $1 == edit ]]; then
         if (($# < 2)) || [[ ! -f ${!#} ]]; then
