@@ -110,6 +110,7 @@ global_variables() {
     template_tags_title="All tags"
     # "posts" (on "All tags" page, text at the end of each tag line, like "2. Music - 15 posts")
     template_tags_posts="posts"
+    template_tags_posts_singular="post"
     # "Posts tagged" (text on a title of a page with index of one tag, like "My Blog - Posts tagged "Music"")
     template_tag_title="Posts tagged"
     # "Tags:" (beginning of line in HTML file with list of all tags for this article)
@@ -689,7 +690,9 @@ all_tags() {
             nposts=$(grep -c "<\!-- text begin -->" "$i")
             tagname=$(echo "$i" | cut -c "$((${#prefix_tags}+3))-" | sed 's/\.html//g')
             i=$(clean_filename "$i")
-            echo "<li><a href=\"$i\">$tagname</a> &mdash; $nposts $template_tags_posts</li>"
+            word=$template_tags_posts_singular
+            (($nposts > 1)) && word=$template_tags_posts
+            echo "<li><a href=\"$i\">$tagname</a> &mdash; $nposts $word</li>"
         done
         echo "" 1>&3
         echo "</ul>"
@@ -836,7 +839,9 @@ list_tags() {
         nposts=$(grep -c "<\!-- text begin -->" "$i")
         tagname=$(echo "$i" | cut -c "$((${#prefix_tags}+3))-" | sed 's/\.html//g')
         i=$(clean_filename "$i")
-        line="$tagname # $nposts # $template_tags_posts"
+        word=$template_tags_posts_singular
+        (($nposts > 1)) && word=$template_tags_posts
+        line="$tagname # $nposts # $word"
         lines+=$line\\n
     done
 
