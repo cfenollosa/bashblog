@@ -144,7 +144,7 @@ global_variables() {
 
     # Markdown location. Trying to autodetect by default.
     # The invocation must support the signature 'markdown_bin in.md > out.html'
-    markdown_bin=$(which Markdown.pl || which markdown)
+    markdown_bin=$(command -v Markdown.pl || command -v markdown)
 }
 
 # Check for the validity of some variables
@@ -162,7 +162,7 @@ global_variables_check() {
 # Test if the markdown script is working correctly
 test_markdown() {
     [[ -z $markdown_bin ]] && return 1
-    [[ -z $(which diff) ]] && return 1
+    command -v diff >/dev/null || return 1
 
     in=/tmp/md-in-${RANDOM}.md
     out=/tmp/md-out-${RANDOM}.html
@@ -388,7 +388,7 @@ twitter() {
 # Return 0 (bash return value 'true') if the input file is an index, feed, etc
 # or 1 (bash return value 'false') if it is a blogpost
 is_boilerplate_file() {
-    name=$(clean_filename "$1")
+    name=${1#./}
     case $name in
     ( "$index_file" | "$archive_index" | "$tags_index" | "$footer_file" | "$header_file" | "$global_analytics_file" | "$prefix_tags"* )
         return 0 ;;
@@ -398,14 +398,6 @@ is_boilerplate_file() {
         done
         return 1 ;;
     esac
-}
-
-# Filenames sometimes have leading './' or other oddities which need to be cleaned
-#
-# $1 the file name
-# returns the clean file name
-clean_filename() {
-    echo "${1#./}" # Delete leading './'
 }
 
 # Adds all the bells and whistles to format the html page
@@ -445,14 +437,16 @@ create_html_page() {
         echo '</div></div></div>' # title, header, headerholder
         echo '<div id="divbody"><div class="content">'
 
-        file_url=$(clean_filename "$filename")
-        file_url=$(sed 's/.rebuilt//g' <<< "$file_url") # Get the correct URL when rebuilding
+        file_url=${filename#./}
+        file_url=${file_url%.rebuilt} # Get the correct URL when rebuilding
         # one blog entry
         if [[ $index == no ]]; then
             echo '<!-- entry begin -->' # marks the beginning of the whole post
             echo "<h3><a class=\"ablack\" href=\"$file_url\">"
             # remove possible <p>'s on the title because of markdown conversion
-            echo "$title" | sed 's/<\/*p>//g'
+            title=${title//<p>/}
+            title=${title//<\/p>/}
+            echo "$title"
             echo '</a></h3>'
             if [[ -z $timestamp ]]; then
                 echo "<div class=\"subtitle\">$(LC_ALL=$date_locale date +"$date_format") &mdash; "
@@ -684,14 +678,13 @@ all_tags() {
     {
         echo "<h3>$template_tags_title</h3>"
         echo "<ul>"
-        for i in ./$prefix_tags*.html; do
+        for i in $prefix_tags*.html; do
             [[ -f "$i" ]] || break
             echo -n "." 1>&3
             nposts=$(grep -c "<\!-- text begin -->" "$i")
-            tagname=$(echo "$i" | cut -c "$((${#prefix_tags}+3))-" | sed 's/\.html//g')
-            i=$(clean_filename "$i")
-            word=$template_tags_posts_singular
-            (($nposts > 1)) && word=$template_tags_posts
+            tagname=${i#"$prefix_tags"}
+            tagname=${tagname%.html}
+            ((nposts > 1)) && word=$template_tags_posts || word=$template_tags_posts_singular
             echo "<li><a href=\"$i\">$tagname</a> &mdash; $nposts $word</li>"
         done
         echo "" 1>&3
@@ -810,7 +803,8 @@ rebuild_tags() {
     rm "$tmpfile"
     # Now generate the tag files with headers, footers, etc
     while IFS='' read -r i; do
-        tagname=$(echo "$i" | cut -c "$((${#prefix_tags}+3))-" | sed 's/\.tmp\.html//g')
+        tagname=${i#./"$prefix_tags"}
+        tagname=${tagname%.tmp.html}
         create_html_page "$i" "$prefix_tags$tagname.html" yes "$global_title &mdash; $template_tag_title \"$tagname\""
         rm "$i"
     done < <(ls -t ./"$prefix_tags"*.tmp.html 2>/dev/null)
@@ -828,24 +822,23 @@ get_post_title() {
 #
 # $2 if "-n", tags will be sorted by number of posts
 list_tags() {
-    if [[ $2 ]] && [[ $2 == -n ]]; then do_sort=1; else do_sort=0; fi
+    if [[ $2 == -n ]]; then do_sort=1; else do_sort=0; fi
 
     ls ./$prefix_tags*.html &> /dev/null
     (($? != 0)) && echo "No posts yet. Use 'bb.sh post' to create one" && return
 
     lines=""
-    for i in ./$prefix_tags*.html; do
+    for i in $prefix_tags*.html; do
         [[ -f "$i" ]] || break
         nposts=$(grep -c "<\!-- text begin -->" "$i")
-        tagname=$(echo "$i" | cut -c "$((${#prefix_tags}+3))-" | sed 's/\.html//g')
-        i=$(clean_filename "$i")
-        word=$template_tags_posts_singular
-        (($nposts > 1)) && word=$template_tags_posts
+        tagname=${i#"$prefix_tags"}
+        tagname=${tagname#.html}
+        ((nposts > 1)) && word=$template_tags_posts || word=$template_tags_posts_singular
         line="$tagname # $nposts # $word"
         lines+=$line\\n
     done
 
-    if (( $do_sort == 1 )); then
+    if (( do_sort == 1 )); then
         echo -e "$lines" | column -t -s "#" | sort -nrk 2
     else
         echo -e "$lines" | column -t -s "#" 
@@ -895,7 +888,7 @@ make_rss() {
             get_post_title "$i"
             echo '</title><description><![CDATA[' 
             get_html_file_content 'text' 'entry' $cut_do <"$i"
-            echo "]]></description><link>$global_url/$(clean_filename "$i")</link>" 
+            echo "]]></description><link>$global_url/${i#./}</link>" 
             echo "<guid>$global_url/$i</guid>" 
             echo "<dc:creator>$global_author</dc:creator>" 
             echo "<pubDate>$(LC_ALL=C date -r "$i" +"%a, %d %b %Y %H:%M:%S %z")</pubDate></item>"
