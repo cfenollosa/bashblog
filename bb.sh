@@ -144,7 +144,7 @@ global_variables() {
 
     # Markdown location. Trying to autodetect by default.
     # The invocation must support the signature 'markdown_bin in.md > out.html'
-    markdown_bin=$(command -v Markdown.pl || command -v markdown)
+    markdown_bin=$(which Markdown.pl || which markdown)
 }
 
 # Check for the validity of some variables
@@ -161,23 +161,8 @@ global_variables_check() {
 
 # Test if the markdown script is working correctly
 test_markdown() {
-    [[ -z $markdown_bin ]] && return 1
-    command -v diff >/dev/null || return 1
-
-    in=/tmp/md-in-${RANDOM}.md
-    out=/tmp/md-out-${RANDOM}.html
-    good=/tmp/md-good-${RANDOM}.html
-    echo -e "line 1\n\nline 2" > "$in"
-    echo -e "<p>line 1</p>\n\n<p>line 2</p>" > "$good"
-    "$markdown_bin" "$in" > "$out" 2> /dev/null
-    diff $good $out &> /dev/null # output is irrelevant, we'll check $?
-    if (($? != 0)); then
-        rm -f "$in" "$good" "$out"
-        return 1
-    fi
-    
-    rm -f "$in" "$good" "$out"
-    return 0
+    [[ -n $markdown_bin ]] &&
+        [[ $("$markdown_bin" <<< $'line 1\n\nline 2') == $'<p>line 1</p>\n\n<p>line 2</p>' ]]
 }
 
 
