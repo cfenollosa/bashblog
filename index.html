@@ -73,17 +73,19 @@ and you should see the index file and a new page for that post!</p>
 <a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features</h2>
 
 <ul>
-<li>No installation required. Download <code>bb.sh</code> and start blogging.</li>
 <li>Ultra simple usage: Just type a post with your favorite editor and the script does the rest. No templating.</li>
+<li>No installation required. Download <code>bb.sh</code> and start blogging.</li>
+<li>Zero dependencies. It runs just on base utils (<code>date</code>, <code>basename</code>, <code>grep</code>, <code>sed</code>, <code>head</code>, etc)</li>
+<li>GNU/Linux, BSD and OSX compatible out of the box, no need for GNU <code>coreutils</code> on a Mac.
+It does some magic to autodetect which command switches it needs to run depending on your system.</li>
 <li>All content is static. You only need shell access to a machine with a public web folder.
 <em>Tip: advanced users could mount a remote public folder via <code>ftpfs</code> and run this script locally</em>
 </li>
 <li>Allows drafts, includes a simple but clean stylesheet, generates the RSS file automatically.</li>
 <li>Support for tags/categories</li>
 <li>Support for Markdown, Disqus comments, Twitter, Feedburner, Google Analytics.</li>
-<li>GNU/Linux, BSD and OSX compatible out of the box (no need for GNU <code>coreutils</code> on a Mac)</li>
-<li>The project is still maintained as of 2015. Bugs are fixed, and new features are considered (see "Contributing")</li>
-<li>Everything stored in a single &lt;1k lines bash script, how cool is that?! ;) </li>
+<li>The project is still maintained as of 2016. Bugs are fixed, and new features are considered (see "Contributing")</li>
+<li>Everything stored in a single ~1k lines bash script, how cool is that?! ;) </li>
 </ul>
 
 <h2>
@@ -167,21 +169,25 @@ As a guideline, pull requests should:</p>
 <a id="changelog" class="anchor" href="#changelog" aria-hidden="true"><span class="octicon octicon-link"></span></a>Changelog</h2>
 
 <ul>
+<li>2.5      Massive code cleanup by Martijn Dekker<br>
+       'tags' command<br>
+       The word 'posts' in the tag list (both website and command) now has a singular form, check out <code>template_tags_posts_singular</code>
+</li>
 <li>2.4      Added Twitter summaries metadata for posts (#36)</li>
-<li>2.3.3    Removed big comment header.
-       Added option to display tags for cut articles on index pages (#61)
+<li>2.3.3    Removed big comment header.<br>
+       Added option to display tags for cut articles on index pages (#61)<br>
        Cleaned up "all posts" page (#57)</li>
 <li>2.3.2    Option to use topsy instead of twitter for references</li>
 <li>2.3.1    Cookieless Twitter option</li>
 <li>2.3      Intelligent tag rebuilding and Markdown by default</li>
 <li>2.2      Flexible post title -&gt; filename conversion</li>
-<li>2.1      Support for tags/categories.
+<li>2.1      Support for tags/categories.<br>
        'delete' command</li>
 <li>2.0.3    Support for other analytics code, via external file</li>
-<li>2.0.2    Fixed bug when $body_begin_file was empty.
+<li>2.0.2    Fixed bug when $body_begin_file was empty.<br>
        Added extra line in the footer linking to the github project</li>
 <li>2.0.1    Allow personalized header/footer files</li>
-<li>2.0      Added Markdown support.
+<li>2.0      Added Markdown support.<br>
        Fully support BSD date</li>
 <li>1.6.4    Fixed bug in localized dates</li>
 <li>1.6.3    Now supporting BSD date</li>
