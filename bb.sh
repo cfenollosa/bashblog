@@ -945,7 +945,7 @@ delete_includes() {
 create_css() {
     # To avoid overwriting manual changes. However it is recommended that
     # this function is modified if the user changes the blog.css file
-    [[ -n $css_include ]] && return || css_include=('main.css' 'blog.css')
+    (( ${#css_include[@]} > 0 )) && return || css_include=('main.css' 'blog.css')
     if [[ ! -f blog.css ]]; then 
         # blog.css directives will be loaded after main.css and thus will prevail
         echo '#title{font-size: x-large;}
@@ -1118,7 +1118,7 @@ do_main() {
     # Test for existing html files
     if ls ./*.html &> /dev/null; then
         # We're going to back up just in case
-        tar cfz ".backup.tar.gz" *.html &&
+        tar -c -z -f ".backup.tar.gz" -- *.html &&
             chmod 600 ".backup.tar.gz"
     elif [[ $1 == rebuild ]]; then
         echo "Can't find any html files, nothing to rebuild"
