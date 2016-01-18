@@ -220,7 +220,7 @@ disqus_body() {
     echo '<div id="disqus_thread"></div>
             <script type="text/javascript">
             /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
-               var disqus_shortname = '\'$global_disqus_username\''; // required: replace example with your forum shortname
+               var disqus_shortname = '"'$global_disqus_username'"'; // required: replace example with your forum shortname
 
             /* * * DONT EDIT BELOW THIS LINE * * */
             (function() {
@@ -238,7 +238,7 @@ disqus_footer() {
     [[ -z $global_disqus_username ]] && return
     echo '<script type="text/javascript">
         /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
-        var disqus_shortname = '\'$global_disqus_username\''; // required: replace example with your forum shortname
+        var disqus_shortname = '"'$global_disqus_username'"'; // required: replace example with your forum shortname
 
         /* * * DONT EDIT BELOW THIS LINE * * */
         (function () {
