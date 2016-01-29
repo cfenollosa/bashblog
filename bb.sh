@@ -664,7 +664,7 @@ all_posts() {
         done < <(ls -t ./*.html)
         echo "" 1>&3
         echo "</ul>"
-        echo "<div id=\"all_posts\"><a href=\"./\">$template_archive_index_page</a></div>"
+        echo "<div id=\"all_posts\"><a href=\"./$index_file\">$template_archive_index_page</a></div>"
     } 3>&1 >"$contentfile"
 
     create_html_page "$contentfile" "$archive_index.tmp" yes "$global_title &mdash; $template_archive_title"
@@ -696,7 +696,7 @@ all_tags() {
         done
         echo "" 1>&3
         echo "</ul>"
-        echo "<div id=\"all_posts\"><a href=\"./\">$template_archive_index_page</a></div>"
+        echo "<div id=\"all_posts\"><a href=\"./$index_file\">$template_archive_index_page</a></div>"
     } 3>&1 > "$contentfile"
 
     create_html_page "$contentfile" "$tags_index.tmp" yes "$global_title &mdash; $template_tags_title"
