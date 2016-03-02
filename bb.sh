@@ -52,8 +52,7 @@ global_variables() {
     # Set this to false for a Twitter button with share count. The cookieless version
     # is just a link.
     global_twitter_cookieless="true"
-    # Set to "topsy" which can search tweets way early in time, or "twitter" 
-    # for the default search page, where tweets more than a week old are hidden
+    # Default search page, where tweets more than a week old are hidden
     global_twitter_search="twitter"
 
     # Change this to your disqus username to use disqus for comments
@@ -343,8 +342,7 @@ twitter() {
             id=$RANDOM
 
             search_engine="https://twitter.com/search?q="
-            [[ $global_twitter_search == topsy ]] && search_engine="http://topsy.com/trackback?url="
-            
+
             echo "<p id='twitter'><a href='http://twitter.com/intent/tweet?url=$1&text=$template_twitter_comment&via=$global_twitter_username'>$template_comments $template_twitter_button</a> "
             echo "<a href='$search_engine""$1'><span id='count-$id'></span></a>&nbsp;</p>"
             # Get current tweet count
