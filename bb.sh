@@ -729,8 +729,8 @@ tags_in_post() {
 }
 
 # Finds all posts referenced in a number of tags.
-# Arguments are tags
-# Prints one line with space-separated tags to stdout
+# Arguments are tags.
+# Prints file names to stdout, one per line.
 posts_with_tags() {
     (($# < 1)) && return
     set -- "${@/#/$prefix_tags}"
@@ -748,31 +748,35 @@ posts_with_tags() {
 # rebuild_tags "one_post.html another_article.html" "example-tag another-tag"
 # mind the quotes!
 rebuild_tags() {
-    if (($# < 2)); then
+    local IFS=$'\n'  # word splitting only on newline; make $* expand with newline as separator
+    if (($# < 1)); then
         # will process all files and tags
-        files=$(ls -t ./*.html)
+        files=( $(ls -t ./*.html) )
         all_tags=yes
     else
         # will process only given files and tags
-        files=$(printf '%s\n' $1 | sort -u)
-        files=$(ls -t $files)
-        tags=$2
+        for ((i=1; i<=$#; i++)); do
+            [[ ${!i} == --tags ]] && break
+        done
+        files=( $(ls -t $(sort -u <<< "${*:1:$((i-1))}")) )
+        tags=( "${@:$((i+1)):$#}" )
+        all_tags=''
     fi
     echo -n "Rebuilding tag pages "
     n=0
     if [[ -n $all_tags ]]; then
-        rm ./"$prefix_tags"*.html &> /dev/null
+        rm -f ./"$prefix_tags"*.html
     else
-        for i in $tags; do
-            rm "./$prefix_tags$i.html" &> /dev/null
+        for i in "${tags[@]}"; do
+            rm -f "./$prefix_tags$i.html"
         done
     fi
     # First we will process all files and create temporal tag files
     # with just the content of the posts
     tmpfile=tmp.$RANDOM
     while [[ -f $tmpfile ]]; do tmpfile=tmp.$RANDOM; done
-    while IFS='' read -r i; do
-        is_boilerplate_file "$i" && continue;
+    for i in "${files[@]}"; do
+        is_boilerplate_file "$i" && continue
         echo -n "."
         if [[ -n $cut_do ]]; then
             get_html_file_content 'entry' 'entry' 'cut' <"$i" | awk "/$cut_line/ { print \"<p class=\\\"readmore\\\"><a href=\\\"$i\\\">$template_read_more</a></p>\" ; next } 1"
@@ -780,11 +784,12 @@ rebuild_tags() {
             get_html_file_content 'entry' 'entry' <"$i"
         fi >"$tmpfile"
         for tag in $(tags_in_post "$i"); do
-            if [[ -n $all_tags || " $tags " == *" $tag "* ]]; then
+            # if either all tags or array tags[] contains $tag...
+            if [[ -n $all_tags || $'\n'"${tags[*]}"$'\n' == *$'\n'"$tag"$'\n'* ]]; then
                 cat "$tmpfile" >> "$prefix_tags$tag".tmp.html
             fi
         done
-    done <<< "$files"
+    done
     rm "$tmpfile"
     # Now generate the tag files with headers, footers, etc
     while IFS='' read -r i; do
