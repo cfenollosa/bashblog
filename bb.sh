@@ -17,7 +17,7 @@ global_config=".config"
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
-    global_software_version="2.5"
+    global_software_version="2.6"
 
     # Blog title
     global_title="My fancy blog"
@@ -52,8 +52,7 @@ global_variables() {
     # Set this to false for a Twitter button with share count. The cookieless version
     # is just a link.
     global_twitter_cookieless="true"
-    # Set to "topsy" which can search tweets way early in time, or "twitter" 
-    # for the default search page, where tweets more than a week old are hidden
+    # Default search page, where tweets more than a week old are hidden
     global_twitter_search="twitter"
 
     # Change this to your disqus username to use disqus for comments
@@ -343,8 +342,7 @@ twitter() {
             id=$RANDOM
 
             search_engine="https://twitter.com/search?q="
-            [[ $global_twitter_search == topsy ]] && search_engine="http://topsy.com/trackback?url="
-            
+
             echo "<p id='twitter'><a href='http://twitter.com/intent/tweet?url=$1&text=$template_twitter_comment&via=$global_twitter_username'>$template_comments $template_twitter_button</a> "
             echo "<a href='$search_engine""$1'><span id='count-$id'></span></a>&nbsp;</p>"
             # Get current tweet count
@@ -396,12 +394,14 @@ is_boilerplate_file() {
 #        "no" to insert new blog posts
 # $4     title for the html header
 # $5     original blog timestamp
+# $6     post author
 create_html_page() {
     content=$1
     filename=$2
     index=$3
     title=$4
     timestamp=$5
+    author=$6
 
     # Create the actual blog post
     # html, head
@@ -438,7 +438,7 @@ create_html_page() {
             else
                 echo "<div class=\"subtitle\">$(LC_ALL=$date_locale date +"$date_format" --date="$timestamp") &mdash; "
             fi
-            echo "$global_author</div>"
+            echo "$author</div>"
             echo '<!-- text begin -->' # This marks the text body, after the title, date...
         fi
         cat "$content" # Actual content
@@ -511,7 +511,7 @@ parse_file() {
     done < "$1"
 
     # Create the actual html page
-    create_html_page "$content" "$filename" no "$title" "$2"
+    create_html_page "$content" "$filename" no "$title" "$2" "$global_author"
     rm "$content"
 }
 
@@ -643,10 +643,10 @@ all_posts() {
         done < <(ls -t ./*.html)
         echo "" 1>&3
         echo "</ul>"
-        echo "<div id=\"all_posts\"><a href=\"./\">$template_archive_index_page</a></div>"
+        echo "<div id=\"all_posts\"><a href=\"./$index_file\">$template_archive_index_page</a></div>"
     } 3>&1 >"$contentfile"
 
-    create_html_page "$contentfile" "$archive_index.tmp" yes "$global_title &mdash; $template_archive_title"
+    create_html_page "$contentfile" "$archive_index.tmp" yes "$global_title &mdash; $template_archive_title" "$global_author"
     mv "$archive_index.tmp" "$archive_index"
     chmod 644 "$archive_index"
     rm "$contentfile"
@@ -674,10 +674,10 @@ all_tags() {
         done
         echo "" 1>&3
         echo "</ul>"
-        echo "<div id=\"all_posts\"><a href=\"./\">$template_archive_index_page</a></div>"
+        echo "<div id=\"all_posts\"><a href=\"./$index_file\">$template_archive_index_page</a></div>"
     } 3>&1 > "$contentfile"
 
-    create_html_page "$contentfile" "$tags_index.tmp" yes "$global_title &mdash; $template_tags_title"
+    create_html_page "$contentfile" "$tags_index.tmp" yes "$global_title &mdash; $template_tags_title" "$global_author"
     mv "$tags_index.tmp" "$tags_index"
     chmod 644 "$tags_index"
     rm "$contentfile"
@@ -715,7 +715,7 @@ rebuild_index() {
 
     echo ""
 
-    create_html_page "$contentfile" "$newindexfile" yes "$global_title"
+    create_html_page "$contentfile" "$newindexfile" yes "$global_title" "$global_author"
     rm "$contentfile"
     mv "$newindexfile" "$index_file"
     chmod 644 "$index_file"
@@ -795,7 +795,7 @@ rebuild_tags() {
     while IFS='' read -r i; do
         tagname=${i#./"$prefix_tags"}
         tagname=${tagname%.tmp.html}
-        create_html_page "$i" "$prefix_tags$tagname.html" yes "$global_title &mdash; $template_tag_title \"$tagname\""
+        create_html_page "$i" "$prefix_tags$tagname.html" yes "$global_title &mdash; $template_tag_title \"$tagname\"" "$global_author"
         rm "$i"
     done < <(ls -t ./"$prefix_tags"*.tmp.html 2>/dev/null)
     echo
@@ -806,6 +806,13 @@ rebuild_tags() {
 # $1 the html file
 get_post_title() {
     awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' "$1"
+}
+
+# Return the post author
+#
+# $1 the html file
+get_post_author() { 
+    awk '/<div class="subtitle">.+/, /<!-- text begin -->/{if (!/<div class="subtitle">.+/ && !/<!-- text begin -->/) print}' "$1" | sed 's/<\/div>//g'
 }
 
 # Displays a list of the tags
@@ -863,7 +870,7 @@ make_rss() {
         pubdate=$(LC_ALL=C date +"%a, %d %b %Y %H:%M:%S %z")
         echo '<?xml version="1.0" encoding="UTF-8" ?>' 
         echo '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">' 
-        echo "<channel><title>$global_title</title><link>$global_url</link>"
+        echo "<channel><title>$global_title</title><link>$global_url/$index_file</link>"
         echo "<description>$global_description</description><language>en</language>"
         echo "<lastBuildDate>$pubdate</lastBuildDate>"
         echo "<pubDate>$pubdate</pubDate>"
@@ -880,7 +887,7 @@ make_rss() {
             get_html_file_content 'text' 'entry' $cut_do <"$i"
             echo "]]></description><link>$global_url/${i#./}</link>" 
             echo "<guid>$global_url/$i</guid>" 
-            echo "<dc:creator>$global_author</dc:creator>" 
+            echo "<dc:creator>$(get_post_author "$i")</dc:creator>" 
             echo "<pubDate>$(LC_ALL=C date -r "$i" +"%a, %d %b %Y %H:%M:%S %z")</pubDate></item>"
     
             n=$(( n + 1 ))
@@ -897,7 +904,7 @@ make_rss() {
 # generate headers, footers, etc
 create_includes() {
     {
-        echo "<h1 class=\"nomargin\"><a class=\"ablack\" href=\"$global_url\">$global_title</a></h1>" 
+        echo "<h1 class=\"nomargin\"><a class=\"ablack\" href=\"$global_url/$index_file\">$global_title</a></h1>" 
         echo "<div id=\"description\">$global_description</div>"
     } > ".title.html"
 
@@ -990,12 +997,13 @@ rebuild_all_entries() {
         echo -n "."
         # Get the title and entry, and rebuild the html structure from scratch (divs, title, description...)
         title=$(get_post_title "$i")
+
         get_html_file_content 'text' 'text' <"$i" >> "$contentfile"
 
         # Original post timestamp
         timestamp=$(LC_ALL=C date -r "$i" +"%a, %d %b %Y %H:%M:%S %z" )
 
-        create_html_page "$contentfile" "$i.rebuilt" no "$title" "$timestamp"
+        create_html_page "$contentfile" "$i.rebuilt" no "$title" "$timestamp" "$(get_post_author "$i")"
         # keep the original timestamp!
         timestamp=$(LC_ALL=C date -r "$i" +'%Y%m%d%H%M')
         mv "$i.rebuilt" "$i"

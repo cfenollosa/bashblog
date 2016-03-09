@@ -128,6 +128,7 @@ As a guideline, pull requests should:
 Changelog
 ---------
 
+- 2.6      Support for multiple authors, use a different `.config` for each one
 - 2.5      Massive code cleanup by Martijn Dekker<br/>
            'tags' command<br/>
            The word 'posts' in the tag list (both website and command) now has a singular form, check out `template_tags_posts_singular`
