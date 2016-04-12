@@ -438,7 +438,8 @@ create_html_page() {
             else
                 echo "<div class=\"subtitle\">$(LC_ALL=$date_locale date +"$date_format" --date="$timestamp") &mdash; "
             fi
-            echo "$author</div>"
+            [[ -n $author ]] && echo " &mdash; $author"
+            echo "</div>"
             echo '<!-- text begin -->' # This marks the text body, after the title, date...
         fi
         cat "$content" # Actual content
@@ -951,6 +952,7 @@ create_css() {
         #description{font-size:large;margin-bottom:12px;}
         h3{margin-top:42px;margin-bottom:8px;}
         h4{margin-left:24px;margin-right:24px;}
+        img{max-width:100%;}
         #twitter{line-height:20px;vertical-align:top;text-align:right;font-style:italic;color:#333;margin-top:24px;font-size:14px;}' > blog.css
     fi
 
