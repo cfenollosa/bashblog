@@ -266,6 +266,7 @@ get_html_file_content() {
 #	leave empty for default behavior (edit only text part and change name)
 edit() {
     # Original post timestamp
+    [[ ! -f "${1%%.*}.html" ]] && echo "Can't edit post "${1%%.*}.html", did you mean to use \"bb.sh post <draft_file>\"?" && exit -1
     edit_timestamp=$(LC_ALL=C date -r "${1%%.*}.html" +"%a, %d %b %Y %H:%M:%S %z" )
     touch_timestamp=$(LC_ALL=C date -r "${1%%.*}.html" +'%Y%m%d%H%M')
     tags_before=$(tags_in_post "${1%%.*}.html")
