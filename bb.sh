@@ -1010,14 +1010,9 @@ rebuild_all_entries() {
 
         # Read timestamp from post, if present, and sync file timestamp
         timestamp=$(awk '/<!-- '$date_inpost': .+ -->/ { print }' "$i" | cut -d '#' -f 2)
-        if [[ -n $timestamp ]]; then 
-            echo "$i" timestamp present $timestamp
-            # Convert to timestamp for touch
-            touch -t "$timestamp" "$i"
-        fi
+        [[ -n $timestamp ]] && touch -t "$timestamp" "$i"
         # Read timestamp from file in correct format for 'create_html_page'
         timestamp=$(LC_ALL=C date -r "$i" +"$date_format_full")
-        echo "$i" now reading $timestamp
 
         create_html_page "$contentfile" "$i.rebuilt" no "$title" "$timestamp" "$(get_post_author "$i")"
         # keep the original timestamp!
