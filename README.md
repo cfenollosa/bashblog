@@ -128,6 +128,8 @@ As a guideline, pull requests should:
 Changelog
 ---------
 
+- 2.7      Store post date on a comment in the html file (#96). 
+           On rebuild, the post date will be synchronised between comment date and file date, with precedence for comment date.
 - 2.6      Support for multiple authors, use a different `.config` for each one
 - 2.5      Massive code cleanup by Martijn Dekker<br/>
            'tags' command<br/>

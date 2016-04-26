@@ -17,7 +17,7 @@ global_config=".config"
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
-    global_software_version="2.6"
+    global_software_version="2.7"
 
     # Blog title
     global_title="My fancy blog"
@@ -124,10 +124,14 @@ global_variables() {
     template_twitter_button="Tweet"
     template_twitter_comment="&lt;Type your comment here but please leave the URL so that other people can follow the comments&gt;"
     
-    # The locale to use for the dates displayed on screen (not for the timestamps)
+    # The locale to use for the dates displayed on screen
     date_format="%B %d, %Y"
-    date_allposts_header="%B %Y"
     date_locale="C"
+    date_inpost="bashblog_timestamp"
+    # Don't change these dates
+    date_format_full="%a, %d %b %Y %H:%M:%S %z"
+    date_format_timestamp="%Y%m%d%H%M.%S"
+    date_allposts_header="%B %Y"
 
     # Perform the post title -> filename conversion
     # Experts only. You may need to tune the locales too
@@ -265,10 +269,10 @@ get_html_file_content() {
 #	"full" to edit full HTML, and not only text part (keeps old filename)
 #	leave empty for default behavior (edit only text part and change name)
 edit() {
-    # Original post timestamp
     [[ ! -f "${1%%.*}.html" ]] && echo "Can't edit post "${1%%.*}.html", did you mean to use \"bb.sh post <draft_file>\"?" && exit -1
-    edit_timestamp=$(LC_ALL=C date -r "${1%%.*}.html" +"%a, %d %b %Y %H:%M:%S %z" )
-    touch_timestamp=$(LC_ALL=C date -r "${1%%.*}.html" +'%Y%m%d%H%M')
+    # Original post timestamp
+    edit_timestamp=$(LC_ALL=C date -r "${1%%.*}.html" +"$date_format_full" )
+    touch_timestamp=$(LC_ALL=C date -r "${1%%.*}.html" +"$date_format_timestamp")
     tags_before=$(tags_in_post "${1%%.*}.html")
     if [[ $2 == full ]]; then
         $EDITOR "$1"
@@ -304,6 +308,7 @@ edit() {
         rm "$TMPFILE"
     fi
     touch -t "$touch_timestamp" "$filename"
+    touch -t "$touch_timestamp" "$1"
     chmod 644 "$filename"
     echo "Posted $filename"
     tags_after=$(tags_in_post "$filename")
@@ -435,11 +440,16 @@ create_html_page() {
             echo "$title"
             echo '</a></h3>'
             if [[ -z $timestamp ]]; then
-                echo "<div class=\"subtitle\">$(LC_ALL=$date_locale date +"$date_format") &mdash; "
+                echo "<!-- $date_inpost: #$(LC_ALL=$date_locale date +"$date_format_timestamp")# -->"
             else
-                echo "<div class=\"subtitle\">$(LC_ALL=$date_locale date +"$date_format" --date="$timestamp") &mdash; "
+                echo "<!-- $date_inpost: #$(LC_ALL=$date_locale date +"$date_format_timestamp" --date="$timestamp")# -->"
             fi
-            [[ -n $author ]] && echo " &mdash; $author"
+            if [[ -z $timestamp ]]; then
+                echo -n "<div class=\"subtitle\">$(LC_ALL=$date_locale date +"$date_format")"
+            else
+                echo -n "<div class=\"subtitle\">$(LC_ALL=$date_locale date +"$date_format" --date="$timestamp")"
+            fi
+            [[ -n $author ]] && echo -e " &mdash; \n$author"
             echo "</div>"
             echo '<!-- text begin -->' # This marks the text body, after the title, date...
         fi
@@ -864,7 +874,7 @@ make_rss() {
     while [[ -f $rssfile ]]; do rssfile=$blog_feed.$RANDOM; done
 
     {
-        pubdate=$(LC_ALL=C date +"%a, %d %b %Y %H:%M:%S %z")
+        pubdate=$(LC_ALL=C date +"$date_format_full")
         echo '<?xml version="1.0" encoding="UTF-8" ?>' 
         echo '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">' 
         echo "<channel><title>$global_title</title><link>$global_url/$index_file</link>"
@@ -885,7 +895,7 @@ make_rss() {
             echo "]]></description><link>$global_url/${i#./}</link>" 
             echo "<guid>$global_url/$i</guid>" 
             echo "<dc:creator>$(get_post_author "$i")</dc:creator>" 
-            echo "<pubDate>$(LC_ALL=C date -r "$i" +"%a, %d %b %Y %H:%M:%S %z")</pubDate></item>"
+            echo "<pubDate>$(LC_ALL=C date -r "$i" +"$date_format_full")</pubDate></item>"
     
             n=$(( n + 1 ))
         done < <(ls -t ./*.html)
@@ -987,7 +997,7 @@ create_css() {
 rebuild_all_entries() {
     echo -n "Rebuilding all entries "
 
-    for i in ./*.html; do # no need to sort
+    for i in ./*.html; do
         is_boilerplate_file "$i" && continue;
         contentfile=.tmp.$RANDOM
         while [[ -f $contentfile ]]; do contentfile=.tmp.$RANDOM; done
@@ -998,12 +1008,20 @@ rebuild_all_entries() {
 
         get_html_file_content 'text' 'text' <"$i" >> "$contentfile"
 
-        # Original post timestamp
-        timestamp=$(LC_ALL=C date -r "$i" +"%a, %d %b %Y %H:%M:%S %z" )
+        # Read timestamp from post, if present, and sync file timestamp
+        timestamp=$(awk '/<!-- '$date_inpost': .+ -->/ { print }' "$i" | cut -d '#' -f 2)
+        if [[ -n $timestamp ]]; then 
+            echo "$i" timestamp present $timestamp
+            # Convert to timestamp for touch
+            touch -t "$timestamp" "$i"
+        fi
+        # Read timestamp from file in correct format for 'create_html_page'
+        timestamp=$(LC_ALL=C date -r "$i" +"$date_format_full")
+        echo "$i" now reading $timestamp
 
         create_html_page "$contentfile" "$i.rebuilt" no "$title" "$timestamp" "$(get_post_author "$i")"
         # keep the original timestamp!
-        timestamp=$(LC_ALL=C date -r "$i" +'%Y%m%d%H%M')
+        timestamp=$(LC_ALL=C date -r "$i" +"$date_format_timestamp")
         mv "$i.rebuilt" "$i"
         chmod 644 "$i"
         touch -t "$timestamp" "$i"
@@ -1067,7 +1085,7 @@ date_version_detect() {
                     stat -f "%Sm" -t "$format" "$2"
                 elif [[ $2 == --date* ]]; then
                     # convert between dates using BSD date syntax
-                    command date -j -f "%a, %d %b %Y %H:%M:%S %z" "${2#--date=}" "$1" 
+                    command date -j -f "$date_format_full" "${2#--date=}" "$1" 
                 else
                     # acceptable format for BSD date
                     command date -j "$@"
