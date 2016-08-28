@@ -650,6 +650,8 @@ all_posts() {
             title=$(get_post_title "$i")
             echo -n "<li><a href=\"$i\">$title</a> &mdash;"
             # Date
+            timestamp=$(awk '/<!-- '$date_inpost': .+ -->/ { print }' "$i" | cut -d '#' -f 2)
+            [[ -n $timestamp ]] && touch -t "$timestamp" "$i"
             date=$(LC_ALL=$date_locale date -r "$i" +"$date_format")
             echo " $date</li>"
         done < <(ls -t ./*.html)
@@ -681,7 +683,11 @@ all_tags() {
             nposts=$(grep -c "<\!-- text begin -->" "$i")
             tagname=${i#"$prefix_tags"}
             tagname=${tagname%.html}
-            ((nposts > 1)) && word=$template_tags_posts || word=$template_tags_posts_singular
+            case $nposts in
+                1) word=$template_tags_posts_singular;;
+                2|3|4) word=$template_tags_posts_before_five;;
+                *) word=$template_tags_posts
+            esac
             echo "<li><a href=\"$i\">$tagname</a> &mdash; $nposts $word</li>"
         done
         echo "" 1>&3
