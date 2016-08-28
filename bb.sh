@@ -652,7 +652,7 @@ all_posts() {
             # Date
             timestamp=$(awk '/<!-- '$date_inpost': .+ -->/ { print }' "$i" | cut -d '#' -f 2)
             [[ -n $timestamp ]] && touch -t "$timestamp" "$i"
-            date=$(LC_ALL=C date -r "$i" +"$date_format")
+            date=$(LC_ALL=$date_locale date -r "$i" +"$date_format")
             echo " $date</li>"
         done < <(ls -t ./*.html)
         echo "" 1>&3
