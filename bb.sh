@@ -159,7 +159,7 @@ global_variables() {
 
     # Markdown location. Trying to autodetect by default.
     # The invocation must support the signature 'markdown_bin in.md > out.html'
-    markdown_bin=$(which Markdown.pl || which markdown)
+    markdown_bin=$(which Markdown.pl 2>/dev/null || which markdown 2>/dev/null)
 }
 
 # Check for the validity of some variables
@@ -296,6 +296,7 @@ edit() {
     tags_before=$(tags_in_post "${1%%.*}.html")
     if [[ $2 == full ]]; then
         invoke_editor "$1"
+        touch -t "$touch_timestamp" "$1"
         filename=$1
     else
         if [[ ${1##*.} == md ]]; then
@@ -306,6 +307,7 @@ edit() {
             fi
             # editing markdown file
             invoke_editor "$1"
+            touch -t "$touch_timestamp" "$1"
             TMPFILE=$(markdown "$1")
             filename=${1%%.*}.html
         else
@@ -320,21 +322,23 @@ edit() {
         fi
         rm "$filename"
         if [[ $2 == keep ]]; then
+            old_filename=''
             parse_file "$TMPFILE" "$edit_timestamp" "$filename"
         else
+            old_filename=$filename                  # save old filename to exclude it from $relevant_posts
             parse_file "$TMPFILE" "$edit_timestamp" # this command sets $filename as the html processed file
             [[ ${1##*.} == md ]] && mv "$1" "${filename%%.*}.md" 2>/dev/null
         fi
         rm "$TMPFILE"
+        touch -t "$touch_timestamp" "$filename"
     fi
-    touch -t "$touch_timestamp" "$filename"
-    touch -t "$touch_timestamp" "$1"
     chmod 644 "$filename"
     echo "Posted $filename"
     tags_after=$(tags_in_post "$filename")
     relevant_tags=$(sort -u <<< "$tags_before"$'\n'"$tags_after")
     if [[ -n $relevant_tags ]]; then
         relevant_posts=$(posts_with_tags $relevant_tags)$'\n'$filename
+        [[ -n $old_filename ]] && relevant_posts=$(grep -vFx "$old_filename" <<<"$relevant_posts")
         rebuild_tags $relevant_posts --tags $relevant_tags
     fi
 }
