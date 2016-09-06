@@ -5,6 +5,18 @@
 # https://github.com/carlesfe/bashblog/contributors
 # Check out README.md for more details
 
+# Some shell settings for robustness by default. These help eliminate
+# unexpected snags and security vulnerabilities in case someone forgets to
+# quote a variable somewhere. They do require a few coding adaptations.
+
+IFS=$'\n'  # Globally, we do word splitting only on newline (which also
+           # makes "$*" expand with newline separator instead of space).
+
+set -f     # Disable globbing (pathname expansion). It can be re-enabled
+           # locally using 'set +f'; it's handy to do this in a subshell,
+           # for example in $(command substitution), as the globbing will
+           # be local to the subshell.
+
 # Global variables
 # It is recommended to perform a 'rebuild' after changing any of this in the code
 
@@ -252,6 +264,14 @@ get_html_file_content() {
     }"
 }
 
+# Invoke the editor specified by the $EDITOR environment variable. Use a
+# function for this as we need to locally word-split $EDITOR on spaces
+# (in case it contains arguments, like EDITOR='joe -nobackups).
+invoke_editor() {
+    local IFS=$' \t\n'
+    $EDITOR "$1"
+}
+
 # Edit an existing, published .html file while keeping its original timestamp
 # Please note that this function does not automatically republish anything, as
 # it is usually called from 'main'.
@@ -270,7 +290,7 @@ edit() {
     touch_timestamp=$(LC_ALL=C date -r "${1%%.*}.html" +'%Y%m%d%H%M')
     tags_before=$(tags_in_post "${1%%.*}.html")
     if [[ $2 == full ]]; then
-        $EDITOR "$1"
+        invoke_editor "$1"
         filename=$1
     else
         if [[ ${1##*.} == md ]]; then
@@ -280,7 +300,7 @@ edit() {
                 exit
             fi
             # editing markdown file
-            $EDITOR "$1"
+            invoke_editor "$1"
             TMPFILE=$(markdown "$1")
             filename=${1%%.*}.html
         else
@@ -290,7 +310,7 @@ edit() {
             get_post_title "$1" > "$TMPFILE"
             # Post text with plaintext tags
             get_html_file_content 'text' 'text' <"$1" | sed "/^<p>$template_tags_line_header/s|<a href='$prefix_tags\([^']*\).html'>\\1</a>|\\1|g" >> "$TMPFILE"
-            $EDITOR "$TMPFILE"
+            invoke_editor "$TMPFILE"
             filename=$1
         fi
         rm "$filename"
@@ -306,10 +326,10 @@ edit() {
     chmod 644 "$filename"
     echo "Posted $filename"
     tags_after=$(tags_in_post "$filename")
-    relevant_tags=$(echo "$tags_before $tags_after" | tr ',' ' ' | tr ' ' '\n' | sort -u | tr '\n' ' ')
-    if [[ ! -z $relevant_tags ]]; then
-        relevant_posts="$(posts_with_tags $relevant_tags) $filename"
-        rebuild_tags "$relevant_posts" "$relevant_tags"
+    relevant_tags=$(sort -u <<< "$tags_before"$'\n'"$tags_after")
+    if [[ -n $relevant_tags ]]; then
+        relevant_posts=$(posts_with_tags $relevant_tags)$'\n'$filename
+        rebuild_tags $relevant_posts --tags $relevant_tags
     fi
 }
 
@@ -475,10 +495,11 @@ create_html_page() {
 parse_file() {
     # Read for the title and check that the filename is ok
     title=""
-    while IFS='' read -r line; do
+    while read -r line; do
         if [[ -z $title ]]; then
             # remove extra <p> and </p> added by markdown
-            title=$(echo "$line" | sed 's/<\/*p>//g')
+            title=${line#<p>}
+            title=${title%</p>}
             if [[ -n $3 ]]; then
                 filename=$3
             else
@@ -498,13 +519,14 @@ parse_file() {
             content=$filename.tmp
         # Parse possible tags
         elif [[ $line == "<p>$template_tags_line_header"* ]]; then
-            tags=$(echo "$line" | cut -d ":" -f 2- | sed -e 's/<\/p>//g' -e 's/^ *//' -e 's/ *$//' -e 's/, /,/g')
-            IFS=, read -r -a array <<< "$tags"
-
             echo -n "<p>$template_tags_line_header " >> "$content"
-            for item in "${array[@]}"; do
-                echo -n "<a href='$prefix_tags$item.html'>$item</a>, "
-            done | sed 's/, $/<\/p>/g' >> "$content"
+            sed "s%</p>%%g
+                 s/^.*:[[:blank:]]*//
+                 s/[[:blank:]]\$//
+                 s/[[:blank:]]*,[[:blank:]]*/,/g
+                 s%\([^,]*\),%<a href='$prefix_tags\1.html'>\1</a>, %g
+                 s%, \([^,]*\)\$%, <a href='$prefix_tags\1.html'>\1</a></p>%
+                " <<< "$line" >> "$content"
         else
             echo "$line" >> "$content"
         fi
@@ -565,7 +587,7 @@ EOF
     filename=""
     while [[ $post_status != "p" && $post_status != "P" ]]; do
         [[ -n $filename ]] && rm "$filename" # Delete the generated html file, if any
-        $EDITOR "$TMPFILE"
+        invoke_editor "$TMPFILE"
         if [[ $fmt == md ]]; then
             html_from_md=$(markdown "$TMPFILE")
             parse_file "$html_from_md"
@@ -607,8 +629,8 @@ EOF
     echo "Posted $filename"
     relevant_tags=$(tags_in_post $filename)
     if [[ -n $relevant_tags ]]; then
-        relevant_posts="$(posts_with_tags $relevant_tags) $filename"
-        rebuild_tags "$relevant_posts" "$relevant_tags"
+        relevant_posts=$(posts_with_tags $relevant_tags)$'\n'$filename
+        rebuild_tags $relevant_posts --tags $relevant_tags
     fi
 }
 
@@ -623,7 +645,7 @@ all_posts() {
     {
         echo "<h3>$template_archive_title</h3>"
         prev_month=""
-        while IFS='' read -r i; do
+        for i in $(set +f; ls -t ./*.html); do
             is_boilerplate_file "$i" && continue
             echo -n "." 1>&3
             # Month headers
@@ -640,7 +662,7 @@ all_posts() {
             # Date
             date=$(LC_ALL=$date_locale date -r "$i" +"$date_format")
             echo " $date</li>"
-        done < <(ls -t ./*.html)
+        done
         echo "" 1>&3
         echo "</ul>"
         echo "<div id=\"all_posts\"><a href=\"./$index_file\">$template_archive_index_page</a></div>"
@@ -663,7 +685,7 @@ all_tags() {
     {
         echo "<h3>$template_tags_title</h3>"
         echo "<ul>"
-        for i in $prefix_tags*.html; do
+        for i in $(set +f; printf '%s\n' $prefix_tags*.html); do
             [[ -f "$i" ]] || break
             echo -n "." 1>&3
             nposts=$(grep -c "<\!-- text begin -->" "$i")
@@ -696,7 +718,8 @@ rebuild_index() {
     # Create the content file
     {
         n=0
-        while IFS='' read -r i; do
+        for i in $(set +f; ls -t ./*.html) # sort by date, newest first
+        do
             is_boilerplate_file "$i" && continue;
             if ((n >= number_of_index_articles)); then break; fi
             if [[ -n $cut_do ]]; then
@@ -706,7 +729,7 @@ rebuild_index() {
             fi
             echo -n "." 1>&3
             n=$(( n + 1 ))
-        done < <(ls -t ./*.html) # sort by date, newest first
+        done
 
         feed=$blog_feed
         if [[ -n $global_feedburner ]]; then feed=$global_feedburner; fi
@@ -723,9 +746,18 @@ rebuild_index() {
 
 # Finds all tags referenced in one post.
 # Accepts either filename as first argument, or post content at stdin
-# Prints one line with space-separated tags to stdout
+# Prints tags to stdout, one per line.
+# (Since we're doing global IFS word splitting on newline only,
+# something like 'for tag in $(tags_in_post $i)' will work.)
 tags_in_post() {
-    sed -n "/^<p>$template_tags_line_header/{s/^<p>$template_tags_line_header//;s/<[^>]*>//g;s/[ ,]\+/ /g;p;}" "$1" | tr ', ' ' '
+    local newline=$'\n'
+    sed -n "/^<p>$template_tags_line_header/ {
+                s/^<p>$template_tags_line_header[[:blank:]]*//
+                s/[[:blank:]]*<[^>]*>[[:blank:]]*//g
+                s/[[:blank:]]*,[[:blank:]]*/,/g
+                s/,\+/\\$newline/g
+                p
+            }" "$1"
 }
 
 # Finds all posts referenced in a number of tags.
@@ -741,17 +773,15 @@ posts_with_tags() {
 # Rebuilds tag_*.html files
 # if no arguments given, rebuilds all of them
 # if arguments given, they should have this format:
-# "FILE1 [FILE2 [...]]" "TAG1 [TAG2 [...]]"
+# FILE1 [FILE2 [...]] --tags TAG1 [TAG2 [...]]
 # where FILEn are files with posts which should be used for rebuilding tags,
 # and TAGn are names of tags which should be rebuilt.
 # example:
-# rebuild_tags "one_post.html another_article.html" "example-tag another-tag"
-# mind the quotes!
+# rebuild_tags one_post.html another_article.html --tags example-tag another-tag
 rebuild_tags() {
-    local IFS=$'\n'  # word splitting only on newline; make $* expand with newline as separator
     if (($# < 1)); then
         # will process all files and tags
-        files=( $(ls -t ./*.html) )
+        files=( $(set +f; ls -t ./*.html) )
         all_tags=yes
     else
         # will process only given files and tags
@@ -765,7 +795,7 @@ rebuild_tags() {
     echo -n "Rebuilding tag pages "
     n=0
     if [[ -n $all_tags ]]; then
-        rm -f ./"$prefix_tags"*.html
+        ( set +f; rm -f ./"$prefix_tags"*.html )
     else
         for i in "${tags[@]}"; do
             rm -f "./$prefix_tags$i.html"
@@ -792,12 +822,12 @@ rebuild_tags() {
     done
     rm "$tmpfile"
     # Now generate the tag files with headers, footers, etc
-    while IFS='' read -r i; do
+    for i in $(set +f; ls -t ./"$prefix_tags"*.tmp.html 2>/dev/null); do
         tagname=${i#./"$prefix_tags"}
         tagname=${tagname%.tmp.html}
         create_html_page "$i" "$prefix_tags$tagname.html" yes "$global_title &mdash; $template_tag_title \"$tagname\"" "$global_author"
         rm "$i"
-    done < <(ls -t ./"$prefix_tags"*.tmp.html 2>/dev/null)
+    done
     echo
 }
 
@@ -821,11 +851,12 @@ get_post_author() {
 list_tags() {
     if [[ $2 == -n ]]; then do_sort=1; else do_sort=0; fi
 
-    ls ./$prefix_tags*.html &> /dev/null
-    (($? != 0)) && echo "No posts yet. Use 'bb.sh post' to create one" && return
+    if ! (set +f; set -- $prefix_tags*.html; [[ -e $1 ]]); then
+        echo "No posts yet. Use 'bb.sh post' to create one"
+        return
+    fi
 
-    lines=""
-    for i in $prefix_tags*.html; do
+    for i in $(set +f; printf '%s\n' $prefix_tags*.html); do
         [[ -f "$i" ]] || break
         nposts=$(grep -c "<\!-- text begin -->" "$i")
         tagname=${i#"$prefix_tags"}
@@ -844,17 +875,19 @@ list_tags() {
 
 # Displays a list of the posts
 list_posts() {
-    ls ./*.html &> /dev/null
-    (($? != 0)) && echo "No posts yet. Use 'bb.sh post' to create one" && return
+    if ! (set +f; set -- *.html; [[ -e $1 ]]); then
+        echo "No posts yet. Use 'bb.sh post' to create one"
+        return
+    fi
 
     lines=""
     n=1
-    while IFS='' read -r i; do
+    for i in $(set +f; ls -t ./*.html); do
         is_boilerplate_file "$i" && continue
         line="$n # $(get_post_title "$i") # $(LC_ALL=$date_locale date -r "$i" +"$date_format")"
         lines+=$line\\n
         n=$(( n + 1 ))
-    done < <(ls -t ./*.html)
+    done
 
     echo -e "$lines" | column -t -s "#"
 }
@@ -877,7 +910,7 @@ make_rss() {
         echo "<atom:link href=\"$global_url/$blog_feed\" rel=\"self\" type=\"application/rss+xml\" />"
     
         n=0
-        while IFS='' read -r i; do
+        for i in $(set +f; ls -t ./*.html); do
             is_boilerplate_file "$i" && continue
             ((n >= number_of_feed_articles)) && break # max 10 items
             echo -n "." 1>&3
@@ -891,7 +924,7 @@ make_rss() {
             echo "<pubDate>$(LC_ALL=C date -r "$i" +"%a, %d %b %Y %H:%M:%S %z")</pubDate></item>"
     
             n=$(( n + 1 ))
-        done < <(ls -t ./*.html)
+        done
     
         echo '</channel></rss>'
     } 3>&1 >"$rssfile"
@@ -989,7 +1022,8 @@ create_css() {
 rebuild_all_entries() {
     echo -n "Rebuilding all entries "
 
-    for i in ./*.html; do # no need to sort
+    for i in $(set +f; printf '%s\n' *.html) # no need to sort
+    do
         is_boilerplate_file "$i" && continue;
         contentfile=.tmp.$RANDOM
         while [[ -f $contentfile ]]; do contentfile=.tmp.$RANDOM; done
@@ -1042,7 +1076,7 @@ reset() {
     echo "Are you sure you want to delete all blog entries? Please write \"Yes, I am!\" "
     read -r line
     if [[ $line == "Yes, I am!" ]]; then
-        rm .*.html ./*.html ./*.css ./*.rss &> /dev/null
+        (set +f; rm -f .*.html ./*.html ./*.css ./*.rss)
         echo
         echo "Deleted all posts, stylesheets and feeds."
         echo "Kept your old '.backup.tar.gz' just in case, please delete it manually if needed."
@@ -1114,9 +1148,9 @@ do_main() {
     fi
 
     # Test for existing html files
-    if ls ./*.html &> /dev/null; then
+    if (set +f; set -- *.html; [[ -e $1 ]]); then
         # We're going to back up just in case
-        tar -c -z -f ".backup.tar.gz" -- *.html &&
+        (set +f; tar -c -z -f ".backup.tar.gz" -- *.html) &&
             chmod 600 ".backup.tar.gz"
     elif [[ $1 == rebuild ]]; then
         echo "Can't find any html files, nothing to rebuild"
