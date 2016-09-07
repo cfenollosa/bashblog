@@ -770,8 +770,7 @@ tags_in_post() {
     sed -n "/^<p>$template_tags_line_header/ {
                 s/^<p>$template_tags_line_header[[:blank:]]*//
                 s/[[:blank:]]*<[^>]*>[[:blank:]]*//g
-                s/[[:blank:]]*,[[:blank:]]*/,/g
-                s/,\+/\\$newline/g
+                s/[[:blank:]]*,[[:blank:]]*/\\$newline/g
                 p
             }" "$1"
 }
