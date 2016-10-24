@@ -132,11 +132,11 @@ As a guideline, pull requests should:
 Changelog
 ---------
 
-- 2.8      Bugfixes
-           Slavic language support thanks to Tomasz Jadowski
-           Removed the now defunct Twitter JSON API share count
-           Support for static, not managed by bashblog html files
-- 2.7      Store post date on a comment in the html file (#96). 
+- 2.8      Bugfixes<br/>
+           Slavic language support thanks to Tomasz Jadowski<br/>
+           Removed the now defunct Twitter JSON API share count<br/>
+           Support for static, not managed by bashblog html files<br/>
+- 2.7      Store post date on a comment in the html file (#96).<br/>
            On rebuild, the post date will be synchronised between comment date and file date, with precedence for comment date.
 - 2.6      Support for multiple authors, use a different `.config` for each one
 - 2.5      Massive code cleanup by Martijn Dekker<br/>
