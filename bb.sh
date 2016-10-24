@@ -17,7 +17,7 @@ global_config=".config"
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
-    global_software_version="2.7"
+    global_software_version="2.8"
 
     # Blog title
     global_title="My fancy blog"
