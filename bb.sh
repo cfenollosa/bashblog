@@ -1110,7 +1110,7 @@ do_main() {
 
     # Check for $EDITOR
     [[ -z $EDITOR ]] && 
-        echo "Please set your \$EDITOR environment variable" && exit
+        echo "Please set your \$EDITOR environment variable. For example, to use nano, add the line 'export EDITOR=nano' to your \$HOME/.bashrc file" && exit
 
     # Check for validity of argument
     [[ $1 != "reset" && $1 != "post" && $1 != "rebuild" && $1 != "list" && $1 != "edit" && $1 != "delete" && $1 != "tags" ]] && 
