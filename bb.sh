@@ -66,6 +66,11 @@ global_variables() {
     # global archive
     archive_index="all_posts.html"
     tags_index="all_tags.html"
+
+    # Non blogpost files. Bashblog will ignore these. Useful for static pages and custom content
+    # Add them as a bash array, e.g. non_blogpost_files=("news.html" "test.html")
+    non_blogpost_files=()
+
     # feed file (rss in this case)
     blog_feed="feed.rss"
     number_of_feed_articles="10"
@@ -376,6 +381,11 @@ twitter() {
 # or 1 (bash return value 'false') if it is a blogpost
 is_boilerplate_file() {
     name=${1#./}
+    # First check against user-defined non-blogpost pages
+    for item in "${non_blogpost_files[@]}"; do
+        [[ "$name" == "$item" ]] && return 0
+    done
+
     case $name in
     ( "$index_file" | "$archive_index" | "$tags_index" | "$footer_file" | "$header_file" | "$global_analytics_file" | "$prefix_tags"* )
         return 0 ;;
@@ -682,7 +692,7 @@ all_tags() {
             case $nposts in
                 1) word=$template_tags_posts_singular;;
                 2|3|4) word=$template_tags_posts_2_4;;
-                *) word=$template_tags_posts
+                *) word=$template_tags_posts;;
             esac
             echo "<li><a href=\"$i\">$tagname</a> &mdash; $nposts $word</li>"
         done
