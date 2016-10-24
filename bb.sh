@@ -536,14 +536,12 @@ parse_file() {
             content=$filename.tmp
         # Parse possible tags
         elif [[ $line == "<p>$template_tags_line_header"* ]]; then
+            tags=$(echo "$line" | cut -d ":" -f 2- | sed -e 's/<\/p>//g' -e 's/^ *//' -e 's/ *$//' -e 's/, /,/g')
+            IFS=, read -r -a array <<< "$tags"
             echo -n "<p>$template_tags_line_header " >> "$content"
-            sed "s%</p>%%g
-                 s/^.*:[[:blank:]]*//
-                 s/[[:blank:]]\$//
-                 s/[[:blank:]]*,[[:blank:]]*/,/g
-                 s%\([^,]*\),%<a href='$prefix_tags\1.html'>\1</a>, %g
-                 s%, \([^,]*\)\$%, <a href='$prefix_tags\1.html'>\1</a></p>%
-                " <<< "$line" >> "$content"
+            for item in "${array[@]}"; do
+                echo -n "<a href='$prefix_tags$item.html'>$item</a>, "
+            done | sed 's/, $/<\/p>/g' >> "$content"
         else
             echo "$line" >> "$content"
         fi
