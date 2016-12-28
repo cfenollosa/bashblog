@@ -92,6 +92,7 @@ global_variables() {
     # leave blank to generate them, recommended
     header_file=""
     footer_file=""
+    title_file=""
     # extra content to add just after we open the <body> tag
     # and before the actual blog content
     body_begin_file=""
