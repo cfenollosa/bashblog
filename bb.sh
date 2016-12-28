@@ -92,6 +92,8 @@ global_variables() {
     # leave blank to generate them, recommended
     header_file=""
     footer_file=""
+    # Note that one must double escape double quotes (e.g. \\")
+    # or use single quotes inside the title_file.
     title_file=""
     # extra content to add just after we open the <body> tag
     # and before the actual blog content
@@ -930,6 +932,8 @@ create_includes() {
         # and processes each line into .title.html. This is a simple
         # way to allow the use of variables in the title_file without
         # having to hack up the default (here... after the else).
+        # Note that one must double escape double quotes (e.g. \\")
+        # or use single quotes inside the title_file.
         while read thisline
         do
             eval "echo \"$thisline\"" >> .title.html
