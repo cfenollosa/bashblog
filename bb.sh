@@ -87,8 +87,8 @@ global_variables() {
     # prefix for tags/categories files
     # please make sure that no other html file starts with this prefix
     prefix_tags="tag_"
-    # personalized header and footer (only if you know what you're doing)
-    # DO NOT name them .header.html, .footer.html or they will be overwritten
+    # personalized header, footer, and title (only if you know what you're doing)
+    # DO NOT name them .header.html, .footer.html, .title.html or they will be overwritten
     # leave blank to generate them, recommended
     header_file=""
     footer_file=""
@@ -923,10 +923,12 @@ make_rss() {
 
 # generate headers, footers, etc
 create_includes() {
-    {
+    if [[ -f $title_file ]]; then cp "$title_file" .title.html
+    else {
         echo "<h1 class=\"nomargin\"><a class=\"ablack\" href=\"$global_url/$index_file\">$global_title</a></h1>" 
         echo "<div id=\"description\">$global_description</div>"
     } > ".title.html"
+    fi
 
     if [[ -f $header_file ]]; then cp "$header_file" .header.html
     else {
