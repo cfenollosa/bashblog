@@ -923,7 +923,18 @@ make_rss() {
 
 # generate headers, footers, etc
 create_includes() {
-    if [[ -f $title_file ]]; then cp "$title_file" .title.html
+    if [[ -f $title_file ]]; then 
+        # Clearing the .title.html -- just in case
+        > .title.html
+        # This while loop reads in the $title_file one line at a time
+        # and processes each line into .title.html. This is a simple
+        # way to allow the use of variables in the title_file without
+        # having to hack up the default (here... after the else).
+        while read thisline
+        do
+            eval "echo \"$thisline\"" >> .title.html
+        done < $title_file
+
     else {
         echo "<h1 class=\"nomargin\"><a class=\"ablack\" href=\"$global_url/$index_file\">$global_title</a></h1>" 
         echo "<div id=\"description\">$global_description</div>"
