@@ -171,7 +171,10 @@ global_variables_check() {
 # Test if the markdown script is working correctly
 test_markdown() {
     [[ -n $markdown_bin ]] &&
-        [[ $("$markdown_bin" <<< $'line 1\n\nline 2') == $'<p>line 1</p>\n\n<p>line 2</p>' ]]
+        (
+        [[ $("$markdown_bin" <<< $'line 1\n\nline 2') == $'<p>line 1</p>\n\n<p>line 2</p>' ]] ||
+        [[ $("$markdown_bin" <<< $'line 1\n\nline 2') == $'<p>line 1</p>\n<p>line 2</p>' ]]
+        )
 }
 
 
