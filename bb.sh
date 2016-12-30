@@ -95,6 +95,9 @@ global_variables() {
     # extra content to add just after we open the <body> tag
     # and before the actual blog content
     body_begin_file=""
+    # extra content to add just before we cloese <body tag (just before
+    # </body>)
+    body_end_file=""
     # CSS files to include on every page, f.ex. css_include=('main.css' 'blog.css')
     # leave empty to use generated
     css_include=()
@@ -480,6 +483,7 @@ create_html_page() {
         # close divs
         echo '</div></div>' # divbody and divbodyholder 
         disqus_footer
+        [[ -n $body_end_file ]] && cat "$body_end_file"
         echo '</body></html>'
     } > "$filename"
 }
