@@ -87,11 +87,14 @@ global_variables() {
     # prefix for tags/categories files
     # please make sure that no other html file starts with this prefix
     prefix_tags="tag_"
-    # personalized header and footer (only if you know what you're doing)
-    # DO NOT name them .header.html, .footer.html or they will be overwritten
+    # personalized header, footer, and title (only if you know what you're doing)
+    # DO NOT name them .header.html, .footer.html, .title.html or they will be overwritten
     # leave blank to generate them, recommended
     header_file=""
     footer_file=""
+    # Note that one must double escape double quotes (e.g. \\")
+    # or use single quotes inside the title_file.
+    title_file=""
     # extra content to add just after we open the <body> tag
     # and before the actual blog content
     body_begin_file=""
@@ -929,10 +932,25 @@ make_rss() {
 
 # generate headers, footers, etc
 create_includes() {
-    {
+    if [[ -f $title_file ]]; then 
+        # Clearing the .title.html -- just in case
+        > .title.html
+        # This while loop reads in the $title_file one line at a time
+        # and processes each line into .title.html. This is a simple
+        # way to allow the use of variables in the title_file without
+        # having to hack up the default (here... after the else).
+        # Note that one must double escape double quotes (e.g. \\")
+        # or use single quotes inside the title_file.
+        while read thisline
+        do
+            eval "echo \"$thisline\"" >> .title.html
+        done < $title_file
+
+    else {
         echo "<h1 class=\"nomargin\"><a class=\"ablack\" href=\"$global_url/$index_file\">$global_title</a></h1>" 
         echo "<div id=\"description\">$global_description</div>"
     } > ".title.html"
+    fi
 
     if [[ -f $header_file ]]; then cp "$header_file" .header.html
     else {
