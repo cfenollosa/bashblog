@@ -26,6 +26,13 @@ global_variables() {
     # The public base URL for this blog
     global_url="http://example.com/blog"
 
+    # the base URL for your bit.ly links, no trailing slash
+    bitly_url="http://example.com/blog"
+    # bit.ly username
+    bitly_user="johnsmith"
+    # bit.ly API key
+    bitly_api=""
+
     # Your name
     global_author="John Smith"
     # You can use twitter or facebook or anything for global_author_url
@@ -964,6 +971,34 @@ delete_includes() {
     rm ".title.html" ".footer.html" ".header.html"
 }
 
+# Checks posts for the string SHORTURLHERE and converts into a bit.ly short url in both the .md and .html file
+create_shorturls() {
+
+    for f in *.html
+    do
+        # search for a string in .html files signifying we want to convert it to a bit.ly url
+	    if grep -q SHORTURLHERE "$f"; then
+		    echo "Found bit.ly request in $f"
+
+            # use the bit.ly api to make our url for the post
+		    short1=$(curl -s "http://api.bitly.com/v3/shorten?login=$bitly_user&apiKey=$bitly_api&longUrl=$bitly_url/$f&format=txt");
+
+	    # strip out 'http://bit.ly/' from the string for problems with sed and '/'
+		    short2=$(echo $short1 | sed 's/http:\/\/bit.ly\///g');
+
+            # replace 'SHORTURLHERE' string with 'http://bit.ly/xxxxx' in html file
+		    sed -i "s/SHORTURLHERE/http:\/\/bit.ly\/$short2/g" "$f"
+            
+            # replace the '*.html' filename extension with '*.md' so we can convert the same string in the markdown file
+		    short3=$(echo $f | sed 's/html/md/g');
+
+            # replace 'SHORTURLHERE' string with 'http://bit.ly/xxxxx' in Markdown file
+		    sed -i "s/SHORTURLHERE/http:\/\/bit.ly\/$short2/g" "$short3"
+	    fi	
+    done
+
+}
+
 # Create the css file from scratch
 create_css() {
     # To avoid overwriting manual changes. However it is recommended that
@@ -1179,6 +1214,7 @@ do_main() {
     all_tags
     make_rss
     delete_includes
+    create_shorturls
 }
 
 
