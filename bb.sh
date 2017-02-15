@@ -283,7 +283,7 @@ get_html_file_content() {
 edit() {
     [[ ! -f "${1%%.*}.html" ]] && echo "Can't edit post "${1%%.*}.html", did you mean to use \"bb.sh post <draft_file>\"?" && exit -1
     # Original post timestamp
-    edit_timestamp=$(LC_ALL=C date -r "${1%%.*}.html" +"$date_format_full" )
+    edit_timestamp=$(LC_ALL=$date_locale date -r "${1%%.*}.html" +"$date_format_full" )
     touch_timestamp=$(LC_ALL=C date -r "${1%%.*}.html" +"$date_format_timestamp")
     tags_before=$(tags_in_post "${1%%.*}.html")
     if [[ $2 == full ]]; then
