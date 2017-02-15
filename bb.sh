@@ -1096,7 +1096,7 @@ date_version_detect() {
                 if [[ $1 == -r ]]; then
                     # Fall back to using stat for 'date -r'
                     format=${3//+/}
-                    stat -f "%Sm" -t "$format" "$2"
+                    date -j -f "$date_format_timestamp" `stat -f "%Sm" -t "$date_format_timestamp" "$2"` "$3"
                 elif [[ $2 == --date* ]]; then
                     # convert between dates using BSD date syntax
                     command date -j -f "$date_format_full" "${2#--date=}" "$1" 
