@@ -29,7 +29,7 @@ global_variables() {
     # Blog title
     global_title="My blog"
     # The typical subtitle for each blog
-    global_description=" blog powered by ${software_name^}"
+    global_description=" blog powered by ${global_software_name^}"
     # The public base URL for this blog
     global_url="http://example.com/blog"
 
