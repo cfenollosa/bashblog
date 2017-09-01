@@ -16,9 +16,16 @@ global_config=".config"
 # This function will load all the variables defined here. They might be overridden
 # by the 'global_config' file contents
 global_variables() {
+    if [[ -f "$global_config" ]]; then
+        source "$global_config"
+        return 0
+    fi
+    cat <<- EOF > "$global_config"
     global_software_name="BashBlog"
     global_software_version="2.8"
 
+    # Editor set to environment or nano if none set.
+    EDITOR="${EDITOR:-nano}"
     # Blog title
     global_title="My fancy blog"
     # The typical subtitle for each blog
@@ -156,7 +163,11 @@ global_variables() {
 
     # Markdown location. Trying to autodetect by default.
     # The invocation must support the signature 'markdown_bin in.md > out.html'
-    [[ -f Markdown.pl ]] && markdown_bin=./Markdown.pl || markdown_bin=$(which Markdown.pl 2>/dev/null || which markdown 2>/dev/null)
+    markdown_bin="$(command -v markdown || echo "")"
+EOF
+    sed -i 's/^ *//g' "$global_config"
+    echo "configuration file \"$global_config\" created. Please edit it to customize settings to your liking." | fold -s
+    exit 0
 }
 
 # Check for the validity of some variables
@@ -1117,14 +1128,9 @@ date_version_detect() {
 do_main() {
     # Detect if using BSD date or GNU date
     date_version_detect
-    # Load default configuration, then override settings with the config file
+    # Load configuration or create config file.
     global_variables
-    [[ -f $global_config ]] && source "$global_config" &> /dev/null 
     global_variables_check
-
-    # Check for $EDITOR
-    [[ -z $EDITOR ]] && 
-        echo "Please set your \$EDITOR environment variable. For example, to use nano, add the line 'export EDITOR=nano' to your \$HOME/.bashrc file" && exit
 
     # Check for validity of argument
     [[ $1 != "reset" && $1 != "post" && $1 != "rebuild" && $1 != "list" && $1 != "edit" && $1 != "delete" && $1 != "tags" ]] && 
