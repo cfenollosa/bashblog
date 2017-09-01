@@ -27,9 +27,9 @@ global_variables() {
     # Editor set to environment or nano if none set.
     EDITOR="${EDITOR:-nano}"
     # Blog title
-    global_title="My fancy blog"
+    global_title="My blog"
     # The typical subtitle for each blog
-    global_description="A blog about turtles and carrots"
+    global_description=" blog powered by ${software_name^}"
     # The public base URL for this blog
     global_url="http://example.com/blog"
 
@@ -141,7 +141,7 @@ global_variables() {
     template_twitter_comment="&lt;Type your comment here but please leave the URL so that other people can follow the comments&gt;"
     
     # The locale to use for the dates displayed on screen
-    date_format="%B %d, %Y"
+    date_format="%A, %B %d, %Y"
     date_locale="C"
     date_inpost="bashblog_timestamp"
     # Don't change these dates
