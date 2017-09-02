@@ -35,8 +35,8 @@ global_variables() {
 
     # Your name
     global_author="John Smith"
-    # You can use twitter or facebook or anything for global_author_url
-    global_author_url="http://twitter.com/example" 
+    # You can use GNU Social or Mastodon or anything for global_author_url
+    global_author_url="https://2mb.social/example" 
     # Your email
     global_email="john@smith.com"
 
@@ -166,7 +166,7 @@ global_variables() {
     markdown_bin="$(command -v markdown || echo "")"
 EOF
     sed -i 's/^ *//g' "$global_config"
-    echo "configuration file \"$global_config\" created. Please edit it to customize settings to your liking." | fold -s
+    echo "configuration file \"$global_config\" created. Please edit it to customize settings to your liking, then run $0 again." | fold -s
     exit 0
 }
 
