@@ -157,6 +157,9 @@ global_variables() {
     # Markdown location. Trying to autodetect by default.
     # The invocation must support the signature 'markdown_bin in.md > out.html'
     [[ -f Markdown.pl ]] && markdown_bin=./Markdown.pl || markdown_bin=$(which Markdown.pl 2>/dev/null || which markdown 2>/dev/null)
+    # Markdown options.
+    # Pass options to the markdown binary
+    markdown_options=""
 }
 
 # Check for the validity of some variables
@@ -185,7 +188,7 @@ test_markdown() {
 markdown() {
     out=${1%.md}.html
     while [[ -f $out ]]; do out=${out%.html}.$RANDOM.html; done
-    $markdown_bin "$1" > "$out"
+    $markdown_bin $markdown_options "$1" > "$out"
     echo "$out"
 }
 
