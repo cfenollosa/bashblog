@@ -18,6 +18,9 @@ global_config=".config"
 global_variables() {
     global_software_name="BashBlog"
     global_software_version="2.8"
+    # organise the blog in a git-repo
+    git_repo="false"
+    git_push_on_commit="false"
 
     # Blog title
     global_title="My fancy blog"
@@ -315,7 +318,10 @@ edit() {
             parse_file "$TMPFILE" "$edit_timestamp" "$filename"
         else
             parse_file "$TMPFILE" "$edit_timestamp" # this command sets $filename as the html processed file
-            [[ ${1##*.} == md ]] && mv "$1" "${filename%%.*}.md" 2>/dev/null
+            if [[ ${1##*.} == md ]]; then
+                mv "$1" "${filename%%.*}.md" 2>/dev/null
+                [[ "$git_repo" == 'true' ]] && git add "${filename%%.*}.md"
+            fi
         fi
         rm "$TMPFILE"
     fi
@@ -323,6 +329,10 @@ edit() {
     touch -t "$touch_timestamp" "$1"
     chmod 644 "$filename"
     echo "Posted $filename"
+    if [[ $git_repo == 'true' ]]; then
+        git add $filename
+        commit_message="edited $filename"
+    fi
     tags_after=$(tags_in_post "$filename")
     relevant_tags=$(echo "$tags_before $tags_after" | tr ',' ' ' | tr ' ' '\n' | sort -u | tr '\n' ' ')
     if [[ ! -z $relevant_tags ]]; then
@@ -617,6 +627,12 @@ EOF
 
             draft=drafts/$title.$fmt
             mv "$TMPFILE" "$draft"
+            if [[ $git_repo == 'true' ]]; then
+                git add $draft
+                git commit -m"$commit_message""drafted $draft; " # will exit soon, no later opportunity to commit
+                [[ $git_push_on_commit == 'true' ]] && git push
+                echo "commited $draft"
+            fi
             chmod 600 "$draft"
             rm "$filename"
             delete_includes
@@ -627,11 +643,16 @@ EOF
 
     if [[ $fmt == md && -n $save_markdown ]]; then
         mv "$TMPFILE" "${filename%%.*}.md"
+        [[ $git_repo == 'true' ]] && git add "${filename%%.*}.md"
     else
         rm "$TMPFILE"
     fi
     chmod 644 "$filename"
     echo "Posted $filename"
+    if [[ $git_repo == 'true' ]]; then
+        git add $filename
+        commit_message="posted ${filename%%.*}"
+    fi
     relevant_tags=$(tags_in_post $filename)
     if [[ -n $relevant_tags ]]; then
         relevant_posts="$(posts_with_tags $relevant_tags) $filename"
@@ -677,6 +698,7 @@ all_posts() {
     mv "$archive_index.tmp" "$archive_index"
     chmod 644 "$archive_index"
     rm "$contentfile"
+    [[ $git_repo == 'true' ]] && git add $archive_index
 }
 
 # Create an index page with all the tags
@@ -712,6 +734,7 @@ all_tags() {
     mv "$tags_index.tmp" "$tags_index"
     chmod 644 "$tags_index"
     rm "$contentfile"
+    [[ $git_repo == 'true' ]] && git add $tags_index
 }
 
 # Generate the index.html with the content of the latest posts
@@ -749,6 +772,7 @@ rebuild_index() {
     create_html_page "$contentfile" "$newindexfile" yes "$global_title" "$global_author"
     rm "$contentfile"
     mv "$newindexfile" "$index_file"
+    [[ $git_repo == 'true' ]] && git add $index_file
     chmod 644 "$index_file"
 }
 
@@ -823,7 +847,9 @@ rebuild_tags() {
         tagname=${tagname%.tmp.html}
         create_html_page "$i" "$prefix_tags$tagname.html" yes "$global_title &mdash; $template_tag_title \"$tagname\"" "$global_author"
         rm "$i"
+        [[ $git_repo == 'true' ]] && git add $prefix_tags$tagname.html
     done < <(ls -t ./"$prefix_tags"*.tmp.html 2>/dev/null)
+    commit_message="rebuilt tags"
     echo
 }
 
@@ -925,6 +951,7 @@ make_rss() {
 
     mv "$rssfile" "$blog_feed"
     chmod 644 "$blog_feed"
+    [[ $git_repo == true ]] && git add $blog_feed
 }
 
 # generate headers, footers, etc
@@ -1009,6 +1036,8 @@ create_css() {
         blockquote img{margin:12px 0px;}
         blockquote iframe{margin:12px 0px;}' > main.css
     fi
+
+    [[ $git_repo == 'true' ]] && git add $css_include
 }
 
 # Regenerates all the single post entries, keeping the post content but modifying
@@ -1039,8 +1068,10 @@ rebuild_all_entries() {
         mv "$i.rebuilt" "$i"
         chmod 644 "$i"
         touch -t "$timestamp" "$i"
+        [[ $git_repo == 'true' ]] && git add $i
         rm "$contentfile"
     done
+    commit_message="rebuilt all entries"
     echo ""
 }
 
@@ -1072,10 +1103,20 @@ reset() {
     echo "Are you sure you want to delete all blog entries? Please write \"Yes, I am!\" "
     read -r line
     if [[ $line == "Yes, I am!" ]]; then
-        rm .*.html ./*.html ./*.css ./*.rss &> /dev/null
+        if [[ $git_repo == 'true' ]]; then
+            git rm .*.html ./*.html ./*.css ./*.rss &> /dev/null
+            git commit -m"$commit_message""resetted the blog; " # has to be commited right here as will be exited right after.
+            [[ $git_push_on_commit == 'true' ]] && git push
+        else
+            rm .*.html ./*.html ./*.css ./*.rss &> /dev/null
+        fi
         echo
         echo "Deleted all posts, stylesheets and feeds."
-        echo "Kept your old '.backup.tar.gz' just in case, please delete it manually if needed."
+        if [[ $git_repo == 'true' ]]; then
+            echo "Didn't reset the git repo just in case, please do so manually if needed."
+        else
+            echo "Kept your old '.backup.tar.gz' just in case, please delete it manually if needed."
+        fi
     else
         echo "Phew! You dodged a bullet there. Nothing was modified."
     fi
@@ -1121,6 +1162,21 @@ do_main() {
     global_variables
     [[ -f $global_config ]] && source "$global_config" &> /dev/null 
     global_variables_check
+    # create git repo if wanted and not there yet, add anything included via
+    # config that is not added to the repo yet
+    if [[ $git_repo == 'true' ]]; then
+        [[ ! -d "./.git/" ]] && git init
+        [[ -n $body_begin_file ]] && git add $body_begin_file
+        [[ -n $body_end_file ]] && git add $body_end_file
+        if [[ -n $css_include ]]; then
+            for i in $css_include; do
+                git add $i
+            done
+        fi
+        [[ -n $header_file ]] && git add $header_file
+        [[ -n $footer_file ]] && git add $footer_file
+        [[ -n $global_analytics_file ]] && git add $global_analytics_file
+    fi
 
     # Check for $EDITOR
     [[ -z $EDITOR ]] && 
@@ -1143,19 +1199,21 @@ do_main() {
         fi
     fi
 
-    # Test for existing html files
-    if ls ./*.html &> /dev/null; then
-        # We're going to back up just in case
-        tar -c -z -f ".backup.tar.gz" -- *.html &&
-            chmod 600 ".backup.tar.gz"
-    elif [[ $1 == rebuild ]]; then
-        echo "Can't find any html files, nothing to rebuild"
-        exit
-    fi
+    if [[ $git_repo != 'true' ]];then # don't use tar-backups when already using git^^
+        # Test for existing html files
+        if ls ./*.html &> /dev/null; then
+            # We're going to back up just in case
+            tar -c -z -f ".backup.tar.gz" -- *.html &&
+                chmod 600 ".backup.tar.gz"
+        elif [[ $1 == rebuild ]]; then
+            echo "Can't find any html files, nothing to rebuild"
+            exit
+        fi
 
-    # Keep first backup of this day containing yesterday's version of the blog
-    [[ ! -f .yesterday.tar.gz || $(date -r .yesterday.tar.gz +'%d') != "$(date +'%d')" ]] &&
-        cp .backup.tar.gz .yesterday.tar.gz &> /dev/null
+        # Keep first backup of this day containing yesterday's version of the blog
+        [[ ! -f .yesterday.tar.gz || $(date -r .yesterday.tar.gz +'%d') != "$(date +'%d')" ]] &&
+            cp .backup.tar.gz .yesterday.tar.gz &> /dev/null
+    fi
 
     [[ $1 == reset ]] &&
         reset && exit
@@ -1164,7 +1222,15 @@ do_main() {
     create_includes
     [[ $1 == post ]] && write_entry "$@"
     [[ $1 == rebuild ]] && rebuild_all_entries && rebuild_tags
-    [[ $1 == delete ]] && rm "$2" &> /dev/null && rebuild_tags
+    if [[ $1 == delete ]]; then
+        if [[ $git_repo == 'true' ]]; then
+            git rm $2 &> /dev/null
+            commit_message="deleted $2"
+        else
+            rm "$2" &> /dev/null 
+        fi
+        rebuild_tags
+    fi
     if [[ $1 == edit ]]; then
         if [[ $2 == -n ]]; then
             edit "$3"
@@ -1179,6 +1245,10 @@ do_main() {
     all_tags
     make_rss
     delete_includes
+    if [[ $git_repo == 'true' ]]; then
+        git commit -m"$commit_message"
+        [[ $git_push_on_commit == 'true' ]] && git push
+    fi
 }
 
 
