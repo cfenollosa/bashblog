@@ -1168,10 +1168,11 @@ do_main() {
         [[ ! -d "./.git/" ]] && git init
         [[ -n $body_begin_file ]] && git add $body_begin_file
         [[ -n $body_end_file ]] && git add $body_end_file
-        [[ -n $css_include ]] 
-            && for i in $css_include; do
+        if [[ -n $css_include ]]; then
+            for i in $css_include; do
                 git add $i
             done
+        fi
         [[ -n $header_file ]] && git add $header_file
         [[ -n $footer_file ]] && git add $footer_file
         [[ -n $global_analytics_file ]] && git add $global_analytics_file
