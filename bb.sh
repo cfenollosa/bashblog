@@ -623,6 +623,17 @@ EOF
             echo "Saved your draft as '$draft'"
             exit
         fi
+        
+        if [[ $post_status == t || $post_status == T ]]; then
+            echo "Are you sure to trash the post? It will not be saved anywhere." 
+            echo "If and only if you are sure to trash this post, type \"YES\""
+            read -r really_trash
+            if [[ $really_trash == 'YES' ]]; then
+                delete_includes
+                rm "$filename"
+                rm "$TMPFILE"
+            fi
+        fi
     done
 
     if [[ $fmt == md && -n $save_markdown ]]; then
