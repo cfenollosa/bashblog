@@ -1162,8 +1162,20 @@ do_main() {
     global_variables
     [[ -f $global_config ]] && source "$global_config" &> /dev/null 
     global_variables_check
-    # create git repo if wanted and not there yet
-    [[ $git_repo == 'true' && ! -d "./.git/" ]] && git init
+    # create git repo if wanted and not there yet, add anything included via
+    # config that is not added to the repo yet
+    if [[ $git_repo == 'true' ]]; then
+        [[ ! -d "./.git/" ]] && git init
+        [[ -n $body_begin_file ]] && git add $body_begin_file
+        [[ -n $body_end_file ]] && git add $body_end_file
+        [[ -n $css_include ]] 
+            && for i in $css_include; do
+                git add $i
+            done
+        [[ -n $header_file ]] && git add $header_file
+        [[ -n $footer_file ]] && git add $footer_file
+        [[ -n $global_analytics_file ]] && git add $global_analytics_file
+    fi
 
     # Check for $EDITOR
     [[ -z $EDITOR ]] && 
