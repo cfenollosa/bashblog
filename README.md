@@ -52,6 +52,7 @@ Features
   It does some magic to autodetect which command switches it needs to run depending on your system.
 - All content is static. You only need shell access to a machine with a public web folder.
   *Tip: advanced users could mount a remote public folder via `ftpfs` and run this script locally*
+- Git support: When you don't like ftpfs or similar you can achieve the same with seemless git integration that will give you sane commit messages without you thinking about everything. This allows a continous-deployment like blog experience. (see \$git\_repo and \$git\_push\_on\_commit for configuration)
 - Allows drafts, includes a simple but clean stylesheet, generates the RSS file automatically.
 - Support for tags/categories
 - Support for Markdown, Disqus comments, Twitter, Feedburner, Google Analytics.
@@ -104,7 +105,7 @@ Detailed features
 - Headers, footers, and in general everything that a well-structured html file needs
 - Support to add extra content on top of every page (e.g. banners, images, etc)
 - xhtml validation, CSS validation, RSS validation by the w3c
-- Automatic backup of the site every time you post (stored as `.backup.tar.gz`)
+- Automatic backup of the site every time you post (stored as `.backup.tar.gz` or, at your choice, in a git repository)
 
 Read the Changelog section for more updates or [check out the news on my blog](http://cfenollosa.com/blog/tag_bashblog.html)
 
