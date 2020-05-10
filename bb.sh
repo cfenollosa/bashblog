@@ -17,7 +17,7 @@ global_config=".config"
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
-    global_software_version="2.8"
+    global_software_version="2.9"
 
     # Blog title
     global_title="My fancy blog"
@@ -95,9 +95,11 @@ global_variables() {
     # extra content to add just after we open the <body> tag
     # and before the actual blog content
     body_begin_file=""
-    # extra content to add just before we cloese <body tag (just before
-    # </body>)
+    # extra content to add just before we close </body>
     body_end_file=""
+    # extra content to ONLY on the index page AFTER `body_begin_file` contents
+    # and before the actual content
+    body_begin_file_index=""
     # CSS files to include on every page, f.ex. css_include=('main.css' 'blog.css')
     # leave empty to use generated
     css_include=()
@@ -433,6 +435,7 @@ create_html_page() {
         echo "</head><body>"
         # stuff to add before the actual body content
         [[ -n $body_begin_file ]] && cat "$body_begin_file"
+        [[ $filename = $index_file* ]] && [[ -n $body_begin_file_index ]] && cat "$body_begin_file_index"
         # body divs
         echo '<div id="divbodyholder">'
         echo '<div class="headerholder"><div class="header">'
