@@ -940,7 +940,6 @@ make_rss() {
 
 # generate headers, footers, etc
 create_includes() {
-    echo "Calling"
     {
         echo "<h1 class=\"nomargin\"><a class=\"ablack\" href=\"$global_url/$index_file\">$global_title</a></h1>" 
         echo "<div id=\"description\">$global_description</div>"
