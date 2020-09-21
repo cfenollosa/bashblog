@@ -551,11 +551,13 @@ write_entry() {
     test_markdown && fmt=md || fmt=html
     while [[ $# -gt 0 ]]; do
       case "$1" in
-          -post) direct_post=y ; shift ;;
+          -direct) direct=y ; shift ;;
           -html) fmt=html ; shift ;;
           *) [[ $# -eq 1 ]] && f=$1 && break || { echo "Please indicate only one file" ; exit 1 ;} ;;
       esac 
     done
+
+    [[ $direct ]] && [[ ! $f ]] && echo "For using direct, please specify a file" && exit 1
 
     if [[ -n $f ]]; then
         TMPFILE=$f
