@@ -553,10 +553,9 @@ write_entry() {
       case "$1" in
           -direct) direct=y ; shift ;;
           -html) fmt=html ; shift ;;
-          *) [[ $# -eq 1 ]] && f=$1 && break || { echo "Please indicate only one file" ; exit 1 ;} ;;
+          *) [[ $# -eq 1 ]] && f=$1 && break || { echo "Please indicate a single file" ; exit 1 ;} ;;
       esac 
     done
-
     [[ $direct ]] && [[ ! $f ]] && echo "For using direct, please specify a file" && exit 1
 
     if [[ -n $f ]]; then
@@ -596,12 +595,10 @@ as soon as you exit your editor.
 $template_tags_line_header keep-this-tag-format, tags-are-optional, beware-with-underscores-in-markdown, example
 EOF
     fi
-
     chmod 600 "$TMPFILE"
 
     post_status="E"
     filename=""
-
     while [[ $post_status != "p" && $post_status != "P" ]]; do
         [[ -n $filename ]] && rm "$filename" # Delete the generated html file, if any
         [[ ! $direct ]] && $EDITOR "$TMPFILE" || post_status="P" ## Direct avoids all prompts
