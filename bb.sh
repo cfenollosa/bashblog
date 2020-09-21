@@ -549,8 +549,13 @@ parse_file() {
 # also the drafts
 write_entry() {
     test_markdown && fmt=md || fmt=html
-    f=$2
-    [[ $2 == -html ]] && fmt=html && f=$3
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+          -post) direct_post=y ; shift ;;
+          -html) fmt=html ; shift ;;
+          *) [[ $# -eq 1 ]] && f=$1 && break || { echo "Please indicate only one file" ; exit 1 ;} ;;
+      esac 
+    done
 
     if [[ -n $f ]]; then
         TMPFILE=$f
@@ -589,6 +594,9 @@ as soon as you exit your editor.
 $template_tags_line_header keep-this-tag-format, tags-are-optional, beware-with-underscores-in-markdown, example
 EOF
     fi
+
+    exit 0
+
     chmod 600 "$TMPFILE"
 
     post_status="E"
@@ -1165,7 +1173,7 @@ do_main() {
 
     create_css
     create_includes
-    [[ $1 == post ]] && write_entry "$@"
+    [[ $1 == post ]] && write_entry "${@:2}"
     [[ $1 == rebuild ]] && rebuild_all_entries && rebuild_tags
     [[ $1 == delete ]] && rm "$2" &> /dev/null && rebuild_tags
     if [[ $1 == edit ]]; then
