@@ -549,8 +549,14 @@ parse_file() {
 # also the drafts
 write_entry() {
     test_markdown && fmt=md || fmt=html
-    f=$2
-    [[ $2 == -html ]] && fmt=html && f=$3
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+          -direct) direct=y ; shift ;;
+          -html) fmt=html ; shift ;;
+          *) [[ $# -eq 1 ]] && f=$1 && break || { echo "Please indicate a single file" ; exit 1 ;} ;;
+      esac 
+    done
+    [[ $direct ]] && [[ ! $f ]] && echo "For using direct, please specify a file" && exit 1
 
     if [[ -n $f ]]; then
         TMPFILE=$f
@@ -595,7 +601,7 @@ EOF
     filename=""
     while [[ $post_status != "p" && $post_status != "P" ]]; do
         [[ -n $filename ]] && rm "$filename" # Delete the generated html file, if any
-        $EDITOR "$TMPFILE"
+        [[ ! $direct ]] && $EDITOR "$TMPFILE" || post_status="P" ## Direct avoids all prompts
         if [[ $fmt == md ]]; then
             html_from_md=$(markdown "$TMPFILE")
             parse_file "$html_from_md"
@@ -605,26 +611,28 @@ EOF
         fi
 
         chmod 644 "$filename"
-        [[ -n $preview_url ]] || preview_url=$global_url
-        echo "To preview the entry, open $preview_url/$filename in your browser"
+        if [[ ! $direct ]]; then
+            [[ -n $preview_url ]] || preview_url=$global_url
+            echo "To preview the entry, open $preview_url/$filename in your browser"
 
-        echo -n "[P]ost this entry, [E]dit again, [D]raft for later? (p/E/d) "
-        read -r post_status
-        if [[ $post_status == d || $post_status == D ]]; then
-            mkdir -p "drafts/"
-            chmod 700 "drafts/"
+            echo -n "[P]ost this entry, [E]dit again, [D]raft for later? (p/E/d) "
+            read -r post_status
+            if [[ $post_status == d || $post_status == D ]]; then
+                mkdir -p "drafts/"
+                chmod 700 "drafts/"
 
-            title=$(head -n 1 $TMPFILE)
-            [[ -n $convert_filename ]] && title=$(echo "$title" | eval "$convert_filename")
-            [[ -n $title ]] || title=$RANDOM
+                title=$(head -n 1 $TMPFILE)
+                [[ -n $convert_filename ]] && title=$(echo "$title" | eval "$convert_filename")
+                [[ -n $title ]] || title=$RANDOM
 
-            draft=drafts/$title.$fmt
-            mv "$TMPFILE" "$draft"
-            chmod 600 "$draft"
-            rm "$filename"
-            delete_includes
-            echo "Saved your draft as '$draft'"
-            exit
+                draft=drafts/$title.$fmt
+                mv "$TMPFILE" "$draft"
+                chmod 600 "$draft"
+                rm "$filename"
+                delete_includes
+                echo "Saved your draft as '$draft'"
+                exit
+            fi
         fi
     done
 
@@ -1165,7 +1173,7 @@ do_main() {
 
     create_css
     create_includes
-    [[ $1 == post ]] && write_entry "$@"
+    [[ $1 == post ]] && write_entry "${@:2}"
     [[ $1 == rebuild ]] && rebuild_all_entries && rebuild_tags
     [[ $1 == delete ]] && rm "$2" &> /dev/null && rebuild_tags
     if [[ $1 == edit ]]; then
