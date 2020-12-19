@@ -507,8 +507,8 @@ parse_file() {
     title=""
     while IFS='' read -r line; do
         if [[ -z $title ]]; then
-            # remove extra <p> and </p> added by markdown
-            title=$(echo "$line" | sed 's/<\/*p>//g')
+            # remove extra <p>, </p>, <h[N]> and </h[N]> added by markdown
+            title=$(echo "$line" | sed 's/<\/\?p>//g; s/<\/\?h[1-6]>//g')
             if [[ -n $3 ]]; then
                 filename=$3
             else
