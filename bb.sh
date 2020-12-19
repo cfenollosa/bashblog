@@ -29,7 +29,7 @@ global_variables() {
     # Your name
     global_author="John Smith"
     # You can use twitter or facebook or anything for global_author_url
-    global_author_url="http://twitter.com/example" 
+    global_author_url="http://twitter.com/example"
     # Your email
     global_email="john@smith.com"
 
@@ -43,7 +43,7 @@ global_variables() {
     global_analytics=""
     global_analytics_file=""
 
-    # Leave this empty (i.e. "") if you don't want to use feedburner, 
+    # Leave this empty (i.e. "") if you don't want to use feedburner,
     # or change it to your own URL
     global_feedburner=""
 
@@ -134,7 +134,7 @@ global_variables() {
     # "Tweet" (used as twitter text button for posting to twitter)
     template_twitter_button="Tweet"
     template_twitter_comment="&lt;Type your comment here but please leave the URL so that other people can follow the comments&gt;"
-    
+
     # The locale to use for the dates displayed on screen
     date_format="%B %d, %Y"
     date_locale="C"
@@ -264,7 +264,7 @@ get_html_file_content() {
         if (\"$3\" == \"cut\" && /$cut_line/){
             if (\"$2\" == \"text\") exit # no need to read further
             while (getline > 0 && !/<!-- text end -->/) {
-                if (\"$cut_tags\" == \"no\" && /^<p>$template_tags_line_header/ ) print 
+                if (\"$cut_tags\" == \"no\" && /^<p>$template_tags_line_header/ ) print
             }
         }
     }"
@@ -339,11 +339,11 @@ edit() {
 # $2 the title
 twitter_card() {
     [[ -z $global_twitter_username ]] && return
-    
+
     echo "<meta name='twitter:card' content='summary' />"
     echo "<meta name='twitter:site' content='@$global_twitter_username' />"
     echo "<meta name='twitter:title' content='$2' />" # Twitter truncates at 70 char
-    description=$(grep -v "^<p>$template_tags_line_header" "$1" | sed -e 's/<[^>]*>//g' | tr '\n' ' ' | sed "s/\"/'/g" | head -c 250) 
+    description=$(grep -v "^<p>$template_tags_line_header" "$1" | sed -e 's/<[^>]*>//g' | tr '\n' ' ' | sed "s/\"/'/g" | head -c 250)
     echo "<meta name='twitter:description' content=\"$description\" />"
     image=$(sed -n '2,$ d; s/.*<img.*src="\([^"]*\)".*/\1/p' "$1") # First image is fine
     [[ -z $image ]] && return
@@ -358,7 +358,7 @@ twitter() {
     [[ -z $global_twitter_username ]] && return
 
     if [[ -z $global_disqus_username ]]; then
-        if [[ $global_twitter_cookieless == true ]]; then 
+        if [[ $global_twitter_cookieless == true ]]; then
             id=$RANDOM
 
             search_engine="https://twitter.com/search?q="
@@ -366,12 +366,12 @@ twitter() {
             echo "<p id='twitter'><a href='http://twitter.com/intent/tweet?url=$1&text=$template_twitter_comment&via=$global_twitter_username'>$template_comments $template_twitter_button</a> "
             echo "<a href='$search_engine""$1'><span id='count-$id'></span></a>&nbsp;</p>"
             return;
-        else 
-            echo "<p id='twitter'>$template_comments&nbsp;"; 
+        else
+            echo "<p id='twitter'>$template_comments&nbsp;";
         fi
     else
         echo "<p id='twitter'><a href=\"$1#disqus_thread\">$template_comments</a> &nbsp;"
-    fi  
+    fi
 
     echo "<a href=\"https://twitter.com/share\" class=\"twitter-share-button\" data-text=\"$template_twitter_comment\" data-url=\"$1\""
     echo " data-via=\"$global_twitter_username\""
@@ -487,7 +487,7 @@ create_html_page() {
         # page footer
         cat .footer.html
         # close divs
-        echo '</div></div>' # divbody and divbodyholder 
+        echo '</div></div>' # divbody and divbodyholder
         disqus_footer
         [[ -n $body_end_file ]] && cat "$body_end_file"
         echo '</body></html>'
@@ -515,7 +515,7 @@ parse_file() {
                 filename=$title
                 [[ -n $convert_filename ]] &&
                     filename=$(echo "$title" | eval "$convert_filename")
-                [[ -n $filename ]] || 
+                [[ -n $filename ]] ||
                     filename=$RANDOM # don't allow empty filenames
 
                 filename=$filename.html
@@ -722,7 +722,7 @@ rebuild_index() {
     echo -n "Rebuilding the index "
     newindexfile=$index_file.$RANDOM
     contentfile=$newindexfile.content
-    while [[ -f $newindexfile ]]; do 
+    while [[ -f $newindexfile ]]; do
         newindexfile=$index_file.$RANDOM
         contentfile=$newindexfile.content
     done
@@ -840,7 +840,7 @@ get_post_title() {
 # Return the post author
 #
 # $1 the html file
-get_post_author() { 
+get_post_author() {
     awk '/<div class="subtitle">.+/, /<!-- text begin -->/{if (!/<div class="subtitle">.+/ && !/<!-- text begin -->/) print}' "$1" | sed 's/<\/div>//g'
 }
 
@@ -867,7 +867,7 @@ list_tags() {
     if (( do_sort == 1 )); then
         echo -e "$lines" | column -t -s "#" | sort -nrk 2
     else
-        echo -e "$lines" | column -t -s "#" 
+        echo -e "$lines" | column -t -s "#"
     fi
 }
 
@@ -897,31 +897,31 @@ make_rss() {
 
     {
         pubdate=$(LC_ALL=C date +"$date_format_full")
-        echo '<?xml version="1.0" encoding="UTF-8" ?>' 
-        echo '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">' 
+        echo '<?xml version="1.0" encoding="UTF-8" ?>'
+        echo '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">'
         echo "<channel><title>$global_title</title><link>$global_url/$index_file</link>"
         echo "<description>$global_description</description><language>en</language>"
         echo "<lastBuildDate>$pubdate</lastBuildDate>"
         echo "<pubDate>$pubdate</pubDate>"
         echo "<atom:link href=\"$global_url/$blog_feed\" rel=\"self\" type=\"application/rss+xml\" />"
-    
+
         n=0
         while IFS='' read -r i; do
             is_boilerplate_file "$i" && continue
             ((n >= number_of_feed_articles)) && break # max 10 items
             echo -n "." 1>&3
-            echo '<item><title>' 
+            echo '<item><title>'
             get_post_title "$i"
-            echo '</title><description><![CDATA[' 
+            echo '</title><description><![CDATA['
             get_html_file_content 'text' 'entry' $cut_do <"$i"
-            echo "]]></description><link>$global_url/${i#./}</link>" 
-            echo "<guid>$global_url/$i</guid>" 
-            echo "<dc:creator>$(get_post_author "$i")</dc:creator>" 
+            echo "]]></description><link>$global_url/${i#./}</link>"
+            echo "<guid>$global_url/$i</guid>"
+            echo "<dc:creator>$(get_post_author "$i")</dc:creator>"
             echo "<pubDate>$(LC_ALL=C date -r "$i" +"$date_format_full")</pubDate></item>"
-    
+
             n=$(( n + 1 ))
         done < <(ls -t ./*.html)
-    
+
         echo '</channel></rss>'
     } 3>&1 >"$rssfile"
     echo ""
@@ -933,7 +933,7 @@ make_rss() {
 # generate headers, footers, etc
 create_includes() {
     {
-        echo "<h1 class=\"nomargin\"><a class=\"ablack\" href=\"$global_url/$index_file\">$global_title</a></h1>" 
+        echo "<h1 class=\"nomargin\"><a class=\"ablack\" href=\"$global_url/$index_file\">$global_title</a></h1>"
         echo "<div id=\"description\">$global_description</div>"
     } > ".title.html"
 
@@ -946,7 +946,7 @@ create_includes() {
         printf '<link rel="stylesheet" href="%s" type="text/css" />\n' "${css_include[@]}"
         if [[ -z $global_feedburner ]]; then
             echo "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"$template_subscribe_browser_button\" href=\"$blog_feed\" />"
-        else 
+        else
             echo "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"$template_subscribe_browser_button\" href=\"$global_feedburner\" />"
         fi
         } > ".header.html"
@@ -972,7 +972,7 @@ create_css() {
     # To avoid overwriting manual changes. However it is recommended that
     # this function is modified if the user changes the blog.css file
     (( ${#css_include[@]} > 0 )) && return || css_include=('main.css' 'blog.css')
-    if [[ ! -f blog.css ]]; then 
+    if [[ ! -f blog.css ]]; then
         # blog.css directives will be loaded after main.css and thus will prevail
         echo '#title{font-size: x-large;}
         a.ablack{color:black !important;}
@@ -993,7 +993,7 @@ create_css() {
     # then use it. This directive is here for compatibility with my own
     # home page. Feel free to edit it out, though it doesn't hurt
     if [[ -f ../style.css ]] && [[ ! -f main.css ]]; then
-        ln -s "../style.css" "main.css" 
+        ln -s "../style.css" "main.css"
     elif [[ ! -f main.css ]]; then
         echo 'body{font-family:Georgia,"Times New Roman",Times,serif;margin:0;padding:0;background-color:#F3F3F3;}
         #divbodyholder{padding:5px;background-color:#DDD;width:100%;max-width:874px;margin:24px auto;}
@@ -1088,7 +1088,7 @@ reset() {
 date_version_detect() {
 	date --version >/dev/null 2>&1
 	if (($? != 0));  then
-		# date utility is BSD. Test if gdate is installed 
+		# date utility is BSD. Test if gdate is installed
 		if gdate --version >/dev/null 2>&1 ; then
             date() {
                 gdate "$@"
@@ -1102,14 +1102,14 @@ date_version_detect() {
                     stat -f "%Sm" -t "$format" "$2"
                 elif [[ $2 == --date* ]]; then
                     # convert between dates using BSD date syntax
-                    command date -j -f "$date_format_full" "${2#--date=}" "$1" 
+                    command date -j -f "$date_format_full" "${2#--date=}" "$1"
                 else
                     # acceptable format for BSD date
                     command date -j "$@"
                 fi
             }
         fi
-    fi    
+    fi
 }
 
 # Main function
@@ -1122,15 +1122,15 @@ do_main() {
     date_version_detect
     # Load default configuration, then override settings with the config file
     global_variables
-    [[ -f $global_config ]] && source "$global_config" &> /dev/null 
+    [[ -f $global_config ]] && source "$global_config" &> /dev/null
     global_variables_check
 
     # Check for $EDITOR
-    [[ -z $EDITOR ]] && 
+    [[ -z $EDITOR ]] &&
         echo "Please set your \$EDITOR environment variable. For example, to use nano, add the line 'export EDITOR=nano' to your \$HOME/.bashrc file" && exit
 
     # Check for validity of argument
-    [[ $1 != "reset" && $1 != "post" && $1 != "rebuild" && $1 != "list" && $1 != "edit" && $1 != "delete" && $1 != "tags" ]] && 
+    [[ $1 != "reset" && $1 != "post" && $1 != "rebuild" && $1 != "list" && $1 != "edit" && $1 != "delete" && $1 != "tags" ]] &&
         usage && exit
 
     [[ $1 == list ]] &&
