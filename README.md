@@ -132,6 +132,7 @@ As a guideline, pull requests should:
 Changelog
 ---------
 
+- 2.9      Added `body_begin_file_index`
 - 2.8      Bugfixes<br/>
            Slavic language support thanks to Tomasz Jadowski<br/>
            Removed the now defunct Twitter JSON API share count<br/>
