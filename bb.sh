@@ -16,27 +16,20 @@ global_config=".config"
 # This function will load all the variables defined here. They might be overridden
 # by the 'global_config' file contents
 global_variables() {
-    if [[ -f "$global_config" ]]; then
-        source "$global_config"
-        return 0
-    fi
-    cat <<- EOF > "$global_config"
     global_software_name="BashBlog"
     global_software_version="2.9"
 
-    # Editor set to environment or nano if none set.
-    EDITOR="${EDITOR:-nano}"
     # Blog title
-    global_title="My blog"
+    global_title="My fancy blog"
     # The typical subtitle for each blog
-    global_description=" blog powered by $(bash --version | head -1 | cut -d '-' -f1)"
+    global_description="A blog about turtles and carrots"
     # The public base URL for this blog
     global_url="http://example.com/blog"
 
     # Your name
     global_author="John Smith"
-    # You can use GNU Social or Mastodon or anything for global_author_url
-    global_author_url="https://2mb.social/example" 
+    # You can use twitter or facebook or anything for global_author_url
+    global_author_url="http://twitter.com/example" 
     # Your email
     global_email="john@smith.com"
 
@@ -143,7 +136,7 @@ global_variables() {
     template_twitter_comment="&lt;Type your comment here but please leave the URL so that other people can follow the comments&gt;"
     
     # The locale to use for the dates displayed on screen
-    date_format="%A, %B %d, %Y"
+    date_format="%B %d, %Y"
     date_locale="C"
     date_inpost="bashblog_timestamp"
     # Don't change these dates
@@ -165,11 +158,7 @@ global_variables() {
 
     # Markdown location. Trying to autodetect by default.
     # The invocation must support the signature 'markdown_bin in.md > out.html'
-    markdown_bin="$(command -v markdown || echo "")"
-EOF
-    sed -i 's/^ *//g' "$global_config"
-    echo "configuration file \"$global_config\" created. Please edit it to customize settings to your liking, then run $0 again." | fold -s
-    exit 0
+    [[ -f Markdown.pl ]] && markdown_bin=./Markdown.pl || markdown_bin=$(which Markdown.pl 2>/dev/null || which markdown 2>/dev/null)
 }
 
 # Check for the validity of some variables
@@ -336,6 +325,7 @@ edit() {
     touch -t "$touch_timestamp" "$1"
     chmod 644 "$filename"
     echo "Posted $filename"
+    call_plugins posted_html
     tags_after=$(tags_in_post "$filename")
     relevant_tags=$(echo "$tags_before $tags_after" | tr ',' ' ' | tr ' ' '\n' | sort -u | tr '\n' ' ')
     if [[ ! -z $relevant_tags ]]; then
@@ -606,7 +596,9 @@ EOF
     filename=""
     while [[ $post_status != "p" && $post_status != "P" ]]; do
         [[ -n $filename ]] && rm "$filename" # Delete the generated html file, if any
+        call_plugins pre_edit "$TMPFILE"
         $EDITOR "$TMPFILE"
+        call_plugins post_edit "$TMPFILE"
         if [[ $fmt == md ]]; then
             html_from_md=$(markdown "$TMPFILE")
             parse_file "$html_from_md"
@@ -646,6 +638,7 @@ EOF
     fi
     chmod 644 "$filename"
     echo "Posted $filename"
+    call_plugins posted_md
     relevant_tags=$(tags_in_post $filename)
     if [[ -n $relevant_tags ]]; then
         relevant_posts="$(posts_with_tags $relevant_tags) $filename"
@@ -1093,6 +1086,7 @@ reset() {
     else
         echo "Phew! You dodged a bullet there. Nothing was modified."
     fi
+    call_plugins reset
 }
 
 # Detects if GNU date is installed
@@ -1129,11 +1123,37 @@ date_version_detect() {
 # $1     command to run
 # $2     file name of a draft to continue editing (optional)
 do_main() {
+    # Load any available plugins from plugins directory in current path or /usr/share/bashblog/plugins
+    if [[ -d "${BASH_SOURCE[0]%/*}/plugins" ]]; then
+        for f in "${BASH_SOURCE[0]%/*}/plugins/"*.sh ; do
+            source "$f"
+        done
+    fi
+    if [[ -d "/usr/share/bashblog/plugins" ]]; then
+        for f in "/usr/share/bashblog/plugins/"*.sh ; do
+            source "$f"
+        done
+    fi
+    # Get a list of all functions available.
+    mapfile -t plugins < <(declare -F)
+    # Loop through the function names and strip away stuff that is not needed.
+    for i in "${!plugins[@]}" ; do
+        plugins[i]="${plugins[i]#*f }"
+        # Remove functions that do not start with plugin_
+        if ! [[ "${plugins[i]}" =~ ^plugin_ ]]; then
+            unset plugins[i]
+        fi
+    done
     # Detect if using BSD date or GNU date
     date_version_detect
-    # Load configuration or create config file.
+    # Load default configuration, then override settings with the config file
     global_variables
+    [[ -f $global_config ]] && source "$global_config" &> /dev/null 
     global_variables_check
+
+    # Check for $EDITOR
+    [[ -z $EDITOR ]] && 
+        echo "Please set your \$EDITOR environment variable. For example, to use nano, add the line 'export EDITOR=nano' to your \$HOME/.bashrc file" && exit
 
     # Check for validity of argument
     [[ $1 != "reset" && $1 != "post" && $1 != "rebuild" && $1 != "list" && $1 != "edit" && $1 != "delete" && $1 != "tags" ]] && 
@@ -1189,6 +1209,18 @@ do_main() {
     make_rss
     delete_includes
 }
+
+
+# Plugins
+call_plugins() {
+    local functionName="$1"
+    shift
+    for i in "${plugins[@]}" ; do
+        if [[ "$i" =~ ^plugin_${functionName} ]]; then
+            ${i} "$@"
+        fi
+    done
+} 
 
 
 #

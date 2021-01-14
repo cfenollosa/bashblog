@@ -56,6 +56,8 @@ Features
 - Support for tags/categories
 - Support for Markdown, Disqus comments, Twitter, Feedburner, Google Analytics.
 - The project is still maintained as of 2016. Bugs are fixed, and new features are considered (see "Contributing")
+- Optional powerful plugin system.
+  Drop your plugins into a directory called plugins, or for system wide, /usr/share/bashblog/plugins.
 - Everything stored in a single ~1k lines bash script, how cool is that?! ;) 
 
 
