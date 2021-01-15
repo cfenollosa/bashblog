@@ -1155,7 +1155,8 @@ do_main() {
     [[ -z $EDITOR ]] && 
         echo "Please set your \$EDITOR environment variable. For example, to use nano, add the line 'export EDITOR=nano' to your \$HOME/.bashrc file" && exit
 
-    # Check for validity of argument
+    # Check for validity of argument including plugins
+    LC_ALL=C type "plugin_command_$1" 2> /dev/null | grep -q "plugin_command_$1 is a function" && call_plugins command_$1
     [[ $1 != "reset" && $1 != "post" && $1 != "rebuild" && $1 != "list" && $1 != "edit" && $1 != "delete" && $1 != "tags" ]] && 
         usage && exit
 
