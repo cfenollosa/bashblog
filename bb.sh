@@ -36,7 +36,7 @@ global_variables() {
     # CC by-nc-nd is a good starting point, you can change this to "&copy;" for Copyright
     global_license="CC by-nc-nd"
 
-    # If you have a Google Analytics ID (UA-XXXXX) and wish to use the standard
+    # If you have a Google Analytics ID (G-XXXXX) and wish to use the standard
     # embedding code, put it on global_analytics
     # If you have custom analytics code (i.e. non-google) or want to use the Universal
     # code, leave global_analytics empty and specify a global_analytics_file
@@ -197,19 +197,19 @@ google_analytics() {
     [[ -z $global_analytics && -z $global_analytics_file ]]  && return
 
     if [[ -z $global_analytics_file ]]; then
-        echo "<script type=\"text/javascript\">
+        echo "<script async src=\"https://www.googletagmanager.com/gtag/js?id=${global_analytics}\"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
 
-        var _gaq = _gaq || [];
-        _gaq.push(['_setAccount', '${global_analytics}']);
-        _gaq.push(['_trackPageview']);
-
-        (function() {
-        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-        })();
-
+            gtag('js', new Date());
+            gtag('config', '${global_analytics}');
         </script>"
+
+
+
+
+
     else
         cat "$global_analytics_file"
     fi
