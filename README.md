@@ -131,7 +131,7 @@ As a guideline, pull requests should:
 
 Changelog
 ---------
-
+- 2.10     Added `global_twitter_card_image`
 - 2.9      Added `body_begin_file_index`
 - 2.8      Bugfixes<br/>
            Slavic language support thanks to Tomasz Jadowski<br/>
