@@ -49,6 +49,8 @@ global_variables() {
 
     # Change this to your username if you want to use twitter for comments
     global_twitter_username=""
+    # Default image for the Twitter cards. Use an absolute URL
+    global_twitter_card_image=""
     # Set this to false for a Twitter button with share count. The cookieless version
     # is just a link.
     global_twitter_cookieless="true"
@@ -345,8 +347,17 @@ twitter_card() {
     echo "<meta name='twitter:title' content='$2' />" # Twitter truncates at 70 char
     description=$(grep -v "^<p>$template_tags_line_header" "$1" | sed -e 's/<[^>]*>//g' | tr '\n' ' ' | sed "s/\"/'/g" | head -c 250) 
     echo "<meta name='twitter:description' content=\"$description\" />"
-    image=$(sed -n '2,$ d; s/.*<img.*src="\([^"]*\)".*/\1/p' "$1") # First image is fine
+
+    # For the image we try to locate the first image in the article
+    image=$(sed -n '2,$ d; s/.*<img.*src="\([^"]*\)".*/\1/p' "$1") 
+
+    # If none, then we try a global setting image
+    [[ -z $image ]] && [[ -n $global_twitter_card_image ]] && image=$global_twitter_card_image
+
+    # If none, return
     [[ -z $image ]] && return
+
+    # Final housekeeping
     [[ $image =~ ^https?:// ]] || image=$global_url/$image # Check that URL is absolute
     echo "<meta name='twitter:image' content='$image' />"
 }
