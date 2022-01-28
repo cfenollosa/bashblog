@@ -869,7 +869,7 @@ list_tags() {
         [[ -f "$i" ]] || break
         nposts=$(grep -c "<\!-- text begin -->" "$i")
         tagname=${i#"$prefix_tags"}
-        tagname=${tagname#.html}
+        tagname=${tagname%.html}
         ((nposts > 1)) && word=$template_tags_posts || word=$template_tags_posts_singular
         line="$tagname # $nposts # $word"
         lines+=$line\\n
