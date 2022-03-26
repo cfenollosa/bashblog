@@ -42,6 +42,12 @@ When you're done, access the public URL for that folder  (e.g. `http://server.co
 and you should see the index file and a new page for that post!
 
 
+How to...
+---------
+
+Please [read the wiki](https://github.com/cfenollosa/bashblog/wiki) to learn how to use the advanced features of Bashblog, such as headers and footers, static pages, and more.
+
+
 Features
 --------
 
