@@ -1007,7 +1007,7 @@ create_css() {
         ln -s "../style.css" "main.css" 
     elif [[ ! -f main.css ]]; then
         echo 'body{font-family:Georgia,"Times New Roman",Times,serif;margin:0;padding:0;background-color:#F3F3F3;}
-        #divbodyholder{padding:5px;background-color:#DDD;width:100%;max-width:874px;margin:24px auto;}
+        #divbodyholder{padding:5px;background-color:#DDD;max-width:874px;margin:24px auto;}
         #divbody{border:solid 1px #ccc;background-color:#fff;padding:0px 48px 24px 48px;top:0;}
         .headerholder{background-color:#f9f9f9;border-top:solid 1px #ccc;border-left:solid 1px #ccc;border-right:solid 1px #ccc;}
         .header{width:100%;max-width:800px;margin:0px auto;padding-top:24px;padding-bottom:8px;}
@@ -1021,7 +1021,11 @@ create_css() {
         a:visited{text-decoration:none;color:#336699 !important;}
         blockquote{background-color:#f9f9f9;border-left:solid 4px #e9e9e9;margin-left:12px;padding:12px 12px 12px 24px;}
         blockquote img{margin:12px 0px;}
-        blockquote iframe{margin:12px 0px;}' > main.css
+        blockquote iframe{margin:12px 0px;}
+	@media only screen and (max-width:874px){
+	  #divbody{padding:0px 10px 5px 10px;}
+	  .content p{margin:0px;}
+	}' > main.css
     fi
 }
 
