@@ -108,6 +108,10 @@ global_variables() {
     # HTML files to exclude from index, f.ex. post_exclude=('imprint.html 'aboutme.html')
     html_exclude=()
 
+    # add specific favicon
+    # a favicon is used as logo/icon the blog in the browser
+    # use the realtiv path to it and it must be an .ico file
+    favicon=""
     # Localization and i18n
     # "Comments?" (used in twitter link after every post)
     template_comments="Comments?"
@@ -954,6 +958,7 @@ create_includes() {
         echo '<html xmlns="http://www.w3.org/1999/xhtml"><head>'
         echo '<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />'
         echo '<meta name="viewport" content="width=device-width, initial-scale=1.0" />'
+        echo "<link rel="icon" type="image/vnd.microsoft.icon" href="$favicon">"
         printf '<link rel="stylesheet" href="%s" type="text/css" />\n' "${css_include[@]}"
         if [[ -z $global_feedburner ]]; then
             echo "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"$template_subscribe_browser_button\" href=\"$blog_feed\" />"
