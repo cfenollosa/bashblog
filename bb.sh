@@ -287,7 +287,7 @@ get_html_file_content() {
 edit() {
     [[ ! -f "${1%%.*}.html" ]] && echo "Can't edit post "${1%%.*}.html", did you mean to use \"bb.sh post <draft_file>\"?" && exit -1
     # Original post timestamp
-    edit_timestamp=$(LC_ALL=C date -r "${1%%.*}.html" +"$date_format_full" )
+    edit_timestamp=$(LC_ALL=$date_locale date -r "${1%%.*}.html" +"$date_format_full" )
     touch_timestamp=$(LC_ALL=C date -r "${1%%.*}.html" +"$date_format_timestamp")
     tags_before=$(tags_in_post "${1%%.*}.html")
     if [[ $2 == full ]]; then
@@ -1110,7 +1110,7 @@ date_version_detect() {
                 if [[ $1 == -r ]]; then
                     # Fall back to using stat for 'date -r'
                     format=${3//+/}
-                    stat -f "%Sm" -t "$format" "$2"
+                    date -j -f "$date_format_timestamp" `stat -f "%Sm" -t "$date_format_timestamp" "$2"` "$3"
                 elif [[ $2 == --date* ]]; then
                     # convert between dates using BSD date syntax
                     command date -j -f "$date_format_full" "${2#--date=}" "$1" 
