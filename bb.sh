@@ -560,8 +560,14 @@ parse_file() {
 # also the drafts
 write_entry() {
     test_markdown && fmt=md || fmt=html
-    f=$2
-    [[ $2 == -html ]] && fmt=html && f=$3
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+          -direct) direct=y ; shift ;;
+          -html) fmt=html ; shift ;;
+          *) [[ $# -eq 1 ]] && f=$1 && break || { echo "Please indicate a single file" ; exit 1 ;} ;;
+      esac 
+    done
+    [[ $direct ]] && [[ ! $f ]] && echo "For using direct, please specify a file" && exit 1
 
     if [[ -n $f ]]; then
         TMPFILE=$f
@@ -606,7 +612,7 @@ EOF
     filename=""
     while [[ $post_status != "p" && $post_status != "P" ]]; do
         [[ -n $filename ]] && rm "$filename" # Delete the generated html file, if any
-        $EDITOR "$TMPFILE"
+        [[ ! $direct ]] && $EDITOR "$TMPFILE" || post_status="P" ## Direct avoids all prompts
         if [[ $fmt == md ]]; then
             html_from_md=$(markdown "$TMPFILE")
             parse_file "$html_from_md"
@@ -616,26 +622,28 @@ EOF
         fi
 
         chmod 644 "$filename"
-        [[ -n $preview_url ]] || preview_url=$global_url
-        echo "To preview the entry, open $preview_url/$filename in your browser"
+        if [[ ! $direct ]]; then
+            [[ -n $preview_url ]] || preview_url=$global_url
+            echo "To preview the entry, open $preview_url/$filename in your browser"
 
-        echo -n "[P]ost this entry, [E]dit again, [D]raft for later? (p/E/d) "
-        read -r post_status
-        if [[ $post_status == d || $post_status == D ]]; then
-            mkdir -p "drafts/"
-            chmod 700 "drafts/"
+            echo -n "[P]ost this entry, [E]dit again, [D]raft for later? (p/E/d) "
+            read -r post_status
+            if [[ $post_status == d || $post_status == D ]]; then
+                mkdir -p "drafts/"
+                chmod 700 "drafts/"
 
-            title=$(head -n 1 $TMPFILE)
-            [[ -n $convert_filename ]] && title=$(echo "$title" | eval "$convert_filename")
-            [[ -n $title ]] || title=$RANDOM
+                title=$(head -n 1 $TMPFILE)
+                [[ -n $convert_filename ]] && title=$(echo "$title" | eval "$convert_filename")
+                [[ -n $title ]] || title=$RANDOM
 
-            draft=drafts/$title.$fmt
-            mv "$TMPFILE" "$draft"
-            chmod 600 "$draft"
-            rm "$filename"
-            delete_includes
-            echo "Saved your draft as '$draft'"
-            exit
+                draft=drafts/$title.$fmt
+                mv "$TMPFILE" "$draft"
+                chmod 600 "$draft"
+                rm "$filename"
+                delete_includes
+                echo "Saved your draft as '$draft'"
+                exit
+            fi
         fi
     done
 
@@ -1064,19 +1072,20 @@ usage() {
     echo "Usage: $0 command [filename]"
     echo ""
     echo "Commands:"
-    echo "    post [-html] [filename] insert a new blog post, or the filename of a draft to continue editing it"
-    echo "                            it tries to use markdown by default, and falls back to HTML if it's not available."
-    echo "                            use '-html' to override it and edit the post as HTML even when markdown is available"
-    echo "    edit [-n|-f] [filename] edit an already published .html or .md file. **NEVER** edit manually a published .html file,"
-    echo "                            always use this function as it keeps internal data and rebuilds the blog"
-    echo "                            use '-n' to give the file a new name, if title was changed"
-    echo "                            use '-f' to edit full html file, instead of just text part (also preserves name)"
-    echo "    delete [filename]       deletes the post and rebuilds the blog"
-    echo "    rebuild                 regenerates all the pages and posts, preserving the content of the entries"
-    echo "    reset                   deletes everything except this script. Use with a lot of caution and back up first!"
-    echo "    list                    list all posts"
-    echo "    tags [-n]               list all tags in alphabetical order"
-    echo "                            use '-n' to sort list by number of posts"
+    echo "    post [-html|-direct] [filename] insert a new blog post, or the filename of a draft to continue editing it"
+    echo "                                    it tries to use markdown by default, and falls back to HTML if it's not available."
+    echo "                                    use '-html' to override it and edit the post as HTML even when markdown is available"
+    echo "                                    use '-direct' to post the file directly without prompt (a file must be specified)"
+    echo "    edit [-n|-f] [filename]         edit an already published .html or .md file. **NEVER** edit manually a published .html file,"
+    echo "                                    always use this function as it keeps internal data and rebuilds the blog"
+    echo "                                    use '-n' to give the file a new name, if title was changed"
+    echo "                                    use '-f' to edit full html file, instead of just text part (also preserves name)"
+    echo "    delete [filename]               deletes the post and rebuilds the blog"
+    echo "    rebuild                         regenerates all the pages and posts, preserving the content of the entries"
+    echo "    reset                           deletes everything except this script. Use with a lot of caution and back up first!"
+    echo "    list                            list all posts"
+    echo "    tags [-n]                       list all tags in alphabetical order"
+    echo "                                    use '-n' to sort list by number of posts"
     echo ""
     echo "For more information please open $0 in a code editor and read the header and comments"
 }
@@ -1176,7 +1185,7 @@ do_main() {
 
     create_css
     create_includes
-    [[ $1 == post ]] && write_entry "$@"
+    [[ $1 == post ]] && write_entry "${@:2}"
     [[ $1 == rebuild ]] && rebuild_all_entries && rebuild_tags
     [[ $1 == delete ]] && rm "$2" &> /dev/null && rebuild_tags
     if [[ $1 == edit ]]; then
