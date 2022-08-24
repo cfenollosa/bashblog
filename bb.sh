@@ -913,8 +913,8 @@ make_sitemap() {
     while [[ -f $blog_sitemap ]]; do sitemapfile=$blog_sitemap.$RANDOM; done
 
     {
-        echo "<?xml version="1.0" encoding="UTF-8"?>"
-        echo "<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">"
+        echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+        echo "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">"
         echo -n "." 1>&3
         while IFS='' read -r i; do
             echo -n "." 1>&3
