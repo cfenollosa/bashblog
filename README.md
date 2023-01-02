@@ -42,6 +42,12 @@ When you're done, access the public URL for that folder  (e.g. `http://server.co
 and you should see the index file and a new page for that post!
 
 
+How to...
+---------
+
+Please [read the wiki](https://github.com/cfenollosa/bashblog/wiki) to learn how to use the advanced features of Bashblog, such as headers and footers, static pages, and more.
+
+
 Features
 --------
 
@@ -131,7 +137,8 @@ As a guideline, pull requests should:
 
 Changelog
 ---------
-
+- 2.10     Added `global_twitter_card_image`
+- 2.9      Added `body_begin_file_index`
 - 2.8      Bugfixes<br/>
            Slavic language support thanks to Tomasz Jadowski<br/>
            Removed the now defunct Twitter JSON API share count<br/>
