@@ -1040,6 +1040,9 @@ rebuild_all_entries() {
         title=$(get_post_title "$i")
 
         get_html_file_content 'text' 'text' <"$i" >> "$contentfile"
+	
+	# delete the last newline character at the end of content to keep the rebuilt version clean
+	truncate -s $(($(stat -c '%s' $contentfile)-1)) "$contentfile"
 
         # Read timestamp from post, if present, and sync file timestamp
         timestamp=$(awk '/<!-- '$date_inpost': .+ -->/ { print }' "$i" | cut -d '#' -f 2)
