@@ -617,7 +617,7 @@ EOF
 
         chmod 644 "$filename"
         [[ -n $preview_url ]] || preview_url=$global_url
-        echo "To preview the entry, open $preview_url/$filename in your browser"
+        echo "To preview the entry, open http://$preview_url/$filename in your browser"
 
         echo -n "[P]ost this entry, [E]dit again, [D]raft for later? (p/E/d) "
         read -r post_status
