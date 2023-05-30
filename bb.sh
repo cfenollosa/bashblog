@@ -96,7 +96,11 @@ global_variables() {
     footer_file=""
     # extra content to add just after we open the <body> tag
     # and before the actual blog content
+    # but before the title of the blog
     body_begin_file=""
+    # extra content to add before the actual blog content
+    # and after the title of the blog
+    title_suffix_file=""
     # extra content to add just before we close </body>
     body_end_file=""
     # extra content to ONLY on the index page AFTER `body_begin_file` contents
@@ -453,7 +457,9 @@ create_html_page() {
         # blog title
         echo '<div id="title">'
         cat .title.html
-        echo '</div></div></div>' # title, header, headerholder
+	echo '</div>' # title
+        [[ -n $title_suffix_file ]] && cat "$title_suffix_file"
+        echo '</div></div>' # header, headerholder
         echo '<div id="divbody"><div class="content">'
 
         file_url=${filename#./}
