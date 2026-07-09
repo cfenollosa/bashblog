@@ -667,6 +667,9 @@ all_posts() {
         while IFS='' read -r i; do
             is_boilerplate_file "$i" && continue
             echo -n "." 1>&3
+             # Read timestamp from post, and sync file timestamp
+            timestamp=$(awk '/<!-- '$date_inpost': .+ -->/ { print }' "$i" | cut -d '#' -f 2)
+            [[ -n $timestamp ]] && touch -t "$timestamp" "$i"
             # Month headers
             month=$(LC_ALL=$date_locale date -r "$i" +"$date_allposts_header")
             if [[ $month != "$prev_month" ]]; then
@@ -681,7 +684,7 @@ all_posts() {
             # Date
             date=$(LC_ALL=$date_locale date -r "$i" +"$date_format")
             echo " $date</li>"
-        done < <(ls -t ./*.html)
+        done < <(list_html_by_timestamp)
         echo "" 1>&3
         echo "</ul>"
         echo "<div id=\"all_posts\"><a href=\"./$index_file\">$template_archive_index_page</a></div>"
@@ -751,7 +754,7 @@ rebuild_index() {
             fi
             echo -n "." 1>&3
             n=$(( n + 1 ))
-        done < <(ls -t ./*.html) # sort by date, newest first
+        done < <(list_html_by_timestamp) # sort by file timestamp, newest first
 
         feed=$blog_feed
         if [[ -n $global_feedburner ]]; then feed=$global_feedburner; fi
@@ -1121,6 +1124,15 @@ date_version_detect() {
             }
         fi
     fi    
+}
+
+# Lists html files in directory ordering by their timestamps
+# instead of modified date
+list_html_by_timestamp() {
+  grep "$date_inpost" ./*.html \
+  | sed -nr 's/<!-- '"$date_inpost"': #(.*)# -->$/\1/p' \
+  | sort --field-separator=: --key=2 --stable --reverse \
+  | sed -nr 's/^(.*):.*$/\1/p'
 }
 
 # Main function
