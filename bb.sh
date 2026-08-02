@@ -342,11 +342,12 @@ edit() {
 twitter_card() {
     [[ -z $global_twitter_username ]] && return
     
-    echo "<meta name='twitter:card' content='summary' />"
-    echo "<meta name='twitter:site' content='@$global_twitter_username' />"
-    echo "<meta name='twitter:title' content='$2' />" # Twitter truncates at 70 char
+
+    echo "<meta name='twitter:card' content='summary'>"
+    echo "<meta name='twitter:site' content='@$global_twitter_username'>"
+    echo "<meta name='twitter:title' content='$2'>" # Twitter truncates at 70 char
     description=$(grep -v "^<p>$template_tags_line_header" "$1" | sed -e 's/<[^>]*>//g' | tr '\n' ' ' | sed "s/\"/'/g" | head -c 250) 
-    echo "<meta name='twitter:description' content=\"$description\" />"
+    echo "<meta name='twitter:description' content=\"$description\">"
 
     # For the image we try to locate the first image in the article
     image=$(sed -n '2,$ d; s/.*<img.*src="\([^"]*\)".*/\1/p' "$1") 
@@ -359,7 +360,7 @@ twitter_card() {
 
     # Final housekeeping
     [[ $image =~ ^https?:// ]] || image=$global_url/$image # Check that URL is absolute
-    echo "<meta name='twitter:image' content='$image' />"
+    echo "<meta name='twitter:image' content='$image'>"
 }
 
 # Adds the code needed by the twitter button
@@ -950,15 +951,15 @@ create_includes() {
 
     if [[ -f $header_file ]]; then cp "$header_file" .header.html
     else {
-        echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">'
-        echo '<html xmlns="http://www.w3.org/1999/xhtml"><head>'
-        echo '<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />'
-        echo '<meta name="viewport" content="width=device-width, initial-scale=1.0" />'
-        printf '<link rel="stylesheet" href="%s" type="text/css" />\n' "${css_include[@]}"
+        echo '<!DOCTYPE html>'
+        echo '<html><head>'
+        echo '<meta charset="UTF-8">'
+        echo '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
+        printf '<link rel="stylesheet" href="%s" type="text/css">\n' "${css_include[@]}"
         if [[ -z $global_feedburner ]]; then
-            echo "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"$template_subscribe_browser_button\" href=\"$blog_feed\" />"
+            echo "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"$template_subscribe_browser_button\" href=\"$blog_feed\">"
         else 
-            echo "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"$template_subscribe_browser_button\" href=\"$global_feedburner\" />"
+            echo "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"$template_subscribe_browser_button\" href=\"$global_feedburner\">"
         fi
         } > ".header.html"
     fi
@@ -967,7 +968,7 @@ create_includes() {
     else {
         protected_mail=${global_email//@/&#64;}
         protected_mail=${protected_mail//./&#46;}
-        echo "<div id=\"footer\">$global_license <a href=\"$global_author_url\">$global_author</a> &mdash; <a href=\"mailto:$protected_mail\">$protected_mail</a><br/>"
+        echo "<div id=\"footer\">$global_license <a href=\"$global_author_url\">$global_author</a> &mdash; <a href=\"mailto:$protected_mail\">$protected_mail</a><br>"
         echo 'Generated with <a href="https://github.com/cfenollosa/bashblog">bashblog</a>, a single bash script to easily create blogs like this one</div>'
         } >> ".footer.html"
     fi
