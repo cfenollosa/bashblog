@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # BashBlog, a simple blog system written in a single bash script
-# (C) Carlos Fenollosa <carlos.fenollosa@gmail.com>, 2011-2016 and contributors
+# (C) Carlos Fenollosa <carlos.fenollosa@gmail.com>, 2011-2026 and contributors
 # https://github.com/carlesfe/bashblog/contributors
 # Check out README.md for more details
 
@@ -17,7 +17,7 @@ global_config=".config"
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
-    global_software_version="2.10"
+    global_software_version="2.11"
 
     # Blog title
     global_title="My fancy blog"
@@ -78,7 +78,7 @@ global_variables() {
     number_of_feed_articles="10"
     # "cut" blog entry when putting it to index page. Leave blank for full articles in front page
     # i.e. include only up to first '<hr>', or '----' in markdown
-    cut_do="cut"
+    cut_do=""
     # When cutting, cut also tags? If "no", tags will appear in index page for cut articles
     cut_tags="yes"
     # Regexp matching the HTML line where to do the cut
@@ -89,6 +89,11 @@ global_variables() {
     # prefix for tags/categories files
     # please make sure that no other html file starts with this prefix
     prefix_tags="tag_"
+    # "staticpage" tags are used for pages which are not really blogposts but rather
+    # "static" pages (about the author, a landing page...)
+    # any post tagged with the staticpage_tag will (i) not have a title and author at the top,
+    # (ii) not display the tags at the end, (iii) will not appear on: tags_index, homepage, archive_index
+    staticpage_tag="staticpage"
     # personalized header and footer (only if you know what you're doing)
     # DO NOT name them .header.html, .footer.html or they will be overwritten
     # leave blank to generate them, recommended
@@ -342,14 +347,17 @@ edit() {
 twitter_card() {
     [[ -z $global_twitter_username ]] && return
     
+    echo "<meta property='og:type' content='website' />"
     echo "<meta name='twitter:card' content='summary' />"
     echo "<meta name='twitter:site' content='@$global_twitter_username' />"
-    echo "<meta name='twitter:title' content='$2' />" # Twitter truncates at 70 char
+    echo "<meta property='og:title' content=\"$2\" />" # Twitter truncates at 70 char
+    echo "<meta name='twitter:title' content=\"$2\" />" # Twitter truncates at 70 char
     description=$(grep -v "^<p>$template_tags_line_header" "$1" | sed -e 's/<[^>]*>//g' | tr '\n' ' ' | sed "s/\"/'/g" | head -c 250) 
+    echo "<meta property='og:description' content=\"$description\" />"
     echo "<meta name='twitter:description' content=\"$description\" />"
 
     # For the image we try to locate the first image in the article
-    image=$(sed -n '2,$ d; s/.*<img.*src="\([^"]*\)".*/\1/p' "$1") 
+    image=$(sed -n '/<img[^>]*src[[:space:]]*="/{ s/.*<img[^>]*src[[:space:]]*="\([^"]*\)".*/\1/; p; q; }'  "$1") 
 
     # If none, then we try a global setting image
     [[ -z $image ]] && [[ -n $global_twitter_card_image ]] && image=$global_twitter_card_image
@@ -359,6 +367,7 @@ twitter_card() {
 
     # Final housekeeping
     [[ $image =~ ^https?:// ]] || image=$global_url/$image # Check that URL is absolute
+    echo "<meta property='og:image' content='$image' />"
     echo "<meta name='twitter:image' content='$image' />"
 }
 
@@ -416,6 +425,19 @@ is_boilerplate_file() {
     esac
 }
 
+# Check if the post is a "static page" and should be treated differently.
+#
+# $1 the file or content
+#
+# Return 0 if the post has the $staticpage_tag and 1 otherwise
+is_staticpage() {
+    local t
+    for t in $(tags_in_post "$1"); do
+        [[ $t == "$staticpage_tag" ]] && return 0
+    done
+    return 1
+}
+
 # Adds all the bells and whistles to format the html page
 # Every blog post is marked with a <!-- entry begin --> and <!-- entry end -->
 # which is parsed afterwards in the other functions. There is also a marker
@@ -436,13 +458,17 @@ create_html_page() {
     timestamp=$5
     author=$6
 
+    # Check if the post is actually a static_page: it will hide some html elements
+    local staticpage=""
+    [[ $index == no ]] && is_staticpage "$content" && staticpage=" hidden"
     # Create the actual blog post
     # html, head
     {
         cat ".header.html"
         echo "<title>$title</title>"
         google_analytics
-        twitter_card "$content" "$title"
+        title_for_twitter="$(echo $title | sed s/\"/\'/g)"
+        twitter_card "$content" "$title_for_twitter"
         echo "</head><body>"
         # stuff to add before the actual body content
         [[ -n $body_begin_file ]] && cat "$body_begin_file"
@@ -461,7 +487,7 @@ create_html_page() {
         # one blog entry
         if [[ $index == no ]]; then
             echo '<!-- entry begin -->' # marks the beginning of the whole post
-            echo "<h3><a class=\"ablack\" href=\"$file_url\">"
+            echo "<h3$staticpage><a class=\"ablack\" href=\"$file_url\">"
             # remove possible <p>'s on the title because of markdown conversion
             title=${title//<p>/}
             title=${title//<\/p>/}
@@ -473,20 +499,18 @@ create_html_page() {
                 echo "<!-- $date_inpost: #$(LC_ALL=$date_locale date +"$date_format_timestamp" --date="$timestamp")# -->"
             fi
             if [[ -z $timestamp ]]; then
-                echo -n "<div class=\"subtitle\">$(LC_ALL=$date_locale date +"$date_format")"
+                echo -n "<div class=\"subtitle\"$staticpage>$(LC_ALL=$date_locale date +"$date_format")"
             else
-                echo -n "<div class=\"subtitle\">$(LC_ALL=$date_locale date +"$date_format" --date="$timestamp")"
+                echo -n "<div class=\"subtitle\"$staticpage>$(LC_ALL=$date_locale date +"$date_format" --date="$timestamp")"
             fi
             [[ -n $author ]] && echo -e " &mdash; \n$author"
             echo "</div>"
             echo '<!-- text begin -->' # This marks the text body, after the title, date...
         fi
-        cat "$content" # Actual content
+        sed "s/^<p[^>]*>$template_tags_line_header/<p$staticpage>$template_tags_line_header/" "$content"
         if [[ $index == no ]]; then
             echo -e '\n<!-- text end -->'
-
             twitter "$global_url/$file_url"
-
             echo '<!-- entry end -->' # absolute end of the post
         fi
 
@@ -666,6 +690,7 @@ all_posts() {
         prev_month=""
         while IFS='' read -r i; do
             is_boilerplate_file "$i" && continue
+            is_staticpage "$i" && continue
             echo -n "." 1>&3
             # Month headers
             month=$(LC_ALL=$date_locale date -r "$i" +"$date_allposts_header")
@@ -742,7 +767,8 @@ rebuild_index() {
     {
         n=0
         while IFS='' read -r i; do
-            is_boilerplate_file "$i" && continue;
+            is_boilerplate_file "$i" && continue
+            is_staticpage "$i" && continue
             if ((n >= number_of_index_articles)); then break; fi
             if [[ -n $cut_do ]]; then
                 get_html_file_content 'entry' 'entry' 'cut' <"$i" | awk "/$cut_line/ { print \"<p class=\\\"readmore\\\"><a href=\\\"$i\\\">$template_read_more</a></p>\" ; next } 1"
@@ -770,7 +796,7 @@ rebuild_index() {
 # Accepts either filename as first argument, or post content at stdin
 # Prints one line with space-separated tags to stdout
 tags_in_post() {
-    sed -n "/^<p>$template_tags_line_header/{s/^<p>$template_tags_line_header//;s/<[^>]*>//g;s/[ ,]\+/ /g;p;}" "$1" | tr ', ' ' '
+    sed -n "/^<p[^>]*>$template_tags_line_header/{s/^<p[^>]*>$template_tags_line_header//;s/<[^>]*>//g;s/[ ,]\+/ /g;p;}" "$1" | tr ', ' ' '
 }
 
 # Finds all posts referenced in a number of tags.
@@ -780,7 +806,7 @@ posts_with_tags() {
     (($# < 1)) && return
     set -- "${@/#/$prefix_tags}"
     set -- "${@/%/.html}"
-    sed -n '/^<h3><a class="ablack" href="[^"]*">/{s/.*href="\([^"]*\)">.*/\1/;p;}' "$@" 2> /dev/null
+    sed -n '/^<h3[^>]*><a class="ablack" href="[^"]*">/{s/.*href="\([^"]*\)">.*/\1/;p;}' "$@" 2> /dev/null
 }
 
 # Rebuilds tag_*.html files
@@ -825,6 +851,7 @@ rebuild_tags() {
             get_html_file_content 'entry' 'entry' <"$i"
         fi >"$tmpfile"
         for tag in $(tags_in_post "$i"); do
+            [[ $tag == "$staticpage_tag" ]] && continue
             if [[ -n $all_tags || " $tags " == *" $tag "* ]]; then
                 cat "$tmpfile" >> "$prefix_tags$tag".tmp.html
             fi
@@ -845,7 +872,7 @@ rebuild_tags() {
 #
 # $1 the html file
 get_post_title() {
-    awk '/<h3><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' "$1"
+    awk '/<h3[^>]*><a class="ablack" href=".+">/, /<\/a><\/h3>/{if (!/<h3[^>]*><a class="ablack" href=".+">/ && !/<\/a><\/h3>/) print}' "$1"
 }
 
 # Return the post author
@@ -919,6 +946,7 @@ make_rss() {
         n=0
         while IFS='' read -r i; do
             is_boilerplate_file "$i" && continue
+            is_staticpage "$i" && continue
             ((n >= number_of_feed_articles)) && break # max 10 items
             echo -n "." 1>&3
             echo '<item><title>' 

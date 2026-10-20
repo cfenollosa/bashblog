@@ -42,12 +42,6 @@ When you're done, access the public URL for that folder  (e.g. `http://server.co
 and you should see the index file and a new page for that post!
 
 
-How to...
----------
-
-Please [read the wiki](https://github.com/cfenollosa/bashblog/wiki) to learn how to use the advanced features of Bashblog, such as headers and footers, static pages, and more.
-
-
 Features
 --------
 
@@ -61,6 +55,7 @@ Features
 - Allows drafts, includes a simple but clean stylesheet, generates the RSS file automatically.
 - Support for tags/categories
 - Support for Markdown, Disqus comments, Twitter, Feedburner, Google Analytics.
+- The project is still maintained as of 2016. Bugs are fixed, and new features are considered (see "Contributing")
 - Everything stored in a single ~1k lines bash script, how cool is that?! ;) 
 
 
@@ -117,8 +112,6 @@ Read the Changelog section for more updates or [check out the news on my blog](h
 Contributing
 ------------
 
-**Important: I am not actively maintaining bashblog as of 2026-07-09. It still works (that was the point all along!) I will fix bugs I find myself, but there are no features on the roadmap. Feel free to fork the project and adapt it to your needs.**
-
 Bashblog started at 500 SLOC and it now has hit the 1000 SLOC barrier. 
 If we want to keep the code minimal and understandable, we need to make the difficult effort to restrain ourselves 
 from adding too many features.
@@ -138,6 +131,7 @@ As a guideline, pull requests should:
 
 Changelog
 ---------
+- 2.11     Added `staticpage_tag`
 - 2.10     Added `global_twitter_card_image`
 - 2.9      Added `body_begin_file_index`
 - 2.8      Bugfixes<br/>
