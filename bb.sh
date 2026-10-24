@@ -17,7 +17,7 @@ global_config=".config"
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
-    global_software_version="2.11"
+    global_software_version="2.12"
 
     # Blog title
     global_title="My fancy blog"
@@ -47,7 +47,7 @@ global_variables() {
     # or change it to your own URL
     global_feedburner=""
 
-    # Change this to your username if you want to use twitter for comments
+    # Change this to your username if you want to use twitter for comments and generate twitter cards
     global_twitter_username=""
     # Default image for the Twitter cards. Use an absolute URL
     global_twitter_card_image=""
@@ -340,35 +340,55 @@ edit() {
     fi
 }
 
-# Create a Twitter summary (twitter "card") for the post
+# Create Opengraph meta tags (originally called "twitter card") for the post
 #
 # $1 the post file
 # $2 the title
+# $3 "yes" for index pages (tags, archive), "no" for regular blog posts
+# $4 the absolute public URL of the page
 twitter_card() {
-    [[ -z $global_twitter_username ]] && return
-    
-    echo "<meta property='og:type' content='website' />"
-    echo "<meta name='twitter:card' content='summary' />"
-    echo "<meta name='twitter:site' content='@$global_twitter_username' />"
-    echo "<meta property='og:title' content=\"$2\" />" # Twitter truncates at 70 char
-    echo "<meta name='twitter:title' content=\"$2\" />" # Twitter truncates at 70 char
-    description=$(grep -v "^<p>$template_tags_line_header" "$1" | sed -e 's/<[^>]*>//g' | tr '\n' ' ' | sed "s/\"/'/g" | head -c 250) 
-    echo "<meta property='og:description' content=\"$description\" />"
-    echo "<meta name='twitter:description' content=\"$description\" />"
+    local post_type="article"
+    [[ "$3" == "yes" ]] && post_type="website"
+    echo "<meta property='og:type' content='$post_type' />"
 
-    # For the image we try to locate the first image in the article
-    image=$(sed -n '/<img[^>]*src[[:space:]]*="/{ s/.*<img[^>]*src[[:space:]]*="\([^"]*\)".*/\1/; p; q; }'  "$1") 
+    local title=${2//\"/\'}
+    echo "<meta property='og:title' content=\"$title\" />"
+
+    local description="$global_description"
+    [[ "$post_type" == "article" ]] && description=$(grep -v "^<p>$template_tags_line_header" "$1" | sed -e 's/<[^>]*>//g' | tr '\n' ' ' | sed "s/\"/'/g" | head -c 250)
+    echo "<meta property='og:description' content=\"$description\" />"
+
+    echo "<meta property='og:url' content='$4' />"
+
+    # Image handling. First, we try to locate the first image in the article
+    [[ "$post_type" == "article" ]] && image=$(sed -n '/<img[^>]*src[[:space:]]*="/{ s/.*<img[^>]*src[[:space:]]*="\([^"]*\)".*/\1/; p; q; }'  "$1")
 
     # If none, then we try a global setting image
-    [[ -z $image ]] && [[ -n $global_twitter_card_image ]] && image=$global_twitter_card_image
+    [[ -z "$image" ]] && [[ -n "$global_twitter_card_image" ]] && image="$global_twitter_card_image"
 
-    # If none, return
-    [[ -z $image ]] && return
+    # Check that the URL is absolute
+    if [[ -n "$image" ]]; then
+        local scheme=${global_url%%://*} rest=${global_url#*://}
+        local origin="$scheme://${rest%%/*}"
+        if [[ "$image" =~ ^https?:// ]]; then
+            :
+        elif [[ "$image" == //* ]]; then
+            image="$scheme:$image"
+        elif [[ "$image" == /* ]]; then
+            image="$origin$image"
+        else
+            image="$global_url/${image#./}"
+        fi
+        echo "<meta property='og:image' content='$image' />"
+    fi
 
-    # Final housekeeping
-    [[ $image =~ ^https?:// ]] || image=$global_url/$image # Check that URL is absolute
-    echo "<meta property='og:image' content='$image' />"
-    echo "<meta name='twitter:image' content='$image' />"
+    # If we have a twitter username, then we add the twitter-specific meta tags
+    [[ -z $global_twitter_username ]] && return
+    echo "<meta name='twitter:card' content='summary' />"
+    echo "<meta name='twitter:title' content=\"$title\" />"
+    echo "<meta name='twitter:site' content='@$global_twitter_username' />"
+    echo "<meta name='twitter:description' content=\"$description\" />"
+    [[ -n "$image" ]] && echo "<meta name='twitter:image' content='$image' />"
 }
 
 # Adds the code needed by the twitter button
@@ -445,8 +465,8 @@ is_staticpage() {
 #
 # $1     a file with the body of the content
 # $2     the output file
-# $3     "yes" if we want to generate the index.html,
-#        "no" to insert new blog posts
+# $3     "yes" if we want to generate the index, tags or archive pages, or
+#        "no" for articles
 # $4     title for the html header
 # $5     original blog timestamp
 # $6     post author
@@ -467,8 +487,12 @@ create_html_page() {
         cat ".header.html"
         echo "<title>$title</title>"
         google_analytics
-        title_for_twitter="$(echo $title | sed s/\"/\'/g)"
-        twitter_card "$content" "$title_for_twitter"
+        # Public URL of the page: strip temporary suffixes used while generating it
+        page_url=${filename#./}
+        page_url=${page_url%.rebuilt}
+        page_url=${page_url%.tmp}
+        [[ $page_url == "$index_file".* ]] && page_url=$index_file
+        twitter_card "$content" "$title" "$index" "$global_url/$page_url"
         echo "</head><body>"
         # stuff to add before the actual body content
         [[ -n $body_begin_file ]] && cat "$body_begin_file"
