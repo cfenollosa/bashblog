@@ -131,6 +131,7 @@ As a guideline, pull requests should:
 
 Changelog
 ---------
+- 2.12     Improved handling of Twitter cards along with Opengraph tags.
 - 2.11     Added `staticpage_tag`
 - 2.10     Added `global_twitter_card_image`
 - 2.9      Added `body_begin_file_index`
