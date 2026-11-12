@@ -176,10 +176,10 @@ global_variables() {
 global_variables_check() {
     [[ $header_file == .header.html ]] &&
         echo "Please check your configuration. '.header.html' is not a valid value for the setting 'header_file'" &&
-        exit
+        exit 1
     [[ $footer_file == .footer.html ]] &&
         echo "Please check your configuration. '.footer.html' is not a valid value for the setting 'footer_file'" &&
-        exit
+        exit 1
 }
 
 
@@ -293,7 +293,7 @@ get_html_file_content() {
 #	"full" to edit full HTML, and not only text part (keeps old filename)
 #	leave empty for default behavior (edit only text part and change name)
 edit() {
-    [[ ! -f "${1%%.*}.html" ]] && echo "Can't edit post "${1%%.*}.html", did you mean to use \"bb.sh post <draft_file>\"?" && exit -1
+    [[ ! -f "${1%%.*}.html" ]] && echo "Can't edit post "${1%%.*}.html", did you mean to use \"bb.sh post <draft_file>\"?" && exit 1
     # Original post timestamp
     edit_timestamp=$(LC_ALL=C date -r "${1%%.*}.html" +"$date_format_full" )
     touch_timestamp=$(LC_ALL=C date -r "${1%%.*}.html" +"$date_format_timestamp")
@@ -306,7 +306,7 @@ edit() {
             test_markdown
             if (($? != 0)); then
                 echo "Markdown is not working, please edit HTML file directly."
-                exit
+                exit 1
             fi
             # editing markdown file
             $EDITOR "$1"
@@ -620,7 +620,7 @@ write_entry() {
         if [[ ! -f $TMPFILE ]]; then
             echo "The file doesn't exist"
             delete_includes
-            exit
+            exit 1
         fi
         # guess format from TMPFILE
         extension=${TMPFILE##*.}
@@ -632,7 +632,7 @@ write_entry() {
             test_markdown
             if (($? != 0)); then
                 echo "Markdown is not working, please edit HTML file directly."
-                exit
+                exit 1
             fi
         fi
     else
@@ -1195,11 +1195,11 @@ do_main() {
 
     # Check for $EDITOR
     [[ -z $EDITOR ]] && 
-        echo "Please set your \$EDITOR environment variable. For example, to use nano, add the line 'export EDITOR=nano' to your \$HOME/.bashrc file" && exit
+        echo "Please set your \$EDITOR environment variable. For example, to use nano, add the line 'export EDITOR=nano' to your \$HOME/.bashrc file" && exit 1
 
     # Check for validity of argument
     [[ $1 != "reset" && $1 != "post" && $1 != "rebuild" && $1 != "list" && $1 != "edit" && $1 != "delete" && $1 != "tags" && $1 != "print" ]] &&
-        usage && exit
+        usage && exit 1
 
     [[ $1 == list ]] &&
         list_posts && exit
@@ -1216,7 +1216,7 @@ do_main() {
     if [[ $1 == edit ]]; then
         if (($# < 2)) || [[ ! -f ${!#} ]]; then
             echo "Please enter a valid .md or .html file to edit"
-            exit
+            exit 1
         fi
     fi
 
@@ -1227,7 +1227,7 @@ do_main() {
             chmod 600 ".backup.tar.gz"
     elif [[ $1 == rebuild ]]; then
         echo "Can't find any html files, nothing to rebuild"
-        exit
+        exit 1
     fi
 
     # Keep first backup of this day containing yesterday's version of the blog
