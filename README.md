@@ -131,6 +131,8 @@ As a guideline, pull requests should:
 
 Changelog
 ---------
+- 2.13     New command: `print` outputs the post content. Useful to pipe it to a mailer or a pager<br/>
+           Added `global_no_twitter_comments` to disable Twitter comments but keep the username for cards
 - 2.12     Improved handling of Twitter cards along with Opengraph tags.
 - 2.11     Added `staticpage_tag`
 - 2.10     Added `global_twitter_card_image`

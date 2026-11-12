@@ -17,7 +17,7 @@ global_config=".config"
 # by the 'global_config' file contents
 global_variables() {
     global_software_name="BashBlog"
-    global_software_version="2.12"
+    global_software_version="2.13"
 
     # Blog title
     global_title="My fancy blog"
@@ -49,6 +49,9 @@ global_variables() {
 
     # Change this to your username if you want to use twitter for comments and generate twitter cards
     global_twitter_username=""
+    # If you configured the above for twitter cards, but you don't want to use the twitter comments,
+    # set this to "Y" (any non-empty value will do).
+    global_no_twitter_comments=""
     # Default image for the Twitter cards. Use an absolute URL
     global_twitter_card_image=""
     # Set this to false for a Twitter button with share count. The cookieless version
@@ -396,6 +399,7 @@ twitter_card() {
 # $1 the post URL
 twitter() {
     [[ -z $global_twitter_username ]] && return
+    [[ -n $global_no_twitter_comments ]] && return
 
     if [[ -z $global_disqus_username ]]; then
         if [[ $global_twitter_cookieless == true ]]; then 
@@ -1123,6 +1127,7 @@ usage() {
     echo "                            always use this function as it keeps internal data and rebuilds the blog"
     echo "                            use '-n' to give the file a new name, if title was changed"
     echo "                            use '-f' to edit full html file, instead of just text part (also preserves name)"
+    echo "    print [filename]        prints the post content, for example to pipe it to a mailer or a pager"
     echo "    delete [filename]       deletes the post and rebuilds the blog"
     echo "    rebuild                 regenerates all the pages and posts, preserving the content of the entries"
     echo "    reset                   deletes everything except this script. Use with a lot of caution and back up first!"
@@ -1193,7 +1198,7 @@ do_main() {
         echo "Please set your \$EDITOR environment variable. For example, to use nano, add the line 'export EDITOR=nano' to your \$HOME/.bashrc file" && exit
 
     # Check for validity of argument
-    [[ $1 != "reset" && $1 != "post" && $1 != "rebuild" && $1 != "list" && $1 != "edit" && $1 != "delete" && $1 != "tags" ]] && 
+    [[ $1 != "reset" && $1 != "post" && $1 != "rebuild" && $1 != "list" && $1 != "edit" && $1 != "delete" && $1 != "tags" && $1 != "print" ]] &&
         usage && exit
 
     [[ $1 == list ]] &&
@@ -1201,6 +1206,12 @@ do_main() {
 
     [[ $1 == tags ]] &&
         list_tags "$@" && exit
+
+    if [[ $1 == print ]]; then
+        get_post_title "$2"
+        get_html_file_content 'text' 'text' <"$2"
+        exit
+    fi
 
     if [[ $1 == edit ]]; then
         if (($# < 2)) || [[ ! -f ${!#} ]]; then
