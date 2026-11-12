@@ -1232,7 +1232,7 @@ do_main() {
 
     # Keep first backup of this day containing yesterday's version of the blog
     [[ ! -f .yesterday.tar.gz || $(date -r .yesterday.tar.gz +'%d') != "$(date +'%d')" ]] &&
-        cp .backup.tar.gz .yesterday.tar.gz &> /dev/null
+        cp -a .backup.tar.gz .yesterday.tar.gz &> /dev/null
 
     [[ $1 == reset ]] &&
         reset && exit
