@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 # BashBlog, a simple blog system written in a single bash script
-# (C) Carlos Fenollosa <carlos.fenollosa@gmail.com>, 2011-2026 and contributors
-# https://github.com/carlesfe/bashblog/contributors
+# (C) Carlos Fenollosa <carlos@cfenollosa.com>, 2011-2026 and contributors
+# https://github.com/cfenollosa/bashblog/contributors
 # Check out README.md for more details
 
 # Global variables
